@@ -61,7 +61,10 @@ exports.optionalAuth = async (req, res, next) => {
  * Phải sử dụng sau middleware protect
  */
 exports.isAdmin = (req, res, next) => {
-  if (req.user && (req.user.isAdmin || req.user.role === 'admin')) {
+  // Add debugging to help troubleshoot
+  console.log("User role check:", req.user ? req.user.role : "No user found");
+  
+  if (req.user && req.user.role === 'admin') {
     next();
   } else {
     res.status(403).json({ message: "Không có quyền truy cập, yêu cầu quyền quản trị viên" });

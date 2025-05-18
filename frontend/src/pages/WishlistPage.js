@@ -1,0 +1,126 @@
+import React from 'react';
+import { Container, Row, Col, Card, Button, Alert } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
+import { FaTrash, FaShoppingCart } from 'react-icons/fa';
+import { useGetWishlistQuery, useRemoveFromWishlistMutation, useAddToCartMutation } from '../services/api';
+import Layout from '../components/Layout';
+import Loader from '../components/Loader';
+import Message from '../components/Message';
+import './WishlistPage.css';
+
+const WishlistPage = () => {
+  const navigate = useNavigate();
+  
+  // Fetch wishlist data
+  const { data: wishlist, error, isLoading, refetch } = useGetWishlistQuery();
+  
+  // Mutations
+  const [removeFromWishlist, { isLoading: isRemoving }] = useRemoveFromWishlistMutation();
+  const [addToCart, { isLoading: isAddingToCart }] = useAddToCartMutation();
+
+  // Handle removing item from wishlist
+  const handleRemoveFromWishlist = async (productId) => {
+    try {
+      await removeFromWishlist(productId);
+      refetch(); // Refresh the wishlist data
+    } catch (err) {
+      console.error('Error removing from wishlist:', err);
+    }
+  };
+
+  // Handle adding item to cart
+  const handleAddToCart = async (product) => {
+    try {
+      await addToCart({
+        productId: product._id,
+        quantity: 1
+      });
+      // Optionally navigate to cart or show success message
+    } catch (err) {
+      console.error('Error adding to cart:', err);
+    }
+  };
+
+  // Format price with comma separators
+  const formatPrice = (price) => {
+    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  };
+
+  return (
+    <Layout>
+      <Container className="py-4">
+        <h1 className="mb-4">My Wishlist</h1>
+        
+        {isLoading ? (
+          <Loader />
+        ) : error ? (
+          <Message variant="danger">
+            Error loading wishlist: {error.data?.message || error.error}
+          </Message>
+        ) : !wishlist || wishlist.length === 0 ? (
+          <Alert variant="info">
+            <Alert.Heading>Your wishlist is empty</Alert.Heading>
+            <p>
+              When you add items to your wishlist, they will appear here.
+              Start shopping and add your favorite products!
+            </p>
+            <div>
+              <Button variant="primary" onClick={() => navigate('/')}>
+                Browse Products
+              </Button>
+            </div>
+          </Alert>
+        ) : (
+          <Row className="wishlist-grid">
+            {wishlist.map((item) => (
+              <Col key={item._id} sm={6} md={4} lg={3} className="mb-4">
+                <Card className="wishlist-item">
+                  <div className="product-image-container">
+                    <Card.Img 
+                      variant="top" 
+                      src={item.image || '/images/product-placeholder.png'} 
+                      alt={item.name}
+                      className="product-image cursor-pointer"
+                      onClick={() => navigate(`/product/${item._id}`)}
+                    />
+                  </div>
+                  <Card.Body>
+                    <Card.Title 
+                      className="product-title cursor-pointer"
+                      onClick={() => navigate(`/product/${item._id}`)}
+                    >
+                      {item.name}
+                    </Card.Title>
+                    <Card.Text className="product-price">
+                      ${formatPrice(item.price)}
+                    </Card.Text>
+                    <div className="button-row">
+                      <Button
+                        variant="outline-danger"
+                        className="remove-btn"
+                        onClick={() => handleRemoveFromWishlist(item._id)}
+                        disabled={isRemoving}
+                      >
+                        <FaTrash /> REMOVE
+                      </Button>
+                      <Button
+                        variant="primary"
+                        className="add-cart-btn"
+                        onClick={() => handleAddToCart(item)}
+                        disabled={isAddingToCart}
+                      >
+                        <FaShoppingCart /> ADD TO CART
+                      </Button>
+                    </div>
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        )}
+      </Container>
+    </Layout>
+  );
+};
+
+export default WishlistPage; 

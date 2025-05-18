@@ -2,6 +2,7 @@ const Cart = require("../models/Cart");
 const GuestCart = require("../models/GuestCart");
 const Product = require("../models/Product");
 const { v4: uuidv4 } = require('uuid');
+const { getCartRecommendations } = require("../services/recommendationService");
 
 // Thêm sản phẩm vào giỏ hàng (cả người dùng đã đăng nhập và khách)
 exports.addToCart = async (req, res) => {
@@ -76,25 +77,35 @@ exports.getCart = async (req, res) => {
       const userId = req.user._id;
       const cart = await Cart.findOne({ user: userId }).populate("items.product");
 
-      if (!cart) return res.status(200).json({ message: "Giỏ hàng trống", items: [] });
+      if (!cart) return res.status(200).json({ message: "Giỏ hàng trống", items: [], recommendations: [] });
 
-      return res.status(200).json(cart);
+      // Lấy đề xuất sản phẩm dựa trên giỏ hàng hiện tại
+      const recommendations = await getCartRecommendations(cart.items);
+
+      return res.status(200).json({
+        ...cart.toObject(),
+        recommendations
+      });
     } 
     // Người dùng là khách
     else {
       const { sessionId } = req.query;
       
       if (!sessionId) {
-        return res.status(200).json({ message: "Giỏ hàng trống", items: [] });
+        return res.status(200).json({ message: "Giỏ hàng trống", items: [], recommendations: [] });
       }
 
       const guestCart = await GuestCart.findOne({ sessionId }).populate("items.product");
 
-      if (!guestCart) return res.status(200).json({ message: "Giỏ hàng trống", items: [] });
+      if (!guestCart) return res.status(200).json({ message: "Giỏ hàng trống", items: [], recommendations: [] });
+
+      // Lấy đề xuất sản phẩm dựa trên giỏ hàng hiện tại
+      const recommendations = await getCartRecommendations(guestCart.items);
 
       return res.status(200).json({
         ...guestCart._doc,
-        sessionId: sessionId
+        sessionId: sessionId,
+        recommendations
       });
     }
   } catch (error) {

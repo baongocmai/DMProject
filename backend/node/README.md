@@ -58,12 +58,24 @@ This is the backend API for the Retail Web Application. It's built with Node.js,
 - GET /api/admin/reports/sales - Get sales reports
 - GET /api/admin/reports/top-products - Get top products
 - GET /api/admin/reports/user-analytics - Get user analytics
+- GET /api/admin/reports/frequently-bought-together - Get frequently bought together products
 
 ### Analytics Endpoints
 - POST /api/analytics/track - Track user behavior
 - GET /api/analytics/recommendations - Get personalized recommendations
 - GET /api/analytics/popular - Get popular products
 - GET /api/analytics/related/:productId - Get related products
+
+### Metrics Endpoints
+- POST /api/metrics/track/impression - Track recommendation impressions
+- POST /api/metrics/track/click - Track recommendation clicks
+- POST /api/metrics/track/add-to-cart - Track adding recommended products to cart
+- POST /api/metrics/track/purchase - Track purchasing recommended products
+- GET /api/metrics/ctr - Get Click-Through Rate (admin only)
+- GET /api/metrics/cart-rate - Get cart addition rate (admin only)
+- GET /api/metrics/conversion-rate - Get conversion rate (admin only)
+- GET /api/metrics/cart-growth - Get cart growth metrics (admin only)
+- GET /api/metrics/all - Get all recommendation metrics (admin only)
 
 ## Setup Instructions
 
@@ -89,4 +101,117 @@ The following environment variables need to be configured:
 - MongoDB & Mongoose
 - JWT for authentication
 - Bcrypt for password hashing
-- Nodemailer for email sending 
+- Nodemailer for email sending
+
+## Tính năng đề xuất sản phẩm
+
+Hệ thống đề xuất sản phẩm sử dụng hai thuật toán phân tích giỏ hàng:
+
+### 1. Thuật toán Apriori
+
+Thuật toán Apriori được sử dụng để phân tích các mẫu mua hàng và tìm ra các luật kết hợp giữa các sản phẩm. Thuật toán này hiệu quả trong việc tìm kiếm các sản phẩm thường được mua cùng nhau.
+
+Các tham số chính:
+- `minSupport`: Ngưỡng tối thiểu cho tỷ lệ xuất hiện của một mẫu trong tổng số giao dịch
+- `minConfidence`: Độ tin cậy tối thiểu của một luật kết hợp
+
+### 2. Thuật toán FP-Growth (Frequent Pattern Growth)
+
+FP-Growth là thuật toán hiệu quả hơn Apriori trong việc tìm kiếm các mẫu mua hàng phổ biến, đặc biệt với tập dữ liệu lớn. Thuật toán này sử dụng cấu trúc dữ liệu FP-Tree để lưu trữ thông tin về các mẫu mua hàng.
+
+## Các API đề xuất sản phẩm
+
+### 1. Đề xuất sản phẩm trong giỏ hàng
+
+```
+GET /api/cart
+```
+
+API này trả về nội dung giỏ hàng cùng với các sản phẩm được đề xuất dựa trên các sản phẩm hiện có trong giỏ hàng. Các đề xuất được tạo bằng thuật toán Apriori.
+
+### 2. Đề xuất sản phẩm cho trang chủ
+
+```
+GET /api/products/featured
+```
+
+API này trả về cả sản phẩm nổi bật và sản phẩm được đề xuất cá nhân hóa cho người dùng dựa trên lịch sử mua hàng của họ. Các đề xuất được tạo bằng thuật toán FP-Growth.
+
+### 3. Đề xuất sản phẩm liên quan
+
+```
+GET /api/products/:id/related
+```
+
+API này trả về các sản phẩm liên quan đến một sản phẩm cụ thể, dựa trên phân tích các mẫu mua hàng.
+
+### 4. Sản phẩm thường được mua cùng nhau (cho Admin)
+
+```
+GET /api/admin/reports/frequently-bought-together
+```
+
+API này trả về danh sách các nhóm sản phẩm thường được mua cùng nhau, giúp admin tạo các combo sản phẩm. Các tham số:
+- `minSupport`: Ngưỡng tối thiểu (0-1)
+- `limit`: Số lượng mẫu trả về
+
+## Các chỉ số đo hiệu quả hệ thống đề xuất
+
+Hệ thống theo dõi và đo lường hiệu quả của các đề xuất sản phẩm thông qua các chỉ số sau:
+
+### 1. Click-Through Rate (CTR)
+
+Tỷ lệ người dùng nhấp vào sản phẩm được đề xuất so với số lần hiển thị đề xuất.
+
+```
+CTR = (Số lượt click / Số lượt hiển thị) × 100%
+```
+
+Chỉ số này đo lường mức độ hấp dẫn của các đề xuất đối với người dùng.
+
+### 2. Tỷ lệ thêm vào giỏ hàng
+
+Tỷ lệ sản phẩm được đề xuất được thêm vào giỏ hàng so với số lần hiển thị.
+
+```
+Tỷ lệ thêm vào giỏ hàng = (Số lượt thêm vào giỏ / Số lượt hiển thị) × 100%
+```
+
+Chỉ số này đo lường khả năng chuyển đổi của đề xuất thành hành động mua hàng.
+
+### 3. Tỷ lệ chuyển đổi
+
+Tỷ lệ sản phẩm được đề xuất cuối cùng được mua so với số lần hiển thị.
+
+```
+Tỷ lệ chuyển đổi = (Số lượt mua / Số lượt hiển thị) × 100%
+```
+
+### 4. Tăng trưởng giỏ hàng
+
+So sánh giá trị giỏ hàng trung bình trước và sau khi xem đề xuất.
+
+```
+Tăng trưởng giỏ hàng = ((Giá trị sau - Giá trị trước) / Giá trị trước) × 100%
+```
+
+Chỉ số này đo lường khả năng của hệ thống đề xuất trong việc tăng giá trị đơn hàng.
+
+## Cách hoạt động
+
+1. Hệ thống phân tích dữ liệu đơn hàng để tạo các giao dịch
+2. Áp dụng thuật toán Apriori hoặc FP-Growth để tìm các mẫu mua hàng phổ biến
+3. Kết quả được lưu vào cache để tối ưu hiệu suất
+4. Dựa vào các mẫu này, hệ thống đề xuất sản phẩm phù hợp cho từng trường hợp
+5. Theo dõi hiệu quả của các đề xuất thông qua các chỉ số CTR, tỷ lệ thêm vào giỏ hàng, tỷ lệ chuyển đổi và tăng trưởng giỏ hàng
+
+## Cài đặt
+
+Các thư viện cần thiết:
+- `apriori`: Thư viện triển khai thuật toán Apriori
+- `node-fpgrowth`: Thư viện triển khai thuật toán FP-Growth
+- `node-cache`: Thư viện lưu cache để tối ưu hiệu suất
+
+```bash
+npm install apriori node-fpgrowth node-cache
+```

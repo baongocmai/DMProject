@@ -10,10 +10,20 @@ const crypto = require("crypto");
 // @access  Public
 exports.registerUser = async (req, res) => {
   try {
+    console.log("Registration request received:", req.body);
     const { name, email, password, phone } = req.body;
 
+    // Validate input
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "Vui lòng điền đầy đủ thông tin" });
+    }
+
+    // Check if user already exists
     const userExists = await User.findOne({ email });
-    if (userExists) return res.status(400).json({ message: "Email đã tồn tại" });
+    if (userExists) {
+      console.log("User already exists:", email);
+      return res.status(400).json({ message: "Email đã tồn tại" });
+    }
 
     // Generate verification token
     const verificationToken = crypto.randomBytes(32).toString("hex");
@@ -22,6 +32,9 @@ exports.registerUser = async (req, res) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
 
+    console.log("Creating new user with email:", email);
+    
+    // Create user
     const user = await User.create({
       name,
       email,
@@ -33,6 +46,8 @@ exports.registerUser = async (req, res) => {
       isVerified: false,
       role: "user"
     });
+
+    console.log("User created successfully:", user._id);
 
     if (user) {
       const emailMessage = `
@@ -62,13 +77,22 @@ exports.registerUser = async (req, res) => {
         </div>
       `;
       
-      await sendEmail(email, "Xác thực tài khoản 2NADH", emailMessage);
+      try {
+        console.log("Sending verification email to:", email);
+        await sendEmail(email, "Xác thực tài khoản 2NADH", emailMessage);
+        console.log("Verification email sent successfully");
+      } catch (emailError) {
+        console.error("Failed to send verification email:", emailError);
+        // Không trả về lỗi, vẫn cho phép người dùng đăng ký thành công
+        // Người dùng có thể yêu cầu gửi lại OTP sau
+      }
       
       res.status(201).json({
         message: "Tài khoản được tạo. Kiểm tra email để nhận OTP.",
         userId: user._id,
       });
     } else {
+      console.error("Failed to create user");
       res.status(400).json({ message: "Lỗi khi tạo tài khoản" });
     }
   } catch (error) {

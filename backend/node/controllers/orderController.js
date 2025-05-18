@@ -16,6 +16,7 @@ exports.createOrder = async (req, res) => {
 
     let orderItems = [];
     let totalPrice = 0;
+    let productsToUpdate = []; // Mảng lưu thông tin sản phẩm cần cập nhật số lượng
 
     // Tạo đơn hàng từ giỏ hàng
     if (req.user) {
@@ -34,6 +35,13 @@ exports.createOrder = async (req, res) => {
             return res.status(404).json({ message: `Sản phẩm ${item.productId} không tồn tại` });
           }
           
+          // Kiểm tra tồn kho
+          if (product.countInStock < item.quantity) {
+            return res.status(400).json({ 
+              message: `Sản phẩm ${product.name} chỉ còn ${product.countInStock} sản phẩm trong kho` 
+            });
+          }
+          
           orderItems.push({
             product: product._id,
             name: product.name,
@@ -43,10 +51,23 @@ exports.createOrder = async (req, res) => {
           });
           
           totalPrice += product.price * item.quantity;
+          
+          // Thêm vào danh sách sản phẩm cần cập nhật số lượng
+          productsToUpdate.push({
+            id: product._id,
+            qty: item.quantity
+          });
         }
       } else {
         // Sử dụng giỏ hàng từ database
         for (const item of cart.items) {
+          // Kiểm tra tồn kho
+          if (item.product.countInStock < item.quantity) {
+            return res.status(400).json({ 
+              message: `Sản phẩm ${item.product.name} chỉ còn ${item.product.countInStock} sản phẩm trong kho` 
+            });
+          }
+          
           orderItems.push({
             product: item.product._id,
             name: item.product.name,
@@ -56,6 +77,12 @@ exports.createOrder = async (req, res) => {
           });
           
           totalPrice += item.product.price * item.quantity;
+          
+          // Thêm vào danh sách sản phẩm cần cập nhật số lượng
+          productsToUpdate.push({
+            id: item.product._id,
+            qty: item.quantity
+          });
         }
         
         // Xóa giỏ hàng sau khi đặt hàng
@@ -73,6 +100,13 @@ exports.createOrder = async (req, res) => {
         
         if (guestCart && guestCart.items.length > 0) {
           for (const item of guestCart.items) {
+            // Kiểm tra tồn kho
+            if (item.product.countInStock < item.quantity) {
+              return res.status(400).json({ 
+                message: `Sản phẩm ${item.product.name} chỉ còn ${item.product.countInStock} sản phẩm trong kho` 
+              });
+            }
+            
             orderItems.push({
               product: item.product._id,
               name: item.product.name,
@@ -82,6 +116,12 @@ exports.createOrder = async (req, res) => {
             });
             
             totalPrice += item.product.price * item.quantity;
+            
+            // Thêm vào danh sách sản phẩm cần cập nhật số lượng
+            productsToUpdate.push({
+              id: item.product._id,
+              qty: item.quantity
+            });
           }
           
           // Xóa giỏ hàng sau khi đặt hàng
@@ -99,6 +139,13 @@ exports.createOrder = async (req, res) => {
             return res.status(404).json({ message: `Sản phẩm ${item.productId} không tồn tại` });
           }
           
+          // Kiểm tra tồn kho
+          if (product.countInStock < item.quantity) {
+            return res.status(400).json({ 
+              message: `Sản phẩm ${product.name} chỉ còn ${product.countInStock} sản phẩm trong kho` 
+            });
+          }
+          
           orderItems.push({
             product: product._id,
             name: product.name,
@@ -108,6 +155,12 @@ exports.createOrder = async (req, res) => {
           });
           
           totalPrice += product.price * item.quantity;
+          
+          // Thêm vào danh sách sản phẩm cần cập nhật số lượng
+          productsToUpdate.push({
+            id: product._id,
+            qty: item.quantity
+          });
         }
       }
       
@@ -133,6 +186,15 @@ exports.createOrder = async (req, res) => {
     
     const order = new Order(orderData);
     await order.save();
+    
+    // Cập nhật số lượng sản phẩm trong kho
+    for (const item of productsToUpdate) {
+      await Product.findByIdAndUpdate(
+        item.id,
+        { $inc: { countInStock: -item.qty } },
+        { new: true }
+      );
+    }
     
     res.status(201).json({
       message: "Đơn hàng đã được tạo thành công",

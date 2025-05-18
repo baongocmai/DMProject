@@ -3,9 +3,12 @@ const {
   trackUserBehavior,
   getRecommendations,
   getPopularProducts,
-  getRelatedProducts
+  getRelatedProducts,
+  getProductAnalytics,
+  getUserAnalytics,
+  getOrderAnalytics
 } = require("../controllers/analyticsController");
-const { protect } = require("../middlewares/authMiddleware");
+const { protect, isAdmin } = require("../middlewares/authMiddleware");
 
 const router = express.Router();
 
@@ -28,5 +31,20 @@ router.get("/popular", getPopularProducts);
 // @route   GET /api/analytics/related/:productId
 // @access  Public
 router.get("/related/:productId", getRelatedProducts);
+
+// @desc    Lấy phân tích sản phẩm cho admin dashboard
+// @route   GET /api/analytics/products
+// @access  Private/Admin
+router.get("/products", protect, isAdmin, getProductAnalytics);
+
+// @desc    Lấy phân tích người dùng cho admin dashboard
+// @route   GET /api/analytics/users
+// @access  Private/Admin
+router.get("/users", protect, isAdmin, getUserAnalytics);
+
+// @desc    Lấy phân tích đơn hàng cho admin dashboard
+// @route   GET /api/analytics/orders
+// @access  Private/Admin
+router.get("/orders", protect, isAdmin, getOrderAnalytics);
 
 module.exports = router; 

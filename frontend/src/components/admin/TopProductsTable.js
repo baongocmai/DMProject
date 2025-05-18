@@ -1,0 +1,133 @@
+import React from 'react';
+import { Table, ProgressBar, Badge, Spinner, Alert } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
+import './TopProductsTable.css';
+
+const TopProductsTable = ({ products = [], loading = false, error = null }) => {
+  // Get stock status
+  const getStockStatus = (countInStock) => {
+    if (countInStock === 0) {
+      return { variant: 'danger', text: 'Out of Stock' };
+    } else if (countInStock < 10) {
+      return { variant: 'warning', text: 'Low Stock' };
+    } else {
+      return { variant: 'success', text: 'In Stock' };
+    }
+  };
+  
+  // Format currency
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2
+    }).format(amount);
+  };
+  
+  // Show loading spinner
+  if (loading) {
+    return (
+      <div className="text-center p-5">
+        <Spinner animation="border" variant="primary" />
+        <p className="mt-2">Loading product data...</p>
+      </div>
+    );
+  }
+  
+  // Show error
+  if (error) {
+    return (
+      <Alert variant="danger" className="m-3">
+        <Alert.Heading>Error loading product data</Alert.Heading>
+        <p>{error.message || 'An unknown error occurred'}</p>
+      </Alert>
+    );
+  }
+  
+  // Show empty state
+  if (!products || products.length === 0) {
+    return (
+      <div className="text-center p-4">
+        <p>No product data available.</p>
+      </div>
+    );
+  }
+  
+  // Calculate the maximum value for progress bar
+  const maxSales = Math.max(...products.map(product => product.totalSales || 0));
+  
+  return (
+    <div className="top-products-table">
+      <Table responsive hover>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Price</th>
+            <th>Sold</th>
+            <th>Revenue</th>
+            <th>Stock</th>
+          </tr>
+        </thead>
+        <tbody>
+          {products.map((product) => {
+            const stockStatus = getStockStatus(product.countInStock || 0);
+            
+            return (
+              <tr key={product._id}>
+                <td>
+                  <div className="product-info">
+                    <div className="product-image">
+                      <img 
+                        src={product.image || "https://via.placeholder.com/50"}
+                        alt={product.name}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = "https://via.placeholder.com/50";
+                        }}
+                      />
+                    </div>
+                    <div className="product-details">
+                      <Link to={`/admin/products/${product._id}`} className="product-name">
+                        {product.name}
+                      </Link>
+                      <span className="product-category">{product.category?.name || 'Uncategorized'}</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  {product.salePrice ? (
+                    <div className="price-container">
+                      <span className="current-price">{formatCurrency(product.salePrice)}</span>
+                      <span className="original-price">{formatCurrency(product.price)}</span>
+                    </div>
+                  ) : (
+                    formatCurrency(product.price || 0)
+                  )}
+                </td>
+                <td>
+                  <div className="sales-data">
+                    <span className="sales-count">{product.totalSales || 0}</span>
+                    <ProgressBar 
+                      now={(product.totalSales || 0) / (maxSales || 1) * 100} 
+                      variant="primary"
+                      className="sales-progress"
+                    />
+                  </div>
+                </td>
+                <td>{formatCurrency((product.totalSales || 0) * (product.salePrice || product.price || 0))}</td>
+                <td>
+                  <Badge bg={stockStatus.variant} className="stock-badge">
+                    {stockStatus.text}
+                  </Badge>
+                  <span className="stock-count">{product.countInStock || 0} units</span>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </Table>
+    </div>
+  );
+};
+
+export default TopProductsTable; 

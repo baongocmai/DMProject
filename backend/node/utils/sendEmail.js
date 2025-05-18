@@ -3,12 +3,10 @@ const nodemailer = require("nodemailer");
 const sendEmail = async (email, subject, message) => {
   try {
     const transporter = nodemailer.createTransport({
-      host: process.env.MAIL_SERVER,
-      port: process.env.MAIL_PORT,
-      secure: process.env.MAIL_SECURE === 'true', // Sử dụng biến môi trường, mặc định là false
+      service: process.env.EMAIL_SERVICE,
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: process.env.EMAIL_USERNAME,
+        pass: process.env.EMAIL_PASSWORD,
       },
       tls: {
         rejectUnauthorized: false // Chấp nhận các chứng chỉ TLS tự ký
@@ -21,15 +19,11 @@ const sendEmail = async (email, subject, message) => {
     console.log(`Sending email to ${email} with subject: ${subject}`);
     
     const mailOptions = {
-      from: `"2NADH" <${process.env.EMAIL_USER}>`,
+      from: `"2NADH" <${process.env.EMAIL_FROM}>`,
       to: email,
       subject: subject,
       text: message,
-      html: `<div style="font-family: Arial, sans-serif; padding: 20px;">
-        <h2 style="color: #333;">2NADH</h2>
-        <p>${message}</p>
-       
-      </div>`
+      html: message // Sử dụng trực tiếp HTML từ tham số message
     };
 
     const info = await transporter.sendMail(mailOptions);
