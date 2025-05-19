@@ -181,8 +181,8 @@ exports.getOrderById = async (req, res) => {
 // @access  Admin
 exports.getPendingOrders = async (req, res) => {
   try {
-    // Simplified query - just get orders with status 'pending'
-    const orders = await Order.find({ status: 'pending' })
+    // Updated to get orders with status 'pending' or 'placed'
+    const orders = await Order.find({ status: { $in: ['pending', 'placed'] } })
       .populate('user', 'name email')
       .sort({ createdAt: -1 });
     
@@ -190,7 +190,7 @@ exports.getPendingOrders = async (req, res) => {
     res.status(200).json(orders);
   } catch (error) {
     console.error("Error in getPendingOrders:", error);
-    res.status(500).json({ message: "Lỗi lấy danh sách đơn hàng đang chờ", error: error.toString() });
+    res.status(500).json({ message: "Lỗi lấy thông tin đơn hàng", error: error.toString() });
   }
 };
 
@@ -199,8 +199,8 @@ exports.getPendingOrders = async (req, res) => {
 // @access  Admin
 exports.getProcessingOrders = async (req, res) => {
   try {
-    // Simplified query - just get orders with status 'processing'
-    const orders = await Order.find({ status: 'processing' })
+    // Updated to get orders with status 'confirmed' or 'processing'
+    const orders = await Order.find({ status: { $in: ['confirmed', 'processing'] } })
       .populate('user', 'name email')
       .sort({ createdAt: -1 });
     
@@ -208,7 +208,7 @@ exports.getProcessingOrders = async (req, res) => {
     res.status(200).json(orders);
   } catch (error) {
     console.error("Error in getProcessingOrders:", error);
-    res.status(500).json({ message: "Lỗi lấy danh sách đơn hàng đang xử lý", error: error.toString() });
+    res.status(500).json({ message: "Lỗi lấy thông tin đơn hàng", error: error.toString() });
   }
 };
 
@@ -708,10 +708,34 @@ exports.deleteAttribute = async (req, res) => {
 // @access  Admin
 exports.getCustomers = async (req, res) => {
   try {
-    const customers = await User.find({ role: 'customer' }).select('-password');
-    res.status(200).json(customers);
+    // Find all users with role 'user' (excluding admins)
+    const customers = await User.find({ role: 'user' })
+      .select('-password')
+      .sort({ createdAt: -1 });
+    
+    // Enhance customer data with order information
+    const enhancedCustomers = await Promise.all(customers.map(async (customer) => {
+      // Get customer's orders
+      const orders = await Order.find({ user: customer._id });
+      
+      // Calculate total spent and return enhanced customer object
+      const totalSpent = orders.reduce((sum, order) => sum + order.totalPrice, 0);
+      
+      return {
+        ...customer.toJSON(),
+        orderCount: orders.length,
+        totalSpent: totalSpent,
+        lastOrderDate: orders.length > 0 ? 
+          orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0].createdAt : 
+          null
+      };
+    }));
+
+    console.log(`Found ${enhancedCustomers.length} customers`);
+    res.status(200).json(enhancedCustomers);
   } catch (error) {
-    res.status(500).json({ message: "Lỗi lấy danh sách khách hàng", error });
+    console.error("Error in getCustomers:", error);
+    res.status(500).json({ message: "Lỗi khi lấy danh sách khách hàng", error: error.toString() });
   }
 };
 
@@ -720,24 +744,30 @@ exports.getCustomers = async (req, res) => {
 // @access  Admin
 exports.getCustomerById = async (req, res) => {
   try {
-    const customer = await User.findOne({ _id: req.params.id, role: 'customer' })
-      .select('-password');
+    const customer = await User.findById(req.params.id).select('-password');
     
-    if (customer) {
-      // Get customer's orders
-      const orders = await Order.find({ user: req.params.id })
-        .sort({ createdAt: -1 })
-        .limit(10);
-      
-      res.status(200).json({
-        customer,
-        recentOrders: orders
-      });
-    } else {
-      res.status(404).json({ message: "Không tìm thấy khách hàng" });
+    if (!customer) {
+      return res.status(404).json({ message: "Không tìm thấy khách hàng" });
     }
+    
+    // Get customer's orders
+    const orders = await Order.find({ user: customer._id })
+      .sort({ createdAt: -1 });
+    
+    // Calculate total spent
+    const totalSpent = orders.reduce((sum, order) => sum + order.totalPrice, 0);
+    
+    const enhancedCustomer = {
+      ...customer.toJSON(),
+      orders,
+      orderCount: orders.length,
+      totalSpent
+    };
+    
+    res.status(200).json(enhancedCustomer);
   } catch (error) {
-    res.status(500).json({ message: "Lỗi lấy thông tin khách hàng", error });
+    console.error("Error in getCustomerById:", error);
+    res.status(500).json({ message: "Lỗi khi lấy thông tin khách hàng", error: error.toString() });
   }
 };
 

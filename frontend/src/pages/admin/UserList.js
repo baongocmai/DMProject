@@ -1,52 +1,68 @@
-import React, { useState, useEffect } from 'react';
-import { Table, Button, Modal, Form } from 'react-bootstrap';
+import React, { useState } from 'react';
+import { Table, Button, Modal, Form, Spinner, Alert } from 'react-bootstrap';
 import { FaEdit, FaTrash, FaUserPlus } from 'react-icons/fa';
-import AdminLayout from './AdminLayout';
+import AdminLayout from '../../components/admin/AdminLayout';
+import { useGetUsersQuery, useUpdateUserMutation, useDeleteUserMutation } from '../../services/api';
 import './UserList.css';
 
 const UserList = () => {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: users, isLoading, error, refetch } = useGetUsersQuery();
+  const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
+  const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
+  
   const [showModal, setShowModal] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
-
-  useEffect(() => {
-    // Fetch users from API
-    // This is a placeholder - replace with actual API call
-    setTimeout(() => {
-      setUsers([
-        { id: 1, name: 'John Doe', email: 'john@example.com', isAdmin: false, createdAt: '2023-05-15' },
-        { id: 2, name: 'Jane Smith', email: 'jane@example.com', isAdmin: false, createdAt: '2023-06-20' },
-        { id: 3, name: 'Admin User', email: 'admin@example.com', isAdmin: true, createdAt: '2023-04-10' },
-      ]);
-      setLoading(false);
-    }, 500);
-  }, []);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleEdit = (user) => {
-    setCurrentUser(user);
+    setCurrentUser({...user});
     setShowModal(true);
   };
 
-  const handleDelete = (userId) => {
+  const handleDelete = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
-      // Delete user API call would go here
-      setUsers(users.filter(user => user.id !== userId));
+      try {
+        await deleteUser(userId).unwrap();
+        setSuccessMessage('User deleted successfully');
+        // Success message will be cleared after 3 seconds
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } catch (err) {
+        console.error('Failed to delete user:', err);
+      }
     }
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    // Save user API call would go here
+    
+    try {
+      if (currentUser._id) {
+        // Update existing user
+        await updateUser({
+          id: currentUser._id,
+          userData: {
+            name: currentUser.name,
+            email: currentUser.email,
+            isAdmin: currentUser.isAdmin
+          }
+        }).unwrap();
+        setSuccessMessage('User updated successfully');
+      } else {
+        // Create new user - this would need a createUser mutation
+        // For simplicity, we'll just show a message
+        setSuccessMessage('This would create a new user in a real API');
+      }
+      
     setShowModal(false);
-    // Update UI optimistically
-    setUsers(users.map(user => 
-      user.id === currentUser.id ? currentUser : user
-    ));
+      // Success message will be cleared after 3 seconds
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (err) {
+      console.error('Failed to save user:', err);
+    }
   };
 
   const handleAddNew = () => {
-    setCurrentUser({ id: null, name: '', email: '', isAdmin: false });
+    setCurrentUser({ _id: null, name: '', email: '', isAdmin: false });
     setShowModal(true);
   };
 
@@ -56,12 +72,28 @@ const UserList = () => {
         <div className="user-list-header">
           <h1>Users Management</h1>
           <Button variant="primary" onClick={handleAddNew}>
-            <FaUserPlus /> Add New User
+            <FaUserPlus /> ADD NEW USER
           </Button>
         </div>
 
-        {loading ? (
-          <div className="text-center my-5">Loading users...</div>
+        {successMessage && (
+          <Alert variant="success" className="my-3" onClose={() => setSuccessMessage('')} dismissible>
+            {successMessage}
+          </Alert>
+        )}
+
+        {error && (
+          <Alert variant="danger" className="my-3">
+            Error loading users: {error.message}
+            <Button variant="link" onClick={refetch}>Try again</Button>
+          </Alert>
+        )}
+
+        {isLoading ? (
+          <div className="text-center my-5">
+            <Spinner animation="border" variant="primary" />
+            <p className="mt-2">Loading users...</p>
+          </div>
         ) : (
           <Table striped bordered hover responsive className="user-table">
             <thead>
@@ -75,18 +107,29 @@ const UserList = () => {
               </tr>
             </thead>
             <tbody>
-              {users.map(user => (
-                <tr key={user.id}>
-                  <td>{user.id}</td>
+              {users && users.map(user => (
+                <tr key={user._id}>
+                  <td>{user._id}</td>
                   <td>{user.name}</td>
                   <td>{user.email}</td>
                   <td>{user.isAdmin ? 'Yes' : 'No'}</td>
-                  <td>{user.createdAt}</td>
+                  <td>{new Date(user.createdAt).toLocaleDateString()}</td>
                   <td>
-                    <Button variant="info" size="sm" className="me-2" onClick={() => handleEdit(user)}>
+                    <Button 
+                      variant="info" 
+                      size="sm" 
+                      className="me-2" 
+                      onClick={() => handleEdit(user)}
+                      disabled={isUpdating || isDeleting}
+                    >
                       <FaEdit />
                     </Button>
-                    <Button variant="danger" size="sm" onClick={() => handleDelete(user.id)}>
+                    <Button 
+                      variant="danger" 
+                      size="sm" 
+                      onClick={() => handleDelete(user._id)}
+                      disabled={isUpdating || isDeleting}
+                    >
                       <FaTrash />
                     </Button>
                   </td>
@@ -98,7 +141,7 @@ const UserList = () => {
 
         <Modal show={showModal} onHide={() => setShowModal(false)}>
           <Modal.Header closeButton>
-            <Modal.Title>{currentUser?.id ? 'Edit User' : 'Add New User'}</Modal.Title>
+            <Modal.Title>{currentUser?._id ? 'Edit User' : 'Add New User'}</Modal.Title>
           </Modal.Header>
           <Form onSubmit={handleSave}>
             <Modal.Body>
@@ -128,13 +171,13 @@ const UserList = () => {
                   onChange={(e) => setCurrentUser({...currentUser, isAdmin: e.target.checked})}
                 />
               </Form.Group>
-              {!currentUser?.id && (
+              {!currentUser?._id && (
                 <Form.Group className="mb-3">
                   <Form.Label>Password</Form.Label>
                   <Form.Control 
                     type="password" 
                     onChange={(e) => setCurrentUser({...currentUser, password: e.target.value})}
-                    required={!currentUser?.id}
+                    required={!currentUser?._id}
                   />
                 </Form.Group>
               )}
@@ -143,7 +186,12 @@ const UserList = () => {
               <Button variant="secondary" onClick={() => setShowModal(false)}>
                 Cancel
               </Button>
-              <Button variant="primary" type="submit">
+              <Button 
+                variant="primary" 
+                type="submit"
+                disabled={isUpdating}
+              >
+                {isUpdating && <Spinner as="span" animation="border" size="sm" className="me-2" />}
                 Save
               </Button>
             </Modal.Footer>

@@ -46,6 +46,14 @@ import AdminRoute from './components/AdminRoute';
 import UnderConstructionPage from './pages/admin/UnderConstructionPage';
 import PendingOrders from './pages/admin/PendingOrders';
 import ProcessingOrders from './pages/admin/ProcessingOrders';
+import CustomerList from './pages/admin/CustomerList';
+import CustomerGroups from './pages/admin/CustomerGroups';
+import DiscountList from './pages/admin/DiscountList';
+import CouponList from './pages/admin/CouponList';
+import BannerList from './pages/admin/BannerList';
+import GeneralSettings from './pages/admin/GeneralSettings';
+import PaymentSettings from './pages/admin/PaymentSettings';
+import ShippingSettings from './pages/admin/ShippingSettings';
 
 function App() {
   return (
@@ -176,42 +184,42 @@ function App() {
         } />
         <Route path="/admin/customers" element={
           <AdminRoute>
-            <UnderConstructionPage />
+            <CustomerList />
           </AdminRoute>
         } />
         <Route path="/admin/customers/groups" element={
           <AdminRoute>
-            <UnderConstructionPage />
+            <CustomerGroups />
           </AdminRoute>
         } />
         <Route path="/admin/marketing/discounts" element={
           <AdminRoute>
-            <UnderConstructionPage />
+            <DiscountList />
           </AdminRoute>
         } />
         <Route path="/admin/marketing/coupons" element={
           <AdminRoute>
-            <UnderConstructionPage />
+            <CouponList />
           </AdminRoute>
         } />
         <Route path="/admin/marketing/banner" element={
           <AdminRoute>
-            <UnderConstructionPage />
+            <BannerList />
           </AdminRoute>
         } />
         <Route path="/admin/settings/general" element={
           <AdminRoute>
-            <UnderConstructionPage />
+            <GeneralSettings />
           </AdminRoute>
         } />
         <Route path="/admin/settings/payment" element={
           <AdminRoute>
-            <UnderConstructionPage />
+            <PaymentSettings />
           </AdminRoute>
         } />
         <Route path="/admin/settings/shipping" element={
           <AdminRoute>
-            <UnderConstructionPage />
+            <ShippingSettings />
           </AdminRoute>
         } />
         <Route path="/admin/stats" element={

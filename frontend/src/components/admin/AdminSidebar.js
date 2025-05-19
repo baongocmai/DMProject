@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Nav } from 'react-bootstrap';
 import { Link, useLocation } from 'react-router-dom';
 import { 
@@ -8,6 +8,7 @@ import {
 } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../redux/slices/authSlice';
+import { useGetPendingOrdersQuery, useGetProcessingOrdersQuery } from '../../services/api';
 import '../../styles/AdminTheme.css';
 import './AdminSidebar.css';
 
@@ -15,6 +16,24 @@ const AdminSidebar = () => {
   const location = useLocation();
   const dispatch = useDispatch();
   const { user } = useSelector(state => state.auth);
+  
+  // Fetch pending orders to display count
+  const { data: pendingOrders } = useGetPendingOrdersQuery(undefined, {
+    pollingInterval: 60000, // Poll every minute
+    refetchOnMountOrArgChange: true
+  });
+  
+  // Fetch processing orders to display count
+  const { data: processingOrders } = useGetProcessingOrdersQuery(undefined, {
+    pollingInterval: 60000, // Poll every minute
+    refetchOnMountOrArgChange: true
+  });
+  
+  // Calculate count of pending orders
+  const pendingOrderCount = pendingOrders?.length || 0;
+  
+  // Calculate count of processing orders
+  const processingOrderCount = processingOrders?.length || 0;
   
   const [expanded, setExpanded] = useState({
     products: false,
@@ -52,7 +71,7 @@ const AdminSidebar = () => {
       <div className="admin-sidebar-header">
         <div className="admin-logo-container">
           <FaStore className="admin-logo-icon" />
-          <h1 className="admin-logo-text">VietShop</h1>
+          <h1 className="admin-logo-text">2NADH</h1>
         </div>
       </div>
       
@@ -175,7 +194,11 @@ const AdminSidebar = () => {
             >
                 <span className="dropdown-bullet"></span>
                 Đơn hàng mới
-                <span className="admin-badge admin-badge-primary admin-notification-badge">5</span>
+                {pendingOrderCount > 0 && (
+                  <span className="admin-badge admin-badge-primary admin-notification-badge">
+                    {pendingOrderCount}
+                  </span>
+                )}
             </Link>
             <Link 
                 to="/admin/orders/processing" 
@@ -183,6 +206,11 @@ const AdminSidebar = () => {
             >
                 <span className="dropdown-bullet"></span>
                 Đang xử lý
+                {processingOrderCount > 0 && (
+                  <span className="admin-badge admin-badge-info admin-notification-badge">
+                    {processingOrderCount}
+                  </span>
+                )}
             </Link>
           </div>
         </Nav.Item>

@@ -3,7 +3,7 @@ import {
   mockDashboardStats, mockProductAnalytics, mockUserAnalytics, mockOrderAnalytics,
   mockCategories, mockAttributes, mockPendingOrders, mockProcessingOrders,
   mockCustomers, mockCustomerGroups, mockDiscounts, mockCoupons, mockBanners,
-  mockGeneralSettings, mockPaymentSettings, mockShippingSettings
+  mockGeneralSettings, mockPaymentSettings, mockShippingSettings, mockUsers
 } from './mockApiData';
 
 const baseQuery = fetchBaseQuery({
@@ -28,6 +28,49 @@ const baseQueryWithLogging = async (args, api, extraOptions) => {
         data: null,
         meta: { skipped: true }
       };
+    }
+  }
+  
+  // Check if we're in development and should use mock data
+  if (process.env.NODE_ENV === 'development' && process.env.REACT_APP_USE_MOCK_API === 'true') {
+    // Extract endpoint from args
+    const endpoint = typeof args === 'string' ? args : args.url;
+    
+    // Mock response based on endpoint
+    if (endpoint === '/dashboard/stats') {
+      return { data: mockDashboardStats };
+    } else if (endpoint === '/analytics/products') {
+      return { data: mockProductAnalytics };
+    } else if (endpoint === '/analytics/users') {
+      return { data: mockUserAnalytics };
+    } else if (endpoint === '/analytics/orders') {
+      return { data: mockOrderAnalytics };
+    } else if (endpoint === '/admin/categories') {
+      return { data: mockCategories };
+    } else if (endpoint === '/admin/attributes') {
+      return { data: mockAttributes };
+    } else if (endpoint === '/admin/orders/pending') {
+      return { data: mockPendingOrders };
+    } else if (endpoint === '/admin/orders/processing') {
+      return { data: mockProcessingOrders };
+    } else if (endpoint === '/admin/customers') {
+      return { data: mockCustomers };
+    } else if (endpoint === '/admin/customers/groups') {
+      return { data: mockCustomerGroups };
+    } else if (endpoint === '/admin/marketing/discounts') {
+      return { data: mockDiscounts };
+    } else if (endpoint === '/admin/marketing/coupons') {
+      return { data: mockCoupons };
+    } else if (endpoint === '/admin/marketing/banners') {
+      return { data: mockBanners };
+    } else if (endpoint === '/admin/settings/general') {
+      return { data: mockGeneralSettings };
+    } else if (endpoint === '/admin/settings/payment') {
+      return { data: mockPaymentSettings };
+    } else if (endpoint === '/admin/settings/shipping') {
+      return { data: mockShippingSettings };
+    } else if (endpoint === '/admin/users') {
+      return { data: mockUsers };
     }
   }
   

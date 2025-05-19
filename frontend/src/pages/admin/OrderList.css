@@ -5,15 +5,28 @@
 
 .order-list-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.date-filter-container {
+  width: 100%;
+  background-color: rgba(0, 123, 255, 0.05);
+  border-color: #dfe3e8;
+  border-radius: 8px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .filter-buttons {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 5px;
 }
 
 .order-table {
@@ -28,6 +41,7 @@
   background-color: #f8f9fa;
   color: #2c3e50;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .order-table td, .order-table th {
@@ -135,17 +149,14 @@ td .dropdown {
   animation: highlightAnimation 2s ease-in-out;
 }
 
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* Animation for refresh button */
+.spin-animation {
+  animation: spin 1s infinite linear;
 }
 
-.spin-animation {
-  animation: spin 1s linear infinite;
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* Màu nền nhẹ cho các trạng thái */

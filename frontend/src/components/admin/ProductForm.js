@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Button, Row, Col, Card, Alert } from 'react-bootstrap';
+import { Form, Button, Row, Col, Card, Alert, Nav } from 'react-bootstrap';
 import { useCreateProductMutation, useUpdateProductMutation } from '../../services/api';
 import './ProductForm.css';
 
@@ -21,6 +21,7 @@ const ProductForm = ({ product, onSuccess, mode = 'create' }) => {
   const [imageFile, setImageFile] = useState(null);
   const [errors, setErrors] = useState({});
   const [validated, setValidated] = useState(false);
+  const [imageInputType, setImageInputType] = useState('file'); // 'file' hoặc 'url'
   
   // Get API hooks
   const [createProduct, { isLoading: isCreating, isSuccess: isCreateSuccess }] = useCreateProductMutation();
@@ -49,6 +50,11 @@ const ProductForm = ({ product, onSuccess, mode = 'create' }) => {
       
       setFormData(productData);
       setImagePreview(product.image);
+      
+      // Nếu đã có URL ảnh, chuyển sang chế độ nhập URL
+      if (product.image && product.image.startsWith('http')) {
+        setImageInputType('url');
+      }
     }
   }, [product, mode]);
   
@@ -127,6 +133,23 @@ const ProductForm = ({ product, onSuccess, mode = 'create' }) => {
       });
     }
   };
+
+  // Xử lý khi nhập URL ảnh trực tiếp
+  const handleImageUrlChange = (e) => {
+    const imageUrl = e.target.value;
+    setFormData({
+      ...formData,
+      image: imageUrl
+    });
+    setImagePreview(imageUrl);
+  };
+  
+  // Xác nhận URL ảnh hợp lệ
+  const validateImageUrl = () => {
+    if (formData.image) {
+      setImagePreview(formData.image);
+    }
+  };
   
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -138,9 +161,10 @@ const ProductForm = ({ product, onSuccess, mode = 'create' }) => {
     
     try {
       // Upload ảnh nếu có
-      let imageUrl = "https://placehold.co/400x400?text=Product+Image";
+      let imageUrl = formData.image;
       
-      if (imageFile) {
+      // Chỉ upload file khi người dùng chọn chế độ tải file
+      if (imageInputType === 'file' && imageFile) {
         console.log("Uploading image to Cloudinary...");
         const formData = new FormData();
         formData.append('image', imageFile);
@@ -380,6 +404,27 @@ const ProductForm = ({ product, onSuccess, mode = 'create' }) => {
           <Col md={4}>
             <Form.Group className="mb-3">
               <Form.Label>Product Image*</Form.Label>
+              
+              {/* Thêm tab để chọn giữa tải ảnh và nhập URL */}
+              <Nav variant="tabs" className="mb-3">
+                <Nav.Item>
+                  <Nav.Link 
+                    active={imageInputType === 'file'} 
+                    onClick={() => setImageInputType('file')}
+                  >
+                    Upload File
+                  </Nav.Link>
+                </Nav.Item>
+                <Nav.Item>
+                  <Nav.Link 
+                    active={imageInputType === 'url'} 
+                    onClick={() => setImageInputType('url')}
+                  >
+                    Image URL
+                  </Nav.Link>
+                </Nav.Item>
+              </Nav>
+              
               <div className="image-upload-container">
                 {imagePreview ? (
                   <div className="image-preview">
@@ -403,7 +448,7 @@ const ProductForm = ({ product, onSuccess, mode = 'create' }) => {
                       Remove Image
                     </Button>
                   </div>
-                ) : (
+                ) : imageInputType === 'file' ? (
                   <div className="image-placeholder">
                     <input
                       type="file"
@@ -418,6 +463,24 @@ const ProductForm = ({ product, onSuccess, mode = 'create' }) => {
                       </div>
                       <span>Click to upload image</span>
                     </label>
+                  </div>
+                ) : (
+                  <div className="image-url-input">
+                    <Form.Control
+                      type="text"
+                      placeholder="Enter image URL"
+                      name="image"
+                      value={formData.image || ''}
+                      onChange={handleImageUrlChange}
+                      className="mb-2"
+                    />
+                    <Button 
+                      variant="outline-primary" 
+                      size="sm" 
+                      onClick={validateImageUrl}
+                    >
+                      Preview Image
+                    </Button>
                   </div>
                 )}
                 {errors.image && (

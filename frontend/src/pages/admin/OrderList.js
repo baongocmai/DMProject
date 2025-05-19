@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Badge, Spinner, Alert, Dropdown, Modal, Form } from 'react-bootstrap';
-import { FaEye, FaShippingFast, FaCheck, FaTimes, FaAngleDown, FaExclamationTriangle, FaSync } from 'react-icons/fa';
+import { Table, Button, Badge, Spinner, Alert, Dropdown, Modal, Form, Row, Col } from 'react-bootstrap';
+import { FaEye, FaShippingFast, FaCheck, FaTimes, FaAngleDown, FaExclamationTriangle, FaSync, FaCalendar, FaSearch } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { useGetAdminOrdersQuery, useUpdateOrderStatusMutation } from '../../services/api';
@@ -20,6 +20,11 @@ const OrderList = () => {
   const [updateOrderStatus, { isLoading: isUpdating }] = useUpdateOrderStatusMutation();
   const [statusFilter, setStatusFilter] = useState('all');
   const [orders, setOrders] = useState([]);
+  
+  // State cho bộ lọc thời gian
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [showDateFilter, setShowDateFilter] = useState(false);
   
   // State cho modal xác nhận thay đổi trạng thái
   const [showStatusModal, setShowStatusModal] = useState(false);
@@ -46,6 +51,22 @@ const OrderList = () => {
     if (!dateString) return 'N/A';
     const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
     return new Date(dateString).toLocaleDateString('vi-VN', options);
+  };
+
+  // Format date for input (YYYY-MM-DD)
+  const formatDateForInput = (date) => {
+    if (!date) return '';
+    const d = new Date(date);
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const day = d.getDate().toString().padStart(2, '0');
+    return `${d.getFullYear()}-${month}-${day}`;
+  };
+
+  // Parse date string to Date object, handling timezone
+  const parseDate = (dateString) => {
+    if (!dateString) return null;
+    const date = new Date(dateString);
+    return date;
   };
 
   // Định dạng tên hiển thị cho phương thức thanh toán
@@ -117,11 +138,47 @@ const OrderList = () => {
     return <Badge bg={variant}>{formattedStatus}</Badge>;
   };
 
-  // Filter orders based on status
+  // Filter orders based on status and date range
   const getFilteredOrders = () => {
     if (!orders || !orders.length) return [];
-    if (statusFilter === 'all') return orders;
-    return orders.filter(order => order.status?.toLowerCase() === statusFilter.toLowerCase());
+    
+    return orders.filter(order => {
+      // Filter by status
+      const statusMatch = statusFilter === 'all' || order.status?.toLowerCase() === statusFilter.toLowerCase();
+      
+      // Filter by date range
+      let dateMatch = true;
+      const orderDate = parseDate(order.createdAt || order.date);
+      
+      if (startDate && orderDate) {
+        const filterStartDate = new Date(startDate);
+        filterStartDate.setHours(0, 0, 0, 0); // Start of day
+        if (orderDate < filterStartDate) {
+          dateMatch = false;
+        }
+      }
+      
+      if (endDate && orderDate) {
+        const filterEndDate = new Date(endDate);
+        filterEndDate.setHours(23, 59, 59, 999); // End of day
+        if (orderDate > filterEndDate) {
+          dateMatch = false;
+        }
+      }
+      
+      return statusMatch && dateMatch;
+    });
+  };
+
+  // Toggle date filter visibility
+  const toggleDateFilter = () => {
+    setShowDateFilter(!showDateFilter);
+  };
+
+  // Reset date filters
+  const resetDateFilters = () => {
+    setStartDate('');
+    setEndDate('');
   };
 
   // Mở modal cập nhật trạng thái
@@ -231,6 +288,75 @@ const OrderList = () => {
             <FaSync className={isLoading ? "me-2 spin-animation" : "me-2"} /> 
             {isLoading ? "Đang làm mới..." : "Làm mới dữ liệu"}
           </Button>
+          
+          {/* Date filter toggle button */}
+          <Button 
+            variant={showDateFilter ? "primary" : "outline-primary"}
+            className="mb-3 ms-2 d-flex align-items-center"
+            onClick={toggleDateFilter}
+          >
+            <FaCalendar className="me-2" /> 
+            Lọc theo thời gian
+          </Button>
+          
+          {/* Date filter form */}
+          {showDateFilter && (
+            <div className="date-filter-container p-3 mb-3 border rounded">
+              <Row>
+                <Col md={5}>
+                  <Form.Group className="mb-2">
+                    <Form.Label>Từ ngày</Form.Label>
+                    <Form.Control
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={5}>
+                  <Form.Group className="mb-2">
+                    <Form.Label>Đến ngày</Form.Label>
+                    <Form.Control
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={2} className="d-flex align-items-end">
+                  <Button variant="outline-secondary" className="mb-2 me-2" onClick={resetDateFilters}>
+                    Xóa
+                  </Button>
+                  <Button variant="primary" className="mb-2" onClick={() => refetch()}>
+                    <FaSearch /> Lọc
+                  </Button>
+                </Col>
+              </Row>
+              
+              {startDate && endDate && (
+                <div className="mt-2">
+                  <Badge bg="info">
+                    Đang lọc: {startDate} đến {endDate}
+                  </Badge>
+                </div>
+              )}
+              {startDate && !endDate && (
+                <div className="mt-2">
+                  <Badge bg="info">
+                    Đang lọc: từ {startDate}
+                  </Badge>
+                </div>
+              )}
+              {!startDate && endDate && (
+                <div className="mt-2">
+                  <Badge bg="info">
+                    Đang lọc: đến {endDate}
+                  </Badge>
+                </div>
+              )}
+            </div>
+          )}
+          
           <div className="filter-buttons mb-3">
             <Button 
               variant={statusFilter === 'all' ? 'primary' : 'outline-primary'} 
@@ -376,7 +502,7 @@ const OrderList = () => {
                     <td className="order-actions">
                       <Link to={`/admin/orders/${orderId}`} className="btn btn-info btn-sm me-1">
                         <FaEye /> Chi tiết
-                      </Link>
+                    </Link>
                     </td>
                   </tr>
                 );

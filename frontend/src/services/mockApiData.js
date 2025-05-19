@@ -611,20 +611,20 @@ export const mockBanners = [
 
 // Mock data for settings
 export const mockGeneralSettings = {
-  siteName: 'VietShop',
+  siteName: '2NADH',
   siteDescription: 'Your one-stop shop for everything digital',
   logo: 'https://via.placeholder.com/200x50',
   favicon: 'https://via.placeholder.com/32x32',
-  email: 'contact@vietshop.com',
+  email: 'contact@2NADH.com',
   phone: '(+84) 28 1234 5678',
   address: '123 Nguyễn Huệ, Quận 1, TP.HCM',
   socialLinks: {
-    facebook: 'https://facebook.com/vietshop',
-    twitter: 'https://twitter.com/vietshop',
-    instagram: 'https://instagram.com/vietshop'
+    facebook: 'https://facebook.com/2NADH',
+    twitter: 'https://twitter.com/2NADH',
+    instagram: 'https://instagram.com/2NADH'
   },
   metaTags: {
-    title: 'VietShop - Premium Electronics Store',
+    title: '2NADH - Premium Electronics Store',
     description: 'Shop the latest electronics, gadgets, and tech accessories',
     keywords: 'electronics, gadgets, smartphones, laptops, Vietnam'
   },
@@ -718,3 +718,49 @@ export const mockShippingSettings = {
     }
   ]
 }; 
+
+// Mock data for users
+export const mockUsers = [
+  {
+    _id: '682156b9cd847bbb9bc14045',
+    name: 'Test User',
+    email: 'lethunhi125+0@gmail.com',
+    isAdmin: false,
+    createdAt: '2023-05-12T10:30:00Z'
+  },
+  {
+    _id: '68215b3dcfe6444b8a1c5b34',
+    name: 'Test User',
+    email: 'lethunhi125+1@gmail.com',
+    isAdmin: false,
+    createdAt: '2023-05-12T10:30:00Z'
+  },
+  {
+    _id: '68215c3ecfe6444b8a1c5b3c',
+    name: 'NHILE',
+    email: 'lethunhi125+2@gmail.com',
+    isAdmin: false,
+    createdAt: '2023-05-12T10:30:00Z'
+  },
+  {
+    _id: '6828f34cb7b205bbbe763bb4',
+    name: 'nh',
+    email: 'lethunhi125@gmail.com',
+    isAdmin: true,
+    createdAt: '2023-05-18T10:30:00Z'
+  },
+  {
+    _id: '682a1bb54c2af669da80dda1',
+    name: 'Bao Ngoc Mai',
+    email: 'maithibaongoc_t67@hus.edu.vn',
+    isAdmin: false,
+    createdAt: '2023-05-19T10:30:00Z'
+  },
+  {
+    _id: '682b1f1bced361ba2c839e93',
+    name: 'Hoang Minh Diep',
+    email: 'diep1422811@gmail.com',
+    isAdmin: false,
+    createdAt: '2023-05-19T10:30:00Z'
+  }
+]; 

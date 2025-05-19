@@ -87,10 +87,10 @@ router.delete("/products/:id", protect, isAdmin, deleteProduct);
 // @desc    Quản lý đơn hàng
 // @access  Admin
 router.get("/orders", protect, isAdmin, getOrders);
-router.get("/orders/:id", protect, isAdmin, getOrderById);
-router.put("/orders/:id", protect, isAdmin, updateOrderStatus);
 router.get("/orders/pending", protect, isAdmin, getPendingOrders);
 router.get("/orders/processing", protect, isAdmin, getProcessingOrders);
+router.get("/orders/:id", protect, isAdmin, getOrderById);
+router.put("/orders/:id", protect, isAdmin, updateOrderStatus);
 
 // @desc    Dashboard và báo cáo
 // @access  Admin
@@ -119,11 +119,11 @@ router.delete("/attributes/:id", protect, isAdmin, deleteAttribute);
 // @desc    Quản lý khách hàng
 // @access  Admin
 router.get("/customers", protect, isAdmin, getCustomers);
-router.get("/customers/:id", protect, isAdmin, getCustomerById);
 router.get("/customers/groups", protect, isAdmin, getCustomerGroups);
 router.post("/customers/groups", protect, isAdmin, createCustomerGroup);
 router.put("/customers/groups/:id", protect, isAdmin, updateCustomerGroup);
 router.delete("/customers/groups/:id", protect, isAdmin, deleteCustomerGroup);
+router.get("/customers/:id", protect, isAdmin, getCustomerById);
 
 // @desc    Quản lý marketing
 // @access  Admin
