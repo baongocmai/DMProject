@@ -7,8 +7,8 @@ if (!PORT) {
   process.exit(1);
 }
 
-app.get("/", (req, res) => res.send("Hello from test server"));
+app.get("/", (req, res) => res.send("Api is running"));
 
 app.listen(PORT, () => {
-  console.log(`Test server running on port ${PORT}`);
+  console.log(`Api running on port ${PORT}`);
 });

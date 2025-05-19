@@ -29,6 +29,28 @@ const HomePage = () => {
     category: categoryFilter || '',
     page: 1,
   });
+  document.addEventListener("DOMContentLoaded", function () {
+  const dropdowns = document.querySelectorAll(".categories-nav .dropdown");
+
+  dropdowns.forEach(function (dropdown) {
+    dropdown.addEventListener("mouseenter", function () {
+      const toggle = this.querySelector(".dropdown-toggle");
+      const menu = this.querySelector(".dropdown-menu");
+
+      toggle.classList.add("show");
+      menu.classList.add("show");
+    });
+
+    dropdown.addEventListener("mouseleave", function () {
+      const toggle = this.querySelector(".dropdown-toggle");
+      const menu = this.querySelector(".dropdown-menu");
+
+      toggle.classList.remove("show");
+      menu.classList.remove("show");
+    });
+  });
+});
+
 
   // Check if we need to open any drawers based on URL params
   useEffect(() => {
@@ -159,10 +181,13 @@ const HomePage = () => {
       
       <Container className="py-5">
         {/* Categories Section */}
-        <CategoryList />
-      
-        {/* Deal of the Day Section */}
-        <DealOfTheDay deal={dealOfDay} />
+        {!filters.keyword && !filters.category && (
+  <>
+    <CategoryList />
+    <DealOfTheDay deal={dealOfDay} />
+  </>
+)}
+
       
         {/* Search Results Header */}
         {(filters.keyword || filters.category) && (

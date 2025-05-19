@@ -29,24 +29,60 @@ const Header = () => {
   
   // Số lượng sản phẩm trong giỏ hàng từ Redux store
   const cartItemCount = cartItems.length;
+  document.addEventListener("DOMContentLoaded", function () {
+  const dropdowns = document.querySelectorAll(".categories-nav .dropdown");
+
+  dropdowns.forEach(function (dropdown) {
+    dropdown.addEventListener("mouseenter", function () {
+      const toggle = this.querySelector(".dropdown-toggle");
+      const menu = this.querySelector(".dropdown-menu");
+
+      toggle.classList.add("show");
+      menu.classList.add("show");
+    });
+
+    dropdown.addEventListener("mouseleave", function () {
+      const toggle = this.querySelector(".dropdown-toggle");
+      const menu = this.querySelector(".dropdown-menu");
+
+      toggle.classList.remove("show");
+      menu.classList.remove("show");
+    });
+  });
+});
+
   
   // Handle scroll event to add shadow to header on scroll
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 50) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
-    };
-    
-    window.addEventListener('scroll', handleScroll);
-    
-    // Cleanup
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
+  const dropdowns = document.querySelectorAll(".categories-nav .dropdown");
+
+  const handleMouseEnter = (e) => {
+    const toggle = e.currentTarget.querySelector(".dropdown-toggle");
+    const menu = e.currentTarget.querySelector(".dropdown-menu");
+    toggle?.classList.add("show");
+    menu?.classList.add("show");
+  };
+
+  const handleMouseLeave = (e) => {
+    const toggle = e.currentTarget.querySelector(".dropdown-toggle");
+    const menu = e.currentTarget.querySelector(".dropdown-menu");
+    toggle?.classList.remove("show");
+    menu?.classList.remove("show");
+  };
+
+  dropdowns.forEach((dropdown) => {
+    dropdown.addEventListener("mouseenter", handleMouseEnter);
+    dropdown.addEventListener("mouseleave", handleMouseLeave);
+  });
+
+  return () => {
+    dropdowns.forEach((dropdown) => {
+      dropdown.removeEventListener("mouseenter", handleMouseEnter);
+      dropdown.removeEventListener("mouseleave", handleMouseLeave);
+    });
+  };
+}, []);
+
   
   const logoutHandler = () => {
     dispatch(logout());
@@ -113,6 +149,7 @@ const Header = () => {
       </div>
     
       {/* Main Header with navigation */}
+      
       <Navbar 
         bg="white" 
         variant="light" 
@@ -185,7 +222,7 @@ const Header = () => {
               <InputGroup>
               <Form.Control
                 type="search"
-                  placeholder="Search for products, brands and more..."
+                  placeholder="Search here ..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                   className="search-input"
@@ -225,12 +262,14 @@ const Header = () => {
                 >
                 Beauty
                 </Nav.Link>
-              <NavDropdown title="More" id="more-dropdown">
-                <NavDropdown.Item as={Link} to="/category/books">Books</NavDropdown.Item>
-                <NavDropdown.Item as={Link} to="/category/sports">Sports</NavDropdown.Item>
-                <NavDropdown.Item as={Link} to="/category/toys">Toys & Games</NavDropdown.Item>
-                <NavDropdown.Item as={Link} to="/category/groceries">Groceries</NavDropdown.Item>
-              </NavDropdown>
+            
+                  <NavDropdown title="More" id="more-dropdown">
+                    <NavDropdown.Item as={Link} to="/category/books">Books</NavDropdown.Item>
+                    <NavDropdown.Item as={Link} to="/category/sports">Sports</NavDropdown.Item>
+                    <NavDropdown.Item as={Link} to="/category/toys">Toys & Games</NavDropdown.Item>
+                    <NavDropdown.Item as={Link} to="/category/groceries">Groceries</NavDropdown.Item>
+                  </NavDropdown>
+                
             </Nav>
             
             <Nav className="user-nav d-none d-lg-flex">
