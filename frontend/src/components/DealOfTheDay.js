@@ -82,11 +82,11 @@ const DealOfTheDay = ({ deal }) => {
   return (
     <div className="deals-section py-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="section-title">Deal of the Day</h2>
+        <h2 className="section-title">Deal hot hôm nay</h2>
         <div className="countdown-timer">
           <FaClock className="me-2" />
           <span className="countdown-text">
-            Ends in: {formatTimeUnit(timeLeft.hours)}:{formatTimeUnit(timeLeft.minutes)}:{formatTimeUnit(timeLeft.seconds)}
+            Kết thúc vào: {formatTimeUnit(timeLeft.hours)}:{formatTimeUnit(timeLeft.minutes)}:{formatTimeUnit(timeLeft.seconds)}
           </span>
         </div>
       </div>
@@ -112,7 +112,7 @@ const DealOfTheDay = ({ deal }) => {
           <Col md={7}>
             <Card.Body className="deal-content">
               <Badge bg="warning" text="dark" className="limited-offer-badge mb-3">
-                Limited Time Offer
+                Ưu đãi giới hạn
               </Badge>
               <h3 className="deal-title">{dealToShow.name}</h3>
               <p className="deal-description">{dealToShow.description}</p>
@@ -120,7 +120,7 @@ const DealOfTheDay = ({ deal }) => {
                 <span className="current-price">${dealToShow.price.toFixed(2)}</span>
                 <span className="original-price">${dealToShow.originalPrice.toFixed(2)}</span>
                 <span className="saving-amount">
-                  You save: ${(dealToShow.originalPrice - dealToShow.price).toFixed(2)}
+                  Tiết kiệm: ${(dealToShow.originalPrice - dealToShow.price).toFixed(2)}
                 </span>
               </div>
               <div className="deal-actions">
@@ -130,10 +130,10 @@ const DealOfTheDay = ({ deal }) => {
                   variant="primary" 
                   className="view-deal-btn"
                 >
-                  View Details
+                  Xem chi tiết
                 </Button>
                 <Button variant="success" className="add-cart-btn ms-3">
-                  <FaShoppingCart className="me-2" /> Add to Cart
+                  <FaShoppingCart className="me-2" /> Thêm vào giỏ hàng
                 </Button>
               </div>
             </Card.Body>

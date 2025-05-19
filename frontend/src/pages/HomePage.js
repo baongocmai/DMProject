@@ -116,25 +116,25 @@ const HomePage = () => {
       title: "Summer Collection",
       subtitle: "New arrivals for the season",
       description: "Discover our latest collection with up to 40% off selected items.",
-      buttonText: "Shop Now",
+      buttonText: "Mua sắm ngay",
       image: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=1200&auto=format&fit=crop",
       link: "/category/summer"
     },
     {
       id: 2,
       title: "Premium Electronics",
-      subtitle: "The latest technology",
-      description: "Explore cutting-edge gadgets and electronics at unbeatable prices.",
-      buttonText: "Discover More",
+      subtitle: "Công nghệ mới nhất",
+      description: "Khám phá các sản phẩm công nghệ mới nhất với giá cực kỳ ưu đãi.",
+      buttonText: "Khám phá thêm",
       image: "https://images.unsplash.com/photo-1468495244123-6c6c332eeece?q=80&w=1200&auto=format&fit=crop",
       link: "/category/electronics"
     },
     {
       id: 3,
       title: "Home Essentials",
-      subtitle: "Transform your space",
-      description: "Find everything you need to make your house feel like home.",
-      buttonText: "View Collection",
+      subtitle: "Thay đổi diện mạo không gian sống",
+      description: "Tìm kiếm những món đồ khiến ngôi nhà của bạn trở thành tổ ấm đích thực.",
+      buttonText: "Xem bộ sưu tập",
       image: "https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=1200&auto=format&fit=crop",
       link: "/category/home"
     }
@@ -202,8 +202,8 @@ const HomePage = () => {
         {/* Products Section */}
         <div className="products-section py-4">
           <div className="d-flex justify-content-between align-items-center mb-4">
-            <h2 className="section-title">Popular Products</h2>
-            <Button variant="outline-primary" href="/products" className="view-all-btn">View All</Button>
+            <h2 className="section-title">Các sản phẩm phổ biến</h2>
+            <Button variant="outline-primary" href="/products" className="view-all-btn">Xem thêm</Button>
           </div>
         
         <ApiErrorBoundary
@@ -214,7 +214,7 @@ const HomePage = () => {
           <>
             {productsError && (
               <Message variant="error">
-                Error loading products: {JSON.stringify(productsError)}
+                Lỗi tải dữ liệu sản phẩm: {JSON.stringify(productsError)}
               </Message>
             )}
             
@@ -227,7 +227,7 @@ const HomePage = () => {
               </Row>
             
             {displayProducts.length === 0 && (
-              <Message>No products found. Try different filters.</Message>
+              <Message>Không có sản phẩm phù hợp. Vui lòng thử thay đổi bộ lọc.</Message>
             )}
           </>
         </ApiErrorBoundary>
@@ -240,18 +240,18 @@ const HomePage = () => {
               <Col md={6} className="mb-4">
                 <div className="featured-card" style={{ backgroundImage: "linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=600&auto=format&fit=crop')" }}>
                   <div className="featured-content">
-                    <h3>New Arrivals</h3>
-                    <p>Check out our latest products</p>
-                    <Button variant="light" href="/new-arrivals">Shop Now</Button>
+                    <h3>Sản phẩm mới</h3>
+                    <p>Khám phá những sản phẩm mới nhất của chúng tôi</p>
+                    <Button variant="light" href="/new-arrivals">Mua sắm ngay</Button>
                   </div>
                 </div>
               </Col>
               <Col md={6} className="mb-4">
                 <div className="featured-card" style={{ backgroundImage: "linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=600&auto=format&fit=crop')" }}>
                   <div className="featured-content">
-                    <h3>Special Offers</h3>
-                    <p>Up to 50% off on selected items</p>
-                    <Button variant="light" href="/special-offers">View Offers</Button>
+                    <h3>Ưu đãi đặc biệt</h3>
+                    <p>Giảm giá lên đến 50% cho các mặt hàng được chọn</p>
+                    <Button variant="light" href="/special-offers">Xem ưu đãi</Button>
                   </div>
                 </div>
               </Col>
@@ -263,8 +263,8 @@ const HomePage = () => {
         {recommendedProducts.length > 0 && !filters.keyword && !filters.category && (
           <div className="recommendations-section py-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
-              <h2 className="section-title">Recommended For You</h2>
-              <Button variant="outline-primary" href="/recommendations" className="view-all-btn">View All</Button>
+              <h2 className="section-title">Gợi ý cho bạn</h2>
+              <Button variant="outline-primary" href="/recommendations" className="view-all-btn">Xem tất cả</Button>
             </div>
             <Row className="product-grid g-3">
               {recommendedProducts.slice(0, 5).map((product) => (
@@ -281,11 +281,11 @@ const HomePage = () => {
           <div className="newsletter-section py-5 my-5 text-center">
             <Row className="justify-content-center">
               <Col md={8} lg={6}>
-                <h3>Join Our Newsletter</h3>
-                <p className="mb-4">Subscribe to get special offers, free giveaways, and once-in-a-lifetime deals.</p>
+                <h3>Đăng ký hội viên</h3>
+                <p className="mb-4">Đăng ký để nhận ưu đãi đặc biệt, quà tặng miễn phí và các chương trình khuyến mãi có một không hai.</p>
                 <div className="d-flex">
-                  <input type="email" className="form-control me-2" placeholder="Your email address" />
-                  <Button variant="primary">Subscribe</Button>
+                  <input type="email" className="form-control me-2" placeholder="Địa chỉ email của bạn" />
+                  <Button variant="primary">Đăng ký</Button>
                 </div>
               </Col>
             </Row>

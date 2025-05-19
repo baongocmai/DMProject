@@ -143,10 +143,10 @@ const OrdersPage = () => {
       <Layout>
         <Container className="py-5">
           <div className="error-container">
-            <h2 className="error-title">Unable to Load Orders</h2>
-            <p className="error-message">There was a problem retrieving your order history. Please try again later.</p>
+            <h2 className="error-title">Không thể tải dữ liệu các đơn hàng</h2>
+            <p className="error-message">Đã xảy ra sự cố khi truy xuất lịch sử đơn hàng của bạn. Vui lòng thử lại sau.</p>
             <button className="btn btn-primary retry-btn" onClick={refetch}>
-              Try Again
+              Tải lại
             </button>
           </div>
         </Container>
@@ -163,25 +163,25 @@ const OrdersPage = () => {
       <Container className="py-4 orders-container">
         {/* Page Header */}
         <div className="page-header text-center">
-          <h1 className="orders-title">My Orders</h1>
-          <p className="orders-subtitle">View and track all your orders</p>
+          <h1 className="orders-title">Đơn hàng của tôi</h1>
+          <p className="orders-subtitle">Xem và kiểm tra đơn hàng của bạn</p>
           
           <div className="orders-stats">
             <div className="stat-item">
               <span className="stat-number">{orderStats.total}</span>
-              <span className="stat-label">Total</span>
+              <span className="stat-label">Tổng</span>
             </div>
             <div className="stat-item">
               <span className="stat-number">{orderStats.pending}</span>
-              <span className="stat-label">Pending</span>
+              <span className="stat-label">Chờ xử lý</span>
             </div>
             <div className="stat-item">
               <span className="stat-number">{orderStats.processing}</span>
-              <span className="stat-label">In Progress</span>
+              <span className="stat-label">Đang xử lý</span>
             </div>
             <div className="stat-item">
               <span className="stat-number">{orderStats.delivered}</span>
-              <span className="stat-label">Delivered</span>
+              <span className="stat-label">Đã giao</span>
             </div>
           </div>
         </div>
@@ -219,10 +219,10 @@ const OrdersPage = () => {
                           setCurrentPage(1);
                         }}
                       >
-                        <option value="newest">Newest First</option>
-                        <option value="oldest">Oldest First</option>
-                        <option value="highest">Price (High to Low)</option>
-                        <option value="lowest">Price (Low to High)</option>
+                        <option value="newest">Mới nhất</option>
+                        <option value="oldest">Cũ nhất</option>
+                        <option value="highest">Giá (Cao tới thấp)</option>
+                        <option value="lowest">Price (Thấp tới cao)</option>
                       </select>
                     </div>
                     
@@ -236,12 +236,13 @@ const OrdersPage = () => {
                           setCurrentPage(1);
                         }}
                       >
-                        <option value="all">All Orders</option>
-                        <option value="pending">Pending</option>
-                        <option value="processing">Processing</option>
-                        <option value="shipped">Shipped</option>
-                        <option value="delivered">Delivered</option>
-                        <option value="cancelled">Cancelled</option>
+                        <option value="all">Tất cả đơn hàng</option>
+                        <option value="pending">Chờ xử lý</option>
+                        <option value="processing">Đang xử lý</option>
+                        <option value="shipped">Đã gửi hàng</option>
+                        <option value="delivered">Đã giao</option>
+                        <option value="cancelled">Đã hủy</option>
+
                       </select>
                     </div>
                   </div>
@@ -255,7 +256,7 @@ const OrdersPage = () => {
         <div className="orders-list">
           {sortedOrders.length === 0 ? (
             <div className="text-center py-4">
-              <p>No orders match your search criteria.</p>
+              <p>Không tìm thấy đơn hàng phù hợp với tìm kiếm.</p>
             </div>
           ) : (
             currentOrders.map((order) => (
@@ -267,13 +268,13 @@ const OrdersPage = () => {
                     <Col>
                       <div className="order-id">
                         <FaIdCard size={16} className="me-2" />
-                        Order ID: <strong>{order._id || 'N/A'}</strong>
+                        ID đơn hàng: <strong>{order._id || 'N/A'}</strong>
                       </div>
                     </Col>
                     <Col className="text-md-center">
                       <div className="order-date">
                         <FaCalendarAlt size={16} className="me-2" />
-                        Date: <strong>{order.createdAt ? formatDate(order.createdAt) : 'N/A'}</strong>
+                        Thời gian: <strong>{order.createdAt ? formatDate(order.createdAt) : 'N/A'}</strong>
                       </div>
                     </Col>
                     <Col className="text-md-end">
@@ -290,7 +291,7 @@ const OrdersPage = () => {
                     <div className="order-items-container">
                       <div className="items-header">
                         <FaBox size={18} className="me-2" />
-                        <h6 className="items-title">Order Items</h6>
+                        <h6 className="items-title">Các sản phẩm</h6>
                         <div className="item-count-badge">
                           {(order.orderItems || []).reduce((sum, item) => sum + (item.quantity || 1), 0)}
                         </div>
@@ -321,7 +322,7 @@ const OrdersPage = () => {
                           ))}
                           {(order.orderItems || []).length > 3 && (
                             <li className="item-product">
-                              <span className="item-product-name">and {order.orderItems.length - 3} more item(s)...</span>
+                              <span className="item-product-name">và {order.orderItems.length - 3} xem thêm ...</span>
                             </li>
                           )}
                         </ul>
@@ -333,25 +334,25 @@ const OrdersPage = () => {
                           <div className="timeline-step-icon">
                             <FaShoppingBag size={12} />
                           </div>
-                          <div className="timeline-step-label">Order Placed</div>
+                          <div className="timeline-step-label">Đã đặt hàng</div>
                         </div>
                         <div className={`timeline-step ${getOrderStep(order.status) >= 2 ? 'timeline-step-active' : ''}`}>
                           <div className="timeline-step-icon">
                             <FaHourglassHalf size={12} />
                           </div>
-                          <div className="timeline-step-label">Processing</div>
+                          <div className="timeline-step-label">Đang xử lý</div>
                         </div>
                         <div className={`timeline-step ${getOrderStep(order.status) >= 3 ? 'timeline-step-active' : ''}`}>
                           <div className="timeline-step-icon">
                             <FaShippingFast size={12} />
                           </div>
-                          <div className="timeline-step-label">Shipped</div>
+                          <div className="timeline-step-label">Đã vận chuyển</div>
                         </div>
                         <div className={`timeline-step ${getOrderStep(order.status) >= 4 ? 'timeline-step-active' : ''}`}>
                           <div className="timeline-step-icon">
                             <FaCheckCircle size={12} />
                           </div>
-                          <div className="timeline-step-label">Delivered</div>
+                          <div className="timeline-step-label">Đã giao</div>
                         </div>
                       </div>
                     </div>
@@ -360,20 +361,20 @@ const OrdersPage = () => {
                     <div className="order-summary">
                       <div className="price-container">
                         <h5 className="order-price">{formatPrice(order.totalPrice || 0)}</h5>
-                        <div className="order-price-label">Total Amount</div>
+                        <div className="order-price-label">Tổng số tiền</div>
                       </div>
                       
                       <div className="summary-details">
                         <div className="summary-item">
-                          <span className="summary-item-label">Items Price</span>
+                          <span className="summary-item-label">Giá các sản phẩm</span>
                           <span className="summary-item-value">{formatPrice(order.itemsPrice || 0)}</span>
                         </div>
                         <div className="summary-item">
-                          <span className="summary-item-label">Shipping</span>
+                          <span className="summary-item-label">Đang vận chuyển</span>
                           <span className="summary-item-value">{formatPrice(order.shippingPrice || 0)}</span>
                         </div>
                         <div className="summary-item">
-                          <span className="summary-total-label">Total</span>
+                          <span className="summary-total-label">Tổng cộng</span>
                           <span className="summary-total-value">{formatPrice(order.totalPrice || 0)}</span>
                         </div>
                       </div>
@@ -383,13 +384,13 @@ const OrdersPage = () => {
                           to={`/order-status/${order._id || ''}`} 
                           className="btn btn-outline-primary view-details-btn"
                         >
-                          View Details
+                          Xem chi tiết
                         </Link>
                         
                         {order.status === 'delivered' && (
                           <button className="invoice-btn">
                             <FaFileInvoice className="invoice-icon" />
-                            Invoice
+                            Hóa đơn
                           </button>
                         )}
                       </div>

@@ -90,8 +90,8 @@ const AdminHeader = ({ toggleSidebar }) => {
                 
                 <Dropdown.Menu className="notification-dropdown-menu">
                   <div className="notification-header">
-                    <h6 className="mb-0">Notifications</h6>
-                    <small className="text-muted">3 New</small>
+                    <h6 className="mb-0">Thông báo</h6>
+                    <small className="text-muted">3 Mới</small>
                   </div>
                   
                   <Dropdown.Divider />
@@ -101,8 +101,8 @@ const AdminHeader = ({ toggleSidebar }) => {
                       <FaEnvelope />
                     </div>
                     <div className="notification-content">
-                      <p className="notification-text">New order #1234 received</p>
-                      <small className="notification-time">30 minutes ago</small>
+                      <p className="notification-text">Đơn hàng #1234 đã được nhận</p>
+                      <small className="notification-time">30 phút trước</small>
                     </div>
                   </Dropdown.Item>
                   
@@ -111,8 +111,8 @@ const AdminHeader = ({ toggleSidebar }) => {
                       <FaUser />
                     </div>
                     <div className="notification-content">
-                      <p className="notification-text">New user registered</p>
-                      <small className="notification-time">2 hours ago</small>
+                      <p className="notification-text">Người dùng mới</p>
+                      <small className="notification-time">2 giờ trước</small>
                     </div>
                   </Dropdown.Item>
                   
@@ -121,15 +121,15 @@ const AdminHeader = ({ toggleSidebar }) => {
                       <FaCog />
                     </div>
                     <div className="notification-content">
-                      <p className="notification-text">Product stock is low</p>
-                      <small className="notification-time">1 day ago</small>
+                      <p className="notification-text">Số lượng sản phẩm ít</p>
+                      <small className="notification-time">1 ngày trước</small>
                     </div>
                   </Dropdown.Item>
                   
                   <Dropdown.Divider />
                   
                   <Dropdown.Item as={Link} to="/admin/notifications" className="text-center view-all">
-                    View all notifications
+                    Xem thêm thông báo
                   </Dropdown.Item>
                 </Dropdown.Menu>
               </Dropdown>

@@ -46,7 +46,7 @@ const AccountDrawer = ({ isOpen, onClose }) => {
   const profileOptions = [
     {
       id: 'orders',
-      name: 'My Orders',
+      name: 'Đơn hàng của tôi',
       icon: <FaShoppingBag color="#D25B70" size={20} />,
       onClick: () => {
         navigate('/orders');
@@ -55,7 +55,7 @@ const AccountDrawer = ({ isOpen, onClose }) => {
     },
     {
       id: 'wishlist',
-      name: 'My Wishlist',
+      name: 'Yêu thích',
       icon: <FaHeart color="#D25B70" size={20} />,
       onClick: () => {
         navigate('/wishlist');
@@ -63,26 +63,8 @@ const AccountDrawer = ({ isOpen, onClose }) => {
       },
     },
     {
-      id: 'address',
-      name: 'Manage Address',
-      icon: <FaMapMarkerAlt color="#D25B70" size={20} />,
-      onClick: () => {
-        navigate('/profile/address');
-        onClose();
-      },
-    },
-    {
-      id: 'payment',
-      name: 'Payment Methods',
-      icon: <FaCreditCard color="#D25B70" size={20} />,
-      onClick: () => {
-        navigate('/payment');
-        onClose();
-      },
-    },
-    {
       id: 'notifications',
-      name: 'Notifications',
+      name: 'Thông báo',
       icon: <FaBell color="#D25B70" size={20} />,
       onClick: () => {
         navigate('/notifications');
@@ -91,7 +73,7 @@ const AccountDrawer = ({ isOpen, onClose }) => {
     },
     {
       id: 'offers',
-      name: 'Offers & Promotions',
+      name: 'Ưu đãi & Khuyến mãi',
       icon: <FaGift color="#D25B70" size={20} />,
       onClick: () => {
         navigate('/offers');
@@ -101,12 +83,12 @@ const AccountDrawer = ({ isOpen, onClose }) => {
   ];
 
   return (
-    <SlidingDrawer isOpen={isOpen} onClose={onClose} title="My Account" position="right">
+    <SlidingDrawer isOpen={isOpen} onClose={onClose} title="Tài khoản" position="right">
       {!isAuthenticated ? (
         <div className="account-drawer-login">
           <div className="account-drawer-login-message">
-            <h3>Welcome to our store!</h3>
-            <p>Please sign in to view your account details and orders.</p>
+            <h3>Chào mừng đến với siêu thị của chúng tôi!</h3>
+            <p>Vui lòng đăng nhập để xem thông tin tài khoản và đơn hàng của bạn.</p>
             <div className="account-drawer-buttons">
               <Button 
                 variant="primary" 
@@ -116,7 +98,7 @@ const AccountDrawer = ({ isOpen, onClose }) => {
                   onClose();
                 }}
               >
-                Sign In
+                Đăng nhập
               </Button>
               <Button 
                 variant="outline-secondary" 
@@ -126,7 +108,7 @@ const AccountDrawer = ({ isOpen, onClose }) => {
                   onClose();
                 }}
               >
-                Register
+                Đăng ký
               </Button>
             </div>
           </div>
@@ -134,16 +116,16 @@ const AccountDrawer = ({ isOpen, onClose }) => {
       ) : profileLoading ? (
         <div className="drawer-loading">
           <Spinner animation="border" variant="primary" />
-          <p>Loading your account...</p>
+          <p>Đang tải thông tin về tài khoản của bạn ...</p>
         </div>
       ) : profileError ? (
         <div className="drawer-error">
-          <p>Error loading your account information. Please try again.</p>
+          <p>Không thể tải thông tin về tài khoản của bạn. Vui lòng thử lại.</p>
           <Button 
             variant="outline-primary" 
             onClick={refetchProfile}
           >
-            Retry
+            Tải lại
           </Button>
         </div>
       ) : (
@@ -190,7 +172,7 @@ const AccountDrawer = ({ isOpen, onClose }) => {
               className="logout-btn"
               onClick={handleLogout}
             >
-              <FaSignOutAlt className="logout-icon" /> Log Out
+              <FaSignOutAlt className="logout-icon" /> Đăng xuất
             </Button>
           </div>
         </>

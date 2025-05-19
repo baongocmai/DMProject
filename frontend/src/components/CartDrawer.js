@@ -86,27 +86,27 @@ const CartDrawer = ({ isOpen, onClose }) => {
   };
 
   return (
-    <SlidingDrawer isOpen={isOpen} onClose={onClose} title="Your Cart" position="right">
+    <SlidingDrawer isOpen={isOpen} onClose={onClose} title="Giở hàng của bạn" position="right">
       {isLoading ? (
         <div className="drawer-loading">
           <Spinner animation="border" variant="primary" />
-          <p>Loading your cart...</p>
+          <p>Đang tải giỏ hàng ...</p>
         </div>
       ) : cartError ? (
         <div className="drawer-error">
-          <p>Error loading your cart. Please try again.</p>
+          <p>Lỗi khi tải giỏ hàng. Vui lòng thử lại.</p>
           <Button 
             variant="outline-primary" 
             onClick={refetch}
           >
-            Retry
+            Thử lại
           </Button>
         </div>
       ) : items.length === 0 ? (
         <div className="empty-cart">
           <div className="empty-cart-message">
-            <h3>Your cart is empty</h3>
-            <p>Looks like you haven't added anything to your cart yet.</p>
+            <h3>Giỏ hàng trống</h3>
+            <p>Có vẻ bạn chưa thêm sản phẩm nào vào giỏ hàng.</p>
             <Button 
               variant="primary" 
               onClick={() => {
@@ -114,7 +114,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
                 onClose();
               }}
             >
-              Continue Shopping
+              Tiếp tục mua sắm
             </Button>
           </div>
         </div>
@@ -186,17 +186,17 @@ const CartDrawer = ({ isOpen, onClose }) => {
           
           <div className="cart-drawer-summary">
             <div className="summary-item">
-              <span>Order Price</span>
+              <span>Giá sản phẩm</span>
               <span>{formatPrice(itemsPrice)}</span>
             </div>
             
             <div className="summary-item">
-              <span>Shipping Cost ({items.reduce((acc, item) => acc + item.quantity, 0)} items)</span>
+              <span>Phí giao hàng ({items.reduce((acc, item) => acc + item.quantity, 0)} items)</span>
               <span>{formatPrice(shippingPrice)}</span>
             </div>
             
             <div className="summary-item summary-total">
-              <span>Total:</span>
+              <span>Tổng cộng:</span>
               <span>{formatPrice(totalPrice)}</span>
             </div>
             
@@ -210,10 +210,10 @@ const CartDrawer = ({ isOpen, onClose }) => {
                 {isUpdating || isRemoving ? (
                   <>
                     <Spinner as="span" size="sm" animation="border" className="me-2" />
-                    Processing...
+                    Đang xử lý...
                   </>
                 ) : (
-                  'Checkout'
+                  'Thanh toán'
                 )}
               </Button>
               <Button 
@@ -225,7 +225,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
                 }}
                 disabled={isUpdating || isRemoving}
               >
-                Continue Shopping
+                Tiếp tục mua sắm
               </Button>
             </div>
           </div>

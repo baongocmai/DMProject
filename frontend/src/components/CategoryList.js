@@ -31,7 +31,7 @@ const CategoryList = () => {
 
   return (
     <div className="category-section py-4">
-      <h2 className="section-title mb-4">Shop by Category</h2>
+      <h2 className="section-title mb-4">Danh mục sản phẩm</h2>
       <Row className="g-2">
         {categories.map((category) => (
           <div key={category.id} className="col-5-products">

@@ -133,15 +133,13 @@ const Header = () => {
         <Container>
           <div className="topbar-content">
             <div className="topbar-promo">
-              <span>Free shipping on orders over $50</span>
+              <span>Miễn phí ship cho đơn hàng trên 300.000 VNĐ</span>
             </div>
             <div className="topbar-links">
-              <a href="/track-order">Track Order</a>
-              <a href="/help">Help & FAQs</a>
               {isAuthenticated ? (
-                <a href="#" onClick={openAccountDrawer} className="welcome-message">Welcome, {user?.name?.split(' ')[0] || 'User'}</a>
+                <a href="#" onClick={openAccountDrawer} className="welcome-message">Chào mừng, {user?.name?.split(' ')[0] || 'User'}</a>
               ) : (
-                <a href="#" onClick={openAccountDrawer}>Sign In / Register</a>
+                <a href="#" onClick={openAccountDrawer}>Đăng nhập / Đăng ký</a>
               )}
             </div>
           </div>
@@ -160,7 +158,7 @@ const Header = () => {
         <Container>
           <Navbar.Brand as={Link} to="/" className="brand">
             <span className="brand-name">2NADH</span>
-            <span className="brand-tagline">Premium Retail</span>
+            <span className="brand-tagline">Siêu thị bán lẻ</span>
           </Navbar.Brand>
           
           <div className="header-search-mobile d-lg-none">
@@ -222,7 +220,7 @@ const Header = () => {
               <InputGroup>
               <Form.Control
                 type="search"
-                  placeholder="Search here ..."
+                  placeholder="Tìm kiếm ..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                   className="search-input"
@@ -263,7 +261,7 @@ const Header = () => {
                 Beauty
                 </Nav.Link>
             
-                  <NavDropdown title="More" id="more-dropdown">
+                  <NavDropdown title="Xem thêm" id="more-dropdown">
                     <NavDropdown.Item as={Link} to="/category/books">Books</NavDropdown.Item>
                     <NavDropdown.Item as={Link} to="/category/sports">Sports</NavDropdown.Item>
                     <NavDropdown.Item as={Link} to="/category/toys">Toys & Games</NavDropdown.Item>
@@ -277,12 +275,12 @@ const Header = () => {
                 <>
                   <Nav.Link as={Link} to="/wishlist" className="icon-link">
                     <FaHeart />
-                    <span className="icon-text">Wishlist</span>
+                    <span className="icon-text">Yêu thích</span>
                   </Nav.Link>
                   
                   <Nav.Link as={Link} to="/notifications" className="icon-link">
                     <FaBell />
-                    <span className="icon-text">Notifications</span>
+                    <span className="icon-text">Thông báo</span>
                   </Nav.Link>
                   
                   <Nav.Link 
@@ -291,11 +289,11 @@ const Header = () => {
                     onClick={openAccountDrawer}
                   >
                     <FaUser className="user-icon" />
-                    <span className="icon-text">Account</span>
+                    <span className="icon-text">Tài khoản</span>
                   </Nav.Link>
                 </>
               ) : (
-                <Nav.Link href="#" className="signin-link" onClick={openAccountDrawer}>Sign In</Nav.Link>
+                <Nav.Link href="#" className="signin-link" onClick={openAccountDrawer}>Đăng nhập</Nav.Link>
               )}
               
               <Nav.Link 
@@ -304,7 +302,7 @@ const Header = () => {
                 onClick={openCartDrawer}
               >
                 <FaShoppingCart />
-                <span className="icon-text">Cart</span>
+                <span className="icon-text">Giỏ hàng</span>
                 {cartItemCount > 0 && (
                   <Badge pill bg="primary" className="cart-badge">
                     {cartItemCount}

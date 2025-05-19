@@ -26,21 +26,21 @@ const PaymentPage = () => {
   const paymentOptions = [
     { 
       id: 'bank', 
-      name: 'Bank Card', 
+      name: 'Thẻ ngân hàng', 
       icon: <FaUniversity size={24} />, 
       background: '#FABFB7',
       color: '#D25B70'
     },
     { 
       id: 'credit', 
-      name: 'Credit Card', 
+      name: 'Thẻ tín dụng', 
       icon: <FaCreditCard size={24} />, 
       background: '#FFE180',
       color: '#D0A137'
     },
     { 
       id: 'cash', 
-      name: 'Cash', 
+      name: 'Tiền mặt', 
       icon: <FaMoneyBillWave size={24} />, 
       background: '#D4F5E9',
       color: '#26A97A'
@@ -75,7 +75,7 @@ const PaymentPage = () => {
         </div>
         
         <div className="payment-content">
-          <h1 className="payment-title">Payment Methods</h1>
+          <h1 className="payment-title">Phương thức thanh toán</h1>
           
           <div className="payment-options-list">
             {paymentOptions.map((option) => (
@@ -100,7 +100,7 @@ const PaymentPage = () => {
             onClick={handleContinue}
             disabled={!paymentMethod}
           >
-            Continue
+            Tiếp tục
           </button>
         </div>
       </div>

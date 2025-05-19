@@ -49,24 +49,24 @@ const WishlistPage = () => {
   return (
     <Layout>
       <Container className="py-4">
-        <h1 className="mb-4">My Wishlist</h1>
+        <h1 className="mb-4">Danh sách yêu thích của tôi</h1>
         
         {isLoading ? (
           <Loader />
         ) : error ? (
           <Message variant="danger">
-            Error loading wishlist: {error.data?.message || error.error}
+            Lỗi khi tải danh sách yêu thích: {error.data?.message || error.error}
           </Message>
         ) : !wishlist || wishlist.length === 0 ? (
           <Alert variant="info">
-            <Alert.Heading>Your wishlist is empty</Alert.Heading>
+            <Alert.Heading>Danh sách trống</Alert.Heading>
             <p>
-              When you add items to your wishlist, they will appear here.
-              Start shopping and add your favorite products!
+              Khi bạn thêm sản phẩm vào danh sách yêu thích, chúng sẽ xuất hiện tại đây.
+              Hãy bắt đầu mua sắm và thêm những sản phẩm bạn yêu thích!
             </p>
             <div>
               <Button variant="primary" onClick={() => navigate('/')}>
-                Browse Products
+                Xem các sản phẩm
               </Button>
             </div>
           </Alert>
@@ -101,7 +101,7 @@ const WishlistPage = () => {
                         onClick={() => handleRemoveFromWishlist(item._id)}
                         disabled={isRemoving}
                       >
-                        <FaTrash /> REMOVE
+                        <FaTrash /> Xóa
                       </Button>
                       <Button
                         variant="primary"
@@ -109,7 +109,7 @@ const WishlistPage = () => {
                         onClick={() => handleAddToCart(item)}
                         disabled={isAddingToCart}
                       >
-                        <FaShoppingCart /> ADD TO CART
+                        <FaShoppingCart /> Thêm vào giỏ hàng
                       </Button>
                     </div>
                   </Card.Body>
