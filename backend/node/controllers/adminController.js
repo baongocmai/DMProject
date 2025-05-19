@@ -181,13 +181,16 @@ exports.getOrderById = async (req, res) => {
 // @access  Admin
 exports.getPendingOrders = async (req, res) => {
   try {
+    // Simplified query - just get orders with status 'pending'
     const orders = await Order.find({ status: 'pending' })
       .populate('user', 'name email')
       .sort({ createdAt: -1 });
     
+    console.log("Successfully retrieved pending orders:", orders.length);
     res.status(200).json(orders);
   } catch (error) {
-    res.status(500).json({ message: "Lỗi lấy danh sách đơn hàng đang chờ", error });
+    console.error("Error in getPendingOrders:", error);
+    res.status(500).json({ message: "Lỗi lấy danh sách đơn hàng đang chờ", error: error.toString() });
   }
 };
 
@@ -196,13 +199,16 @@ exports.getPendingOrders = async (req, res) => {
 // @access  Admin
 exports.getProcessingOrders = async (req, res) => {
   try {
+    // Simplified query - just get orders with status 'processing'
     const orders = await Order.find({ status: 'processing' })
       .populate('user', 'name email')
       .sort({ createdAt: -1 });
     
+    console.log("Successfully retrieved processing orders:", orders.length);
     res.status(200).json(orders);
   } catch (error) {
-    res.status(500).json({ message: "Lỗi lấy danh sách đơn hàng đang xử lý", error });
+    console.error("Error in getProcessingOrders:", error);
+    res.status(500).json({ message: "Lỗi lấy danh sách đơn hàng đang xử lý", error: error.toString() });
   }
 };
 
@@ -214,24 +220,62 @@ exports.updateOrderStatus = async (req, res) => {
     const order = await Order.findById(req.params.id);
 
     if (order) {
+      const oldStatus = order.status; // Lưu trạng thái cũ để log
       order.status = req.body.status || order.status;
       
-      if (req.body.status === 'delivered') {
-        order.isDelivered = true;
-        order.deliveredAt = Date.now();
+      // Cập nhật các trường liên quan dựa trên trạng thái mới
+      switch(req.body.status) {
+        case 'delivered':
+          order.isDelivered = true;
+          order.deliveredAt = Date.now();
+          break;
+        case 'paid':
+          order.isPaid = true;
+          order.paidAt = Date.now();
+          break;
+        case 'placed':
+        case 'confirmed':
+        case 'processing':
+          // Không cần thay đổi các trường khác
+          break;
+        case 'shipped':
+          // Không cần thay đổi các trường khác
+          break;
+        case 'cancelled':
+          // Có thể thêm logic để trả lại hàng tồn kho, hủy thanh toán, v.v.
+          break;
+        case 'pending':
+          // Đặt lại các trạng thái nếu cần
+          if (oldStatus === 'delivered' || oldStatus === 'cancelled') {
+            order.isDelivered = false;
+            order.deliveredAt = undefined;
+          }
+          if (oldStatus === 'paid') {
+            // Thận trọng khi đặt lại trạng thái thanh toán
+            // order.isPaid = false;
+            // order.paidAt = undefined;
+          }
+          break;
+        default:
+          break;
       }
       
-      if (req.body.status === 'paid') {
-        order.isPaid = true;
-        order.paidAt = Date.now();
+      // Lưu ghi chú nếu có
+      if (req.body.note) {
+        order.note = req.body.note;
       }
       
       const updatedOrder = await order.save();
+      
+      // Log thay đổi trạng thái
+      console.log(`Order ${order._id} status updated: ${oldStatus} -> ${updatedOrder.status}`);
+      
       res.status(200).json(updatedOrder);
     } else {
       res.status(404).json({ message: "Không tìm thấy đơn hàng" });
     }
   } catch (error) {
+    console.error("Error updating order status:", error);
     res.status(500).json({ message: "Lỗi cập nhật đơn hàng", error });
   }
 };

@@ -41,10 +41,14 @@ const ProductList = () => {
   
   // Mock categories for filtering
   const categories = [
-    { _id: 'electronics', name: 'Electronics' },
-    { _id: 'clothing', name: 'Clothing' },
-    { _id: 'books', name: 'Books' },
-    { _id: 'home', name: 'Home & Garden' }
+    { _id: 'milk', name: 'Sữa các loại' },
+    { _id: 'produce', name: 'Rau - Củ - Trái Cây' },
+    { _id: 'cleaning', name: 'Hóa Phẩm - Tẩy rửa' },
+    { _id: 'personal-care', name: 'Chăm Sóc Cá Nhân' },
+    { _id: 'office-toys', name: 'Văn phòng phẩm - Đồ chơi' },
+    { _id: 'candy', name: 'Bánh Kẹo' },
+    { _id: 'beverages', name: 'Đồ uống - Giải khát' },
+    { _id: 'instant-food', name: 'Mì - Thực Phẩm Ăn Liền' }
   ];
   
   // Query products with filters
@@ -135,6 +139,7 @@ const ProductList = () => {
   
   // Handle sort change
   const handleSort = (field) => {
+    console.log('Sorting by:', field);
     let direction = 'asc';
     
     if (sort.field === field) {
@@ -146,7 +151,10 @@ const ProductList = () => {
       direction
     });
     
-    refetchProducts();
+    // Delay refetch để đảm bảo state đã được cập nhật
+    setTimeout(() => {
+      refetchProducts();
+    }, 100);
   };
   
   // Get sort icon for table headers
@@ -210,6 +218,7 @@ const ProductList = () => {
   
   // Handle edit product
   const handleEditProduct = (product) => {
+    console.log('Editing product:', product);
     setEditingProduct(product);
     setShowProductForm(true);
   };
@@ -253,12 +262,12 @@ const ProductList = () => {
             alt={product.name}
             className="product-thumbnail"
             onError={(e) => {
-              e.target.src = '/images/placeholder.png';
+              e.target.src = 'https://placehold.co/100x100?text=No+Image';
             }}
           />
         ) : (
           <div className="no-image">
-        <FaImage />
+            <FaImage />
           </div>
         )}
       </div>
@@ -267,7 +276,7 @@ const ProductList = () => {
   
   // Render stock badge
   const renderStockBadge = (product) => {
-    if (!product.countInStock) {
+    if (product.countInStock === 0 || product.countInStock === null || product.countInStock === undefined) {
       return <Badge bg="danger">Out of Stock</Badge>;
     }
     
@@ -433,27 +442,47 @@ const ProductList = () => {
                 <thead>
                   <tr>
                         <th width="60"></th>
-                        <th className="sortable" onClick={() => handleSort('name')}>
+                        <th 
+                          className="sortable" 
+                          onClick={() => handleSort('name')}
+                          style={{ cursor: 'pointer' }}
+                        >
                           <div className="d-flex align-items-center">
-                        Product {getSortIcon('name')}
-                      </div>
-                    </th>
-                        <th className="sortable" onClick={() => handleSort('price')}>
+                            Product {getSortIcon('name')}
+                          </div>
+                        </th>
+                        <th 
+                          className="sortable" 
+                          onClick={() => handleSort('price')}
+                          style={{ cursor: 'pointer' }}
+                        >
                           <div className="d-flex align-items-center">
                             Price {getSortIcon('price')}
                           </div>
                         </th>
-                        <th className="sortable" onClick={() => handleSort('category')}>
+                        <th 
+                          className="sortable" 
+                          onClick={() => handleSort('category')}
+                          style={{ cursor: 'pointer' }}
+                        >
                           <div className="d-flex align-items-center">
-                        Category {getSortIcon('category')}
-                      </div>
-                    </th>
-                        <th className="sortable" onClick={() => handleSort('countInStock')}>
+                            Category {getSortIcon('category')}
+                          </div>
+                        </th>
+                        <th 
+                          className="sortable" 
+                          onClick={() => handleSort('countInStock')}
+                          style={{ cursor: 'pointer' }}
+                        >
                           <div className="d-flex align-items-center">
-                        Stock {getSortIcon('countInStock')}
-                      </div>
-                    </th>
-                        <th className="sortable" onClick={() => handleSort('createdAt')}>
+                            Stock {getSortIcon('countInStock')}
+                          </div>
+                        </th>
+                        <th 
+                          className="sortable" 
+                          onClick={() => handleSort('createdAt')}
+                          style={{ cursor: 'pointer' }}
+                        >
                           <div className="d-flex align-items-center">
                             Created {getSortIcon('createdAt')}
                           </div>
@@ -509,22 +538,28 @@ const ProductList = () => {
                       </td>
                       <td>
                               <div className="d-flex">
-                          <Button 
+                                <Button 
                                   size="sm"
-                            variant="outline-primary" 
+                                  variant="outline-primary" 
                                   className="me-2"
-                            onClick={() => handleEditProduct(product)}
-                          >
-                            <FaEdit />
-                          </Button>
-                          <Button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditProduct(product);
+                                  }}
+                                >
+                                  <FaEdit />
+                                </Button>
+                                <Button 
                                   size="sm"
-                            variant="outline-danger" 
-                            onClick={() => confirmDelete(product)}
-                          >
-                            <FaTrash />
-                          </Button>
-                        </div>
+                                  variant="outline-danger" 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    confirmDelete(product);
+                                  }}
+                                >
+                                  <FaTrash />
+                                </Button>
+                              </div>
                       </td>
                     </tr>
                         ))
@@ -559,15 +594,26 @@ const ProductList = () => {
       </div>
       
       {/* Product form modal */}
-      {showProductForm && (
-        <div className="product-form-modal">
+      <Modal
+        show={showProductForm}
+        onHide={() => setShowProductForm(false)}
+        size="lg"
+        aria-labelledby="product-form-modal"
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title id="product-form-modal">
+            {editingProduct ? 'Edit Product' : 'Add New Product'}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
           <ProductForm
             mode={editingProduct ? 'edit' : 'create'}
             product={editingProduct}
             onSuccess={handleFormSuccess}
           />
-        </div>
-      )}
+        </Modal.Body>
+      </Modal>
       
       {/* Delete confirmation modal */}
       <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>

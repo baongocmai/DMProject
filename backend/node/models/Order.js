@@ -24,8 +24,16 @@ const orderSchema = new mongoose.Schema(
       country: { type: String, required: true },
     },
     totalPrice: { type: Number, required: true },
+    status: {
+      type: String,
+      enum: ['pending', 'placed', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'paid'],
+      default: 'pending'
+    },
+    isPaid: { type: Boolean, default: false },
+    paidAt: { type: Date },
     isDelivered: { type: Boolean, default: false },
     deliveredAt: { type: Date },
+    note: { type: String }
   },
   { timestamps: true }
 );

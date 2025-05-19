@@ -59,6 +59,18 @@ const { protect, isAdmin } = require("../middlewares/authMiddleware");
 
 const router = express.Router();
 
+// Add a debug endpoint handler at the top of the file
+const debugDb = async (req, res) => {
+  try {
+    const Order = require('../models/Order');
+    const count = await Order.countDocuments();
+    res.status(200).json({ message: 'Database connection working', orderCount: count });
+  } catch (error) {
+    console.error('Debug endpoint error:', error);
+    res.status(500).json({ message: 'Database connection error', error: error.toString() });
+  }
+};
+
 // @desc    Quản lý người dùng
 // @access  Admin
 router.get("/users", protect, isAdmin, getUsers);
@@ -69,6 +81,7 @@ router.delete("/users/:id", protect, isAdmin, deleteUser);
 // @desc    Quản lý sản phẩm
 // @access  Admin
 router.get("/products", protect, isAdmin, getProducts);
+router.post("/products", protect, isAdmin, require("../controllers/productController").createProduct);
 router.delete("/products/:id", protect, isAdmin, deleteProduct);
 
 // @desc    Quản lý đơn hàng
@@ -135,5 +148,8 @@ router.get("/settings/payment", protect, isAdmin, getPaymentSettings);
 router.put("/settings/payment", protect, isAdmin, updatePaymentSettings);
 router.get("/settings/shipping", protect, isAdmin, getShippingSettings);
 router.put("/settings/shipping", protect, isAdmin, updateShippingSettings);
+
+// Add the debug route near the beginning of your routes
+router.get("/debug-db", debugDb);
 
 module.exports = router;

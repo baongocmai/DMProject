@@ -305,13 +305,54 @@ exports.updateOrderStatus = async (req, res) => {
       return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
     }
 
-    // Cập nhật trạng thái đơn hàng
-    if (status === 'delivered') {
-      order.isDelivered = true;
-      order.deliveredAt = Date.now();
+    const oldStatus = order.status; // Lưu trạng thái cũ để log
+    order.status = status || order.status;
+    
+    // Cập nhật các trường liên quan dựa trên trạng thái mới
+    switch(status) {
+      case 'delivered':
+        order.isDelivered = true;
+        order.deliveredAt = Date.now();
+        break;
+      case 'paid':
+        order.isPaid = true;
+        order.paidAt = Date.now();
+        break;
+      case 'processing':
+        // Không cần thay đổi các trường khác
+        break;
+      case 'shipped':
+        // Không cần thay đổi các trường khác
+        break;
+      case 'cancelled':
+        // Có thể thêm logic để trả lại hàng tồn kho, hủy thanh toán, v.v.
+        break;
+      case 'pending':
+        // Đặt lại các trạng thái nếu cần
+        if (oldStatus === 'delivered' || oldStatus === 'cancelled') {
+          order.isDelivered = false;
+          order.deliveredAt = undefined;
+        }
+        if (oldStatus === 'paid') {
+          // Thận trọng khi đặt lại trạng thái thanh toán
+          // order.isPaid = false;
+          // order.paidAt = undefined;
+        }
+        break;
+      default:
+        break;
+    }
+    
+    // Lưu ghi chú nếu có
+    if (req.body.note) {
+      order.note = req.body.note;
     }
 
     const updatedOrder = await order.save();
+    
+    // Log thay đổi trạng thái
+    console.log(`Order ${order._id} status updated: ${oldStatus} -> ${updatedOrder.status}`);
+    
     res.status(200).json(updatedOrder);
   } catch (error) {
     console.error("Error updating order status:", error);

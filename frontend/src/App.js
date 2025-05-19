@@ -40,8 +40,12 @@ import OrderList from './pages/admin/OrderList';
 import CategoryList from './pages/admin/CategoryList';
 import AdminStats from './pages/admin/AdminStats';
 import AdminProfile from './pages/admin/AdminProfile';
+import InventoryManagement from './pages/admin/InventoryManagement';
+import OrderDetail from './pages/admin/OrderDetail';
 import AdminRoute from './components/AdminRoute';
 import UnderConstructionPage from './pages/admin/UnderConstructionPage';
+import PendingOrders from './pages/admin/PendingOrders';
+import ProcessingOrders from './pages/admin/ProcessingOrders';
 
 function App() {
   return (
@@ -135,6 +139,11 @@ function App() {
             <CreateProductPage />
           </AdminRoute>
         } />
+        <Route path="/admin/products/inventory" element={
+          <AdminRoute>
+            <InventoryManagement />
+          </AdminRoute>
+        } />
         <Route path="/admin/users" element={
           <AdminRoute>
             <UserList />
@@ -145,24 +154,24 @@ function App() {
             <OrderList />
           </AdminRoute>
         } />
+        <Route path="/admin/orders/:id" element={
+          <AdminRoute>
+            <OrderDetail />
+          </AdminRoute>
+        } />
         <Route path="/admin/categories" element={
           <AdminRoute>
             <CategoryList />
           </AdminRoute>
         } />
-        <Route path="/admin/attributes" element={
-          <AdminRoute>
-            <UnderConstructionPage />
-          </AdminRoute>
-        } />
         <Route path="/admin/orders/pending" element={
           <AdminRoute>
-            <UnderConstructionPage />
+            <PendingOrders />
           </AdminRoute>
         } />
         <Route path="/admin/orders/processing" element={
           <AdminRoute>
-            <UnderConstructionPage />
+            <ProcessingOrders />
           </AdminRoute>
         } />
         <Route path="/admin/customers" element={

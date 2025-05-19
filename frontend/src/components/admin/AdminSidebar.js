@@ -142,16 +142,6 @@ const AdminSidebar = () => {
               <span className="admin-menu-text">Danh mục</span>
           </Link>
         </Nav.Item>
-        
-          <Nav.Item>
-            <Link 
-              to="/admin/attributes" 
-              className={`admin-menu-item ${isActive('/admin/attributes') ? 'active' : ''}`}
-            >
-              <FaTags className="admin-menu-icon" />
-              <span className="admin-menu-text">Thuộc tính</span>
-            </Link>
-          </Nav.Item>
         </div>
         
         <div className="admin-menu-section">

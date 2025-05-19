@@ -460,11 +460,62 @@ export const api = createApi({
     }),
     updateOrderStatus: builder.mutation({
       query: ({ id, status }) => ({
-        url: `/admin/orders/${id}/status`,
+        url: `/admin/orders/${id}`,
         method: 'PUT',
         body: { status },
       }),
-      invalidatesTags: ['Order'],
+      invalidatesTags: (result, error, { id }) => [
+        { type: 'Order', id },
+        'Order'
+      ],
+      async onQueryStarted({ id, status }, { dispatch, queryFulfilled, getState }) {
+        // 1. Cập nhật cache cho getAdminOrders
+        const patchResult1 = dispatch(
+          api.util.updateQueryData('getAdminOrders', undefined, (draft) => {
+            const orderToUpdate = draft?.find(order => 
+              (order._id === id || order.id === id)
+            );
+            if (orderToUpdate) {
+              console.log('Updating order in cache:', orderToUpdate);
+              orderToUpdate.status = status;
+            } else {
+              console.log('Order not found in cache:', id);
+            }
+          })
+        );
+
+        // 2. Cập nhật cache cho getOrderById nếu có
+        const patchResult2 = dispatch(
+          api.util.updateQueryData('getOrderById', id, (draft) => {
+            if (draft) {
+              console.log('Updating order detail in cache:', draft);
+              draft.status = status;
+              
+              // Cập nhật các trường khác liên quan
+              if (status === 'delivered') {
+                draft.isDelivered = true;
+                draft.deliveredAt = new Date().toISOString();
+              }
+              
+              if (status === 'paid') {
+                draft.isPaid = true;
+                draft.paidAt = new Date().toISOString();
+              }
+            }
+          })
+        );
+        
+        try {
+          // Chờ kết quả từ API
+          const { data } = await queryFulfilled;
+          console.log('Order status update successful:', data);
+        } catch (err) {
+          // Nếu API thất bại, undo lại các thay đổi cache
+          patchResult1.undo();
+          patchResult2.undo();
+          console.error('Failed to update order status, reverting cache:', err);
+        }
+      }
     }),
     
     // Admin Customer Management endpoints

@@ -455,3 +455,28 @@ exports.deleteProduct = async (req, res) => {
     });
   }
 };
+
+// Lấy số lượng sản phẩm theo danh mục
+exports.getProductCountsByCategory = async (req, res) => {
+  try {
+    // Aggregate products by category and count
+    const categoryCounts = await Product.aggregate([
+      { $group: { _id: "$category", count: { $sum: 1 } } },
+      { $project: { categoryId: "$_id", count: 1, _id: 0 } }
+    ]);
+    
+    console.log('Product counts by category:', categoryCounts);
+    
+    res.json({
+      success: true,
+      categoryCounts
+    });
+  } catch (error) {
+    console.error("Lỗi khi lấy số lượng sản phẩm theo danh mục:", error);
+    res.status(500).json({ 
+      message: "Lỗi khi lấy số lượng sản phẩm theo danh mục", 
+      error: error.message,
+      success: false
+    });
+  }
+};

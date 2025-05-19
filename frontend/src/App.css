@@ -17,12 +17,19 @@
   box-sizing: border-box;
 }
 
+html, body {
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden; /* Ngăn scroll ngang trên toàn trang */
+}
+
 body {
   font-family: 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--background-color);
   color: var(--text-color);
+  max-width: 100%; /* Đảm bảo không bị tràn container */
 }
 
 a {

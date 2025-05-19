@@ -2,6 +2,7 @@ const express = require("express");
 const connectDB = require("./config/db");
 const cors = require("cors");
 const setupSwagger = require("./swagger");
+const path = require("path");
 require("dotenv").config();
 
 const app = express();
@@ -19,6 +20,9 @@ connectDB();
 
 // Setup Swagger documentation
 setupSwagger(app);
+
+// Phục vụ file tĩnh từ thư mục uploads
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Log tất cả các requests để debug
 app.use((req, res, next) => {
@@ -53,6 +57,7 @@ const couponRoutes = require("./routes/couponRoutes");
 const newsletterRoutes = require("./routes/newsletterRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const metricsRoutes = require("./routes/metricsRoutes");
+const uploadRoutes = require('./routes/uploadRoutes');
 
 // Áp dụng routes
 app.use("/api/products", productRoutes);
@@ -66,6 +71,7 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/newsletter", newsletterRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/metrics", metricsRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Xử lý lỗi 404
 app.use((req, res) => {

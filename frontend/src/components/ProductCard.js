@@ -140,12 +140,6 @@ const ProductCard = ({ product, inWishlist = false }) => {
             {isAddingToCart ? '...' : <FaShoppingCart />}
           </Button>
         </div>
-        
-        {product.countInStock === 0 && (
-          <Badge bg="secondary" className="out-of-stock-badge mt-2">
-            Out of Stock
-          </Badge>
-        )}
       </Card.Body>
     </Card>
   );

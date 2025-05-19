@@ -28,10 +28,14 @@ const ProductForm = ({ product, onSuccess, mode = 'create' }) => {
   
   // Mock categories since the API endpoint is not available
   const categories = [
-    { _id: 'electronics', name: 'Electronics' },
-    { _id: 'clothing', name: 'Clothing' },
-    { _id: 'books', name: 'Books' },
-    { _id: 'home', name: 'Home & Garden' }
+    { _id: 'milk', name: 'Sữa các loại' },
+    { _id: 'produce', name: 'Rau - Củ - Trái Cây' },
+    { _id: 'cleaning', name: 'Hóa Phẩm - Tẩy rửa' },
+    { _id: 'personal-care', name: 'Chăm Sóc Cá Nhân' },
+    { _id: 'office-toys', name: 'Văn phòng phẩm - Đồ chơi' },
+    { _id: 'candy', name: 'Bánh Kẹo' },
+    { _id: 'beverages', name: 'Đồ uống - Giải khát' },
+    { _id: 'instant-food', name: 'Mì - Thực Phẩm Ăn Liền' }
   ];
   
   // Set initial form data if editing
@@ -132,25 +136,87 @@ const ProductForm = ({ product, onSuccess, mode = 'create' }) => {
       return;
     }
     
-    // Prepare form data
-    const productData = new FormData();
-    for (const key in formData) {
-      if (key !== 'image' || (key === 'image' && !imageFile)) {
-        productData.append(key, formData[key]);
-      }
-    }
-    
-    // Add image file if there's a new one
-    if (imageFile) {
-      productData.append('image', imageFile);
-    }
-    
     try {
-      if (mode === 'edit') {
-        await updateProduct({ id: product._id, productData }).unwrap();
-      } else {
-        await createProduct(productData).unwrap();
+      // Upload ảnh nếu có
+      let imageUrl = "https://placehold.co/400x400?text=Product+Image";
+      
+      if (imageFile) {
+        console.log("Uploading image to Cloudinary...");
+        const formData = new FormData();
+        formData.append('image', imageFile);
+        
+        try {
+          // Lấy token từ localStorage (tùy thuộc vào cách bạn lưu token)
+          const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+          
+          const uploadResponse = await fetch('/api/upload/image', {
+            method: 'POST',
+            body: formData,
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (!uploadResponse.ok) {
+            console.error("Upload failed with status:", uploadResponse.status);
+            // Sử dụng ảnh mặc định nếu upload thất bại
+            throw new Error(`Upload failed with status ${uploadResponse.status}`);
+          }
+          
+          const uploadResult = await uploadResponse.json();
+          console.log("Image upload result:", uploadResult);
+          
+          if (uploadResult.success) {
+            imageUrl = uploadResult.imageUrl;
+            console.log("Image uploaded successfully:", imageUrl);
+          }
+        } catch (uploadError) {
+          console.error("Image upload error:", uploadError);
+          // Tiếp tục với ảnh mặc định thay vì dừng luồng
+        }
       }
+      
+      // Chuẩn bị dữ liệu sản phẩm
+      const productData = {
+        name: formData.name,
+        price: Number(formData.price),
+        description: formData.description || "",
+        category: formData.category,
+        countInStock: Number(formData.countInStock),
+        brand: formData.brand || "",
+        isNew: formData.isNew || false,
+        isFeatured: formData.isFeatured || false,
+        image: imageUrl
+      };
+      
+      // Thêm salePrice nếu có
+      if (formData.salePrice) {
+        productData.salePrice = Number(formData.salePrice);
+      }
+      
+      console.log("Sending product data:", productData);
+      
+      let result;
+      if (mode === 'edit') {
+        result = await updateProduct({ 
+          id: product._id, 
+          productData 
+        }).unwrap();
+      } else {
+        result = await createProduct(productData).unwrap();
+      }
+      
+      console.log("Product saved successfully:", result);
+      
+      // Reset form if creating product
+      if (mode === 'create') {
+        resetForm();
+      }
+      
+      if (onSuccess) {
+        onSuccess();
+      }
+      
     } catch (error) {
       console.error('Failed to save product:', error);
       setErrors({ submit: error.data?.message || 'Failed to save product' });
@@ -158,244 +224,239 @@ const ProductForm = ({ product, onSuccess, mode = 'create' }) => {
   };
   
   return (
-    <Card className="product-form-card">
-      <Card.Header>
-        <h5 className="mb-0">{mode === 'edit' ? 'Edit Product' : 'Add New Product'}</h5>
-      </Card.Header>
-      <Card.Body>
-        {errors.submit && <Alert variant="danger">{errors.submit}</Alert>}
-        
-        <Form noValidate validated={validated} onSubmit={handleSubmit}>
-          <Row>
-            <Col md={8}>
-              <Form.Group className="mb-3">
-                <Form.Label>Product Name*</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  isInvalid={!!errors.name}
-                  required
-                />
-                <Form.Control.Feedback type="invalid">
-                  {errors.name}
-                </Form.Control.Feedback>
-              </Form.Group>
-              
-              <Row>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Price*</Form.Label>
-                    <Form.Control
-                      type="number"
-                      name="price"
-                      value={formData.price}
-                      onChange={handleChange}
-                      min="0.01"
-                      step="0.01"
-                      isInvalid={!!errors.price}
-                      required
-                    />
-                    <Form.Control.Feedback type="invalid">
-                      {errors.price}
-                    </Form.Control.Feedback>
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Sale Price</Form.Label>
-                    <Form.Control
-                      type="number"
-                      name="salePrice"
-                      value={formData.salePrice}
-                      onChange={handleChange}
-                      min="0.01"
-                      step="0.01"
-                      isInvalid={!!errors.salePrice}
-                    />
-                    <Form.Control.Feedback type="invalid">
-                      {errors.salePrice}
-                    </Form.Control.Feedback>
-                  </Form.Group>
-                </Col>
-              </Row>
-              
-              <Row>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Category*</Form.Label>
-                    <Form.Select
-                      name="category"
-                      value={formData.category}
-                      onChange={handleChange}
-                      isInvalid={!!errors.category}
-                      required
-                    >
-                      <option value="">Select a category</option>
-                      {categories.map((category) => (
-                        <option key={category._id} value={category._id}>
-                          {category.name}
-                        </option>
-                      ))}
-                    </Form.Select>
-                    <Form.Control.Feedback type="invalid">
-                      {errors.category}
-                    </Form.Control.Feedback>
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Brand</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="brand"
-                      value={formData.brand}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-              
-              <Form.Group className="mb-3">
-                <Form.Label>Description</Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={3}
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-              
-              <Row>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Count in Stock*</Form.Label>
-                    <Form.Control
-                      type="number"
-                      name="countInStock"
-                      value={formData.countInStock}
-                      onChange={handleChange}
-                      min="0"
-                      step="1"
-                      isInvalid={!!errors.countInStock}
-                      required
-                    />
-                    <Form.Control.Feedback type="invalid">
-                      {errors.countInStock}
-                    </Form.Control.Feedback>
-                  </Form.Group>
-                </Col>
-              </Row>
-              
-              <Form.Group className="mb-3">
-                <Row>
-                  <Col xs={6}>
-                    <Form.Check
-                      type="checkbox"
-                      id="isNewCheck"
-                      name="isNew"
-                      checked={formData.isNew}
-                      onChange={handleChange}
-                      label="Mark as New"
-                    />
-                  </Col>
-                  <Col xs={6}>
-                    <Form.Check
-                      type="checkbox"
-                      id="isFeaturedCheck"
-                      name="isFeatured"
-                      checked={formData.isFeatured}
-                      onChange={handleChange}
-                      label="Featured Product"
-                    />
-                  </Col>
-                </Row>
-              </Form.Group>
-            </Col>
+    <div className="product-form-wrapper">
+      {errors.submit && <Alert variant="danger">{errors.submit}</Alert>}
+      
+      <Form noValidate validated={validated} onSubmit={handleSubmit}>
+        <Row>
+          <Col md={8}>
+            <Form.Group className="mb-3">
+              <Form.Label>Product Name*</Form.Label>
+              <Form.Control
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                isInvalid={!!errors.name}
+                required
+              />
+              <Form.Control.Feedback type="invalid">
+                {errors.name}
+              </Form.Control.Feedback>
+            </Form.Group>
             
-            <Col md={4}>
-              <Form.Group className="mb-3">
-                <Form.Label>Product Image*</Form.Label>
-                <div className="image-upload-container">
-                  {imagePreview ? (
-                    <div className="image-preview">
-                      <img
-                        src={imagePreview}
-                        alt="Product preview"
-                        className="img-fluid mb-2"
-                      />
-                      <Button
-                        variant="outline-secondary"
-                        size="sm"
-                        onClick={() => {
-                          setImagePreview(null);
-                          setImageFile(null);
-                          setFormData({
-                            ...formData,
-                            image: ''
-                          });
-                        }}
-                      >
-                        Remove Image
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="image-placeholder">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageChange}
-                        className="d-none"
-                        id="image-upload"
-                      />
-                      <label htmlFor="image-upload" className="upload-label">
-                        <div className="upload-icon">
-                          <i className="bi bi-cloud-arrow-up"></i>
-                        </div>
-                        <span>Click to upload image</span>
-                      </label>
-                    </div>
-                  )}
-                  {errors.image && (
-                    <div className="text-danger mt-2 small">
-                      {errors.image}
-                    </div>
-                  )}
-                </div>
-              </Form.Group>
-            </Col>
-          </Row>
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Price*</Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="price"
+                    value={formData.price}
+                    onChange={handleChange}
+                    min="0.01"
+                    step="0.01"
+                    isInvalid={!!errors.price}
+                    required
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    {errors.price}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Sale Price</Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="salePrice"
+                    value={formData.salePrice}
+                    onChange={handleChange}
+                    min="0.01"
+                    step="0.01"
+                    isInvalid={!!errors.salePrice}
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    {errors.salePrice}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
+            
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Category*</Form.Label>
+                  <Form.Select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    isInvalid={!!errors.category}
+                    required
+                  >
+                    <option value="">Select a category</option>
+                    {categories.map((category) => (
+                      <option key={category._id} value={category._id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">
+                    {errors.category}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Brand</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="brand"
+                    value={formData.brand}
+                    onChange={handleChange}
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+            
+            <Form.Group className="mb-3">
+              <Form.Label>Description</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+              />
+            </Form.Group>
+            
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Count in Stock*</Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="countInStock"
+                    value={formData.countInStock}
+                    onChange={handleChange}
+                    min="0"
+                    step="1"
+                    isInvalid={!!errors.countInStock}
+                    required
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    {errors.countInStock}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
+            
+            <Form.Group className="mb-3">
+              <Row>
+                <Col xs={6}>
+                  <Form.Check
+                    type="checkbox"
+                    id="isNewCheck"
+                    name="isNew"
+                    checked={formData.isNew}
+                    onChange={handleChange}
+                    label="Mark as New"
+                  />
+                </Col>
+                <Col xs={6}>
+                  <Form.Check
+                    type="checkbox"
+                    id="isFeaturedCheck"
+                    name="isFeatured"
+                    checked={formData.isFeatured}
+                    onChange={handleChange}
+                    label="Featured Product"
+                  />
+                </Col>
+              </Row>
+            </Form.Group>
+          </Col>
           
-          <div className="d-flex justify-content-end mt-3">
-            <Button
-              variant="secondary"
-              className="me-2"
-              onClick={() => {
-                if (onSuccess) onSuccess();
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={isCreating || isUpdating}
-            >
-              {isCreating || isUpdating ? (
-                <>
-                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  Saving...
-                </>
-              ) : (
-                mode === 'edit' ? 'Update Product' : 'Create Product'
-              )}
-            </Button>
-          </div>
-        </Form>
-      </Card.Body>
-    </Card>
+          <Col md={4}>
+            <Form.Group className="mb-3">
+              <Form.Label>Product Image*</Form.Label>
+              <div className="image-upload-container">
+                {imagePreview ? (
+                  <div className="image-preview">
+                    <img
+                      src={imagePreview}
+                      alt="Product preview"
+                      className="img-fluid mb-2"
+                    />
+                    <Button
+                      variant="outline-secondary"
+                      size="sm"
+                      onClick={() => {
+                        setImagePreview(null);
+                        setImageFile(null);
+                        setFormData({
+                          ...formData,
+                          image: ''
+                        });
+                      }}
+                    >
+                      Remove Image
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="image-placeholder">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="d-none"
+                      id="image-upload"
+                    />
+                    <label htmlFor="image-upload" className="upload-label">
+                      <div className="upload-icon">
+                        <i className="bi bi-cloud-arrow-up"></i>
+                      </div>
+                      <span>Click to upload image</span>
+                    </label>
+                  </div>
+                )}
+                {errors.image && (
+                  <div className="text-danger mt-2 small">
+                    {errors.image}
+                  </div>
+                )}
+              </div>
+            </Form.Group>
+          </Col>
+        </Row>
+        
+        <div className="d-flex justify-content-end mt-4">
+          <Button
+            variant="secondary"
+            className="me-2"
+            onClick={() => {
+              if (onSuccess) onSuccess();
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={isCreating || isUpdating}
+          >
+            {isCreating || isUpdating ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Saving...
+              </>
+            ) : (
+              mode === 'edit' ? 'Update Product' : 'Create Product'
+            )}
+          </Button>
+        </div>
+      </Form>
+    </div>
   );
 };
 

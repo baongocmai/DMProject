@@ -147,7 +147,7 @@ const OrderManagement = () => {
     
     switch (activeTab) {
       case 'pending':
-        return orders.filter(order => order.status === 'placed');
+        return orders.filter(order => ['pending', 'placed'].includes(order.status));
       case 'processing':
         return orders.filter(order => ['confirmed', 'processing'].includes(order.status));
       case 'shipping':

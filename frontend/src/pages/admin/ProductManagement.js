@@ -48,10 +48,14 @@ const ProductManagement = () => {
   
   // Sample categories data (replace with actual API data)
   const categories = [
-    { _id: 'electronics', name: 'Điện tử' },
-    { _id: 'clothing', name: 'Thời trang' },
-    { _id: 'food', name: 'Thực phẩm' },
-    { _id: 'furniture', name: 'Nội thất' }
+    { _id: 'milk', name: 'Sữa các loại' },
+    { _id: 'produce', name: 'Rau - Củ - Trái Cây' },
+    { _id: 'cleaning', name: 'Hóa Phẩm - Tẩy rửa' },
+    { _id: 'personal-care', name: 'Chăm Sóc Cá Nhân' },
+    { _id: 'office-toys', name: 'Văn phòng phẩm - Đồ chơi' },
+    { _id: 'candy', name: 'Bánh Kẹo' },
+    { _id: 'beverages', name: 'Đồ uống - Giải khát' },
+    { _id: 'instant-food', name: 'Mì - Thực Phẩm Ăn Liền' }
   ];
   
   // Sample status options
@@ -287,7 +291,7 @@ const ProductManagement = () => {
   
   // Determine stock status class
   const getStockStatusClass = (stock) => {
-    if (stock <= 0) return 'text-danger';
+    if (stock === 0 || stock === null || stock === undefined) return 'text-danger';
     if (stock <= 10) return 'text-warning';
     return 'text-success';
   };
@@ -554,7 +558,7 @@ const ProductManagement = () => {
                             {product.stock <= 10 && product.stock > 0 && (
                               <FaExclamationTriangle className="ms-2" />
                             )}
-                            {product.stock <= 0 && (
+                            {(product.stock === 0 || product.stock === null || product.stock === undefined) && (
                               <Badge bg="danger" className="ms-2">Hết hàng</Badge>
                             )}
                           </span>
