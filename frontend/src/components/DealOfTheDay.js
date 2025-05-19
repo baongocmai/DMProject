@@ -86,7 +86,7 @@ const DealOfTheDay = ({ deal }) => {
         <div className="countdown-timer">
           <FaClock className="me-2" />
           <span className="countdown-text">
-            Kết thúc vào: {formatTimeUnit(timeLeft.hours)}:{formatTimeUnit(timeLeft.minutes)}:{formatTimeUnit(timeLeft.seconds)}
+            Kết thúc trong: {formatTimeUnit(timeLeft.hours)}:{formatTimeUnit(timeLeft.minutes)}:{formatTimeUnit(timeLeft.seconds)}
           </span>
         </div>
       </div>
