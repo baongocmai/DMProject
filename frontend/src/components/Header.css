@@ -56,18 +56,17 @@
   flex-direction: column;
   line-height: 1;
 }
-
 .brand-name {
-  font-size: 24px;
+  font-size: 40px;
   font-weight: 700;
   color: var(--primary-color);
 }
 
 .brand-tagline {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 3px;
   color: #666;
 }
 
@@ -79,10 +78,12 @@
 
 .search-input {
   border-radius: 4px 0 0 4px;
-  height: 42px;
+  height: 50px;
+  font-size: 14;
   border: 1px solid #e0e0e0;
   padding-left: 15px;
   transition: border-color 0.3s ease;
+  letter-spacing: 2px;
 }
 
 .search-input:focus {
@@ -107,7 +108,7 @@
   font-weight: 500;
 }
 
-.categories-nav .nav-link {
+.categories-nav .nav-link, .dropdown-toggle {
   color: #333;
   padding: 8px 15px;
   position: relative;
@@ -151,6 +152,50 @@
 .dropdown-item:hover, .dropdown-item:focus {
   background-color: rgba(178, 63, 86, 0.1);
   color: var(--primary-color);
+}
+.categories-nav .dropdown-toggle {
+  font-weight: 500;
+  font-size: 1rem;
+  padding: 8px 15px;
+  color: #333;
+  background-color: transparent !important;
+  border: none;
+}
+
+.categories-nav .dropdown-toggle:hover,
+.categories-nav .dropdown-toggle:focus {
+  color: var(--primary-color);
+  box-shadow: none;
+}
+/* Hover vào .dropdown thì hiện .dropdown-menu */
+.categories-nav .dropdown:hover > .dropdown-menu {
+  display: block;
+  margin-top: 0;
+}
+
+/* Đảm bảo dropdown-menu không bị ẩn */
+.categories-nav .dropdown-menu {
+  display: none; /* Mặc định ẩn */
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1000;
+}
+.dropdown-menu {
+  display: block;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1000;
+}
+
+
+.dropdown-menu.show {
+  visibility: visible;
+  opacity: 1;
 }
 
 /* User Navigation */
