@@ -139,7 +139,7 @@ exports.getStats = async (req, res) => {
     
     // Đếm sản phẩm sắp hết hàng
     const lowStockProducts = await Product.countDocuments({
-      countInStock: { $lte: 10, $gt: 0 }
+      stock: { $lte: 10, $gt: 0 }
     });
 
     res.json({
@@ -327,12 +327,9 @@ exports.getInventoryStats = async (req, res) => {
     const { lowStockThreshold = 5 } = req.query;
     
     // Sản phẩm sắp hết hàng
-    const lowStockProducts = await Product.find({ 
-      stock: { $lte: Number(lowStockThreshold), $gt: 0 }
-    })
-    .select('name price stock category image')
-    .sort({ stock: 1 })
-    .limit(20);
+    const lowStockProducts = await Product.find({
+      stock: { $lte: 10, $gt: 0 }
+    }).limit(5);
     
     // Sản phẩm hết hàng
     const outOfStockProducts = await Product.find({ stock: 0 })

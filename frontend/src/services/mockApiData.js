@@ -105,6 +105,7 @@ export const mockUserAnalytics = {
 
 export const mockOrderAnalytics = {
   revenueByPeriod: [
+    // Monthly data
     { name: 'Jan', revenue: 85000000, orders: 125, period: 'month' },
     { name: 'Feb', revenue: 92000000, orders: 145, period: 'month' },
     { name: 'Mar', revenue: 115000000, orders: 175, period: 'month' },
@@ -112,7 +113,24 @@ export const mockOrderAnalytics = {
     { name: 'May', revenue: 123000000, orders: 183, period: 'month' },
     { name: 'Jun', revenue: 156000000, orders: 212, period: 'month' },
     { name: 'Jul', revenue: 182000000, orders: 245, period: 'month' },
-    { name: 'Aug', revenue: 145000000, orders: 198, period: 'month' }
+    { name: 'Aug', revenue: 145000000, orders: 198, period: 'month' },
+    
+    // Weekly data
+    { name: 'Tuần 1', revenue: 21250000, orders: 32, period: 'week' },
+    { name: 'Tuần 2', revenue: 24500000, orders: 37, period: 'week' },
+    { name: 'Tuần 3', revenue: 27750000, orders: 42, period: 'week' },
+    { name: 'Tuần 4', revenue: 32000000, orders: 48, period: 'week' },
+    { name: 'Tuần 5', revenue: 38000000, orders: 58, period: 'week' },
+    { name: 'Tuần 6', revenue: 42500000, orders: 64, period: 'week' },
+    { name: 'Tuần 7', revenue: 48000000, orders: 73, period: 'week' },
+    { name: 'Tuần 8', revenue: 46000000, orders: 70, period: 'week' },
+    
+    // Yearly data
+    { name: '2020', revenue: 850000000, orders: 1250, period: 'year' },
+    { name: '2021', revenue: 920000000, orders: 1450, period: 'year' },
+    { name: '2022', revenue: 1150000000, orders: 1750, period: 'year' },
+    { name: '2023', revenue: 1250000000, orders: 1900, period: 'year' },
+    { name: '2024', revenue: 950000000, orders: 1450, period: 'year' }
   ],
   recentOrders: [
     {
@@ -764,3 +782,151 @@ export const mockUsers = [
     createdAt: '2023-05-19T10:30:00Z'
   }
 ]; 
+
+// Thêm dữ liệu mẫu cho frequently bought together
+export const mockFrequentlyBoughtTogether = {
+  frequentItemsets: [
+    {
+      products: [
+        {
+          _id: '60f6e5f1f5f5f5f5f5f5f5f5',
+          name: 'Lốc 4 hộp sữa tươi Vinamilk 100% có đường 180ml',
+          price: 29000,
+          category: 'milk',
+          image: 'https://cdn-crownx.winmart.vn/images/prod/162428206978910055508-LOC-sua-tuoi-tiet-trung-it-duong-vinamilk-100-sua-tuoi-hop-180ml-loc-4-hop.jpg'
+        },
+        {
+          _id: '60f6e5f1f5f5f5f5f5f5f5f6',
+          name: 'Bánh quy Oreo vị chocolate 137g',
+          price: 20000,
+          category: 'candy',
+          image: 'https://cdn-crownx.winmart.vn/images/prod/162427560282610017466-HOP-banh-quy-oreo-vanilla-hop-137g.jpg'
+        }
+      ],
+      support: 0.25,
+      confidence: 0.78,
+      frequency: 123
+    },
+    {
+      products: [
+        {
+          _id: '60f6e5f1f5f5f5f5f5f5f5f7',
+          name: 'Mì gói Hảo Hảo tôm chua cay gói 75g',
+          price: 3500,
+          category: 'instant-food',
+          image: 'https://cdn-crownx.winmart.vn/images/prod/162427573193310017518-GOI-mi-hao-hao-tom-chua-cay-goi-75g.jpg'
+        },
+        {
+          _id: '60f6e5f1f5f5f5f5f5f5f5f8',
+          name: 'Nước tương Nam Dương đậu nành 500ml',
+          price: 15000,
+          category: 'cleaning',
+          image: 'https://cdn-crownx.winmart.vn/images/prod/mi-hao-hao-tom-chua-cay-goi-75g-5-org.jpg'
+        },
+        {
+          _id: '60f6e5f1f5f5f5f5f5f5f5f9',
+          name: 'Xúc xích Vissan tiêu đỏ 175g',
+          price: 25000,
+          category: 'produce',
+          image: 'https://cdn-crownx.winmart.vn/images/prod/162436190217110055842-GOI-xuc-xich-tieu-do-vissan-goi-175g.jpg'
+        }
+      ],
+      support: 0.18,
+      confidence: 0.65,
+      frequency: 88
+    },
+    {
+      products: [
+        {
+          _id: '60f6e5f1f5f5f5f5f5f5f5a1',
+          name: 'Cà phê hòa tan 3in1 NESCAFE gói 20g',
+          price: 8000,
+          category: 'beverages',
+          image: 'https://cdn-crownx.winmart.vn/images/prod/ca-phe-hoa-tan-3in1-nescafe-goi-20g-5-org.jpg'
+        },
+        {
+          _id: '60f6e5f1f5f5f5f5f5f5f5a2',
+          name: 'Sữa đặc có đường Ông Thọ đỏ lon 380g',
+          price: 29000,
+          category: 'milk',
+          image: 'https://cdn-crownx.winmart.vn/images/prod/sua-dac-co-duong-ong-tho-do-lon-380g-5-org.jpg'
+        }
+      ],
+      support: 0.22,
+      confidence: 0.73,
+      frequency: 107
+    },
+    {
+      products: [
+        {
+          _id: '60f6e5f1f5f5f5f5f5f5f5a3',
+          name: 'Nước giặt Omo Matic cửa trước 3.7kg',
+          price: 145000,
+          category: 'cleaning',
+          image: 'https://cdn-crownx.winmart.vn/images/prod/nuoc-giat-omo-matic-cua-truoc-3-7kg-5-org.jpg'
+        },
+        {
+          _id: '60f6e5f1f5f5f5f5f5f5f5a4',
+          name: 'Nước xả vải Comfort hương nước hoa túi 1.6L',
+          price: 67000,
+          category: 'cleaning',
+          image: 'https://cdn-crownx.winmart.vn/images/prod/nuoc-xa-vai-comfort-huong-nuoc-hoa-tui-1-6l-5-org.jpg'
+        }
+      ],
+      support: 0.35,
+      confidence: 0.85,
+      frequency: 172
+    },
+    {
+      products: [
+        {
+          _id: '60f6e5f1f5f5f5f5f5f5f5a5',
+          name: 'Sữa tắm Dove dưỡng ẩm sâu 900g',
+          price: 165000,
+          category: 'personal-care',
+          image: 'https://cdn-crownx.winmart.vn/images/prod/sua-tam-dove-duong-am-sau-900g-5-org.jpg'
+        },
+        {
+          _id: '60f6e5f1f5f5f5f5f5f5f5a6',
+          name: 'Dầu gội đầu Dove phục hồi hư tổn 640g',
+          price: 135000,
+          category: 'personal-care',
+          image: 'https://cdn-crownx.winmart.vn/images/prod/dau-goi-dove-phuc-hoi-hu-ton-640g-5-org.jpg'
+        },
+        {
+          _id: '60f6e5f1f5f5f5f5f5f5f5a7',
+          name: 'Dầu xả Dove phục hồi hư tổn 620g',
+          price: 135000,
+          category: 'personal-care',
+          image: 'https://cdn-crownx.winmart.vn/images/prod/dau-xa-dove-phuc-hoi-hu-ton-620g-5-org.jpg'
+        }
+      ],
+      support: 0.12,
+      confidence: 0.62,
+      frequency: 59
+    },
+    {
+      products: [
+        {
+          _id: '60f6e5f1f5f5f5f5f5f5f5a8',
+          name: 'Bánh mì sandwich Kinh Đô bơ sữa 270g',
+          price: 32000,
+          category: 'candy',
+          image: 'https://cdn-crownx.winmart.vn/images/prod/banh-mi-sandwich-kinh-do-bo-sua-270g-5-org.jpg'
+        },
+        {
+          _id: '60f6e5f1f5f5f5f5f5f5f5a9',
+          name: 'Sữa chua uống Vinamilk dâu chai 170ml',
+          price: 7500,
+          category: 'milk',
+          image: 'https://cdn-crownx.winmart.vn/images/prod/sua-chua-uong-vinamilk-dau-chai-170ml-5-org.jpg'
+        }
+      ],
+      support: 0.16,
+      confidence: 0.68,
+      frequency: 78
+    }
+  ],
+  message: "Danh sách sản phẩm thường được mua cùng nhau",
+  success: true
+}; 

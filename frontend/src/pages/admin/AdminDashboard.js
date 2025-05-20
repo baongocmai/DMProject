@@ -12,14 +12,19 @@ import {
   useGetDashboardStatsQuery,
   useGetProductAnalyticsQuery,
   useGetUserAnalyticsQuery,
-  useGetOrderAnalyticsQuery
+  useGetOrderAnalyticsQuery,
+  useGetFrequentlyBoughtTogetherQuery,
+  useGetSalesReportQuery,
+  useGetTopProductsQuery
 } from '../../services/api';
 import AdminLayout from './AdminLayout';
 import RecentOrdersTable from '../../components/admin/RecentOrdersTable';
 import TopProductsTable from '../../components/admin/TopProductsTable';
+import FrequentlyBoughtTogetherTable from '../../components/admin/FrequentlyBoughtTogetherTable';
 import './AdminDashboard.css';
 import { useSelector } from 'react-redux';
 import { getUserData } from '../../utils/tokenHelper';
+import { Link } from 'react-router-dom';
 
 const AdminDashboard = () => {
   const [period, setPeriod] = useState('monthly');
@@ -27,6 +32,11 @@ const AdminDashboard = () => {
   const { data: productAnalytics, isLoading: productLoading } = useGetProductAnalyticsQuery();
   const { data: userAnalytics, isLoading: userLoading } = useGetUserAnalyticsQuery();
   const { data: orderAnalytics, isLoading: orderLoading } = useGetOrderAnalyticsQuery();
+  const { data: frequentlyBoughtTogetherData, isLoading: frequentlyBoughtTogetherLoading } = useGetFrequentlyBoughtTogetherQuery({
+    minSupport: 0.01,
+    limit: 5,
+    orderLimit: 10000
+  });
   
   // Debug user authentication
   const { user, isAuthenticated } = useSelector((state) => state.auth);
@@ -64,11 +74,11 @@ const AdminDashboard = () => {
                   THEME_COLORS.info, THEME_COLORS.accent1, THEME_COLORS.accent2];
   
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2
-    }).format(amount);
+      currency: 'VND',
+      minimumFractionDigits: 0
+    }).format(amount * 1000);
   };
   
   // Redesigned stat card with elegant styling
@@ -121,12 +131,21 @@ const AdminDashboard = () => {
     
     // Return filtered analytics data based on period
     const revenueData = orderAnalytics.revenueByPeriod || [];
-    return revenueData.filter(item => {
+    
+    const filteredData = revenueData.filter(item => {
       if (period === 'weekly') return item.period === 'week';
       if (period === 'monthly') return item.period === 'month';
       if (period === 'yearly') return item.period === 'year';
       return true;
     });
+    
+    // Make sure we have data for the selected period
+    if (filteredData.length === 0) {
+      return [];
+    }
+    
+    // Return only real data, no sample data
+    return filteredData;
   };
   
   // Get top products data
@@ -154,18 +173,7 @@ const AdminDashboard = () => {
             <p className="dashboard-subtitle">Welcome back, {user?.name || 'Admin'}</p>
           </div>
           <div className="dashboard-actions">
-            <button className="dashboard-action-btn">
-              <FaRegCalendarAlt />
-              <span>Today</span>
-            </button>
-            <button className="dashboard-action-btn notification-btn">
-              <FaRegBell />
-              <Badge className="notification-badge" bg="danger">3</Badge>
-            </button>
-            <button className="dashboard-action-btn">
-              <FaChartLine />
-              <span>Reports</span>
-            </button>
+            {/* Buttons removed as requested */}
           </div>
         </div>
         
@@ -240,11 +248,11 @@ const AdminDashboard = () => {
                   <div className="chart-loader">
                     <Spinner animation="border" variant="primary" />
                   </div>
-                ) : !orderAnalytics || !orderAnalytics.revenueByPeriod || orderAnalytics.revenueByPeriod.length === 0 ? (
+                ) : getRevenueData().length === 0 ? (
                   <div className="text-center p-4">
                     <Alert variant="warning">
                       <i className="fas fa-exclamation-circle me-2"></i>
-                      Revenue data could not be loaded. Using mock data instead.
+                      Không có dữ liệu cho giai đoạn đã chọn. Vui lòng chọn giai đoạn khác.
                     </Alert>
                   </div>
                 ) : (
@@ -297,44 +305,153 @@ const AdminDashboard = () => {
           <Col lg={4}>
             <Card className="modern-chart-card h-100">
               <Card.Header className="chart-card-header">
-                <h5 className="mb-0">Sales by Category</h5>
+                <h5 className="mb-0">Deal Hot</h5>
               </Card.Header>
               <Card.Body>
                 {productLoading ? (
                   <div className="chart-loader">
                     <Spinner animation="border" variant="primary" />
                   </div>
-                ) : !productAnalytics || !productAnalytics.salesByCategory || productAnalytics.salesByCategory.length === 0 ? (
-                  <div className="text-center p-4">
-                    <Alert variant="warning">
-                      <i className="fas fa-exclamation-circle me-2"></i>
-                      Category sales data could not be loaded. Using mock data instead.
-                    </Alert>
-                  </div>
                 ) : (
-                  <ResponsiveContainer width="100%" height={350}>
-                    <PieChart>
-                      <Pie
-                        dataKey="value"
-                        nameKey="name"
-                        data={productAnalytics?.salesByCategory || []}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={90}
-                        paddingAngle={2}
-                        fill="#8884d8"
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {(productAnalytics?.salesByCategory || []).map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <div className="deal-hot-container">
+                    <div className="deal-hot-header">
+                      <Badge bg="danger" className="deal-timer">
+                        <FaRegCalendarAlt className="me-1" /> Còn hiệu lực 24h
+                      </Badge>
+                    </div>
+                    <div className="deal-products">
+                      {(productAnalytics?.topProducts || [])
+                        .filter(product => product.category?.name === "Deal hot" || product.category === "Deal hot")
+                        .slice(0, 3)
+                        .map((product, index) => (
+                          <div key={index} className="deal-product-item">
+                            <div className="deal-product-image">
+                              {product.image ? (
+                                <img src={product.image} alt={product.name} />
+                              ) : (
+                                <div className="placeholder-image">
+                                  {product.name?.substring(0, 2).toUpperCase() || 'PR'}
+                                </div>
+                              )}
+                            </div>
+                            <div className="deal-product-info">
+                              <h6 className="deal-product-name">{product.name}</h6>
+                              <div className="deal-product-price">
+                                <span className="current-price">
+                                  {formatCurrency(product.salePrice || product.price)}
+                                </span>
+                                {product.salePrice && (
+                                  <span className="original-price">
+                                    {formatCurrency(product.price)}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="deal-product-discount">
+                                <Badge bg="warning" text="dark">
+                                  {((1 - (product.salePrice || product.price) / product.price) * 100).toFixed(0)}% OFF
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
                         ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={{ borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                    </PieChart>
-                  </ResponsiveContainer>
+                      {(productAnalytics?.topProducts || []).filter(product => 
+                        product.category?.name === "Deal hot" || product.category === "Deal hot"
+                      ).length === 0 && (
+                        <div className="no-deals-message">
+                          <Alert variant="info">
+                            Không có sản phẩm Deal Hot. Vui lòng thêm sản phẩm vào danh mục "Deal hot".
+                          </Alert>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 )}
               </Card.Body>
+              <style jsx="true">{`
+                .deal-hot-container {
+                  height: 100%;
+                  display: flex;
+                  flex-direction: column;
+                }
+                .deal-hot-header {
+                  display: flex;
+                  justify-content: center;
+                  margin-bottom: 15px;
+                }
+                .deal-timer {
+                  font-size: 0.9rem;
+                  padding: 6px 12px;
+                }
+                .deal-products {
+                  flex: 1;
+                  overflow-y: auto;
+                }
+                .deal-product-item {
+                  display: flex;
+                  align-items: center;
+                  margin-bottom: 15px;
+                  padding: 10px;
+                  border-radius: 8px;
+                  background-color: #f8f9fa;
+                  transition: all 0.3s ease;
+                }
+                .deal-product-item:hover {
+                  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                  transform: translateY(-2px);
+                }
+                .deal-product-image {
+                  width: 60px;
+                  height: 60px;
+                  border-radius: 6px;
+                  overflow: hidden;
+                  margin-right: 12px;
+                  background-color: #fff;
+                }
+                .deal-product-image img {
+                  width: 100%;
+                  height: 100%;
+                  object-fit: contain;
+                }
+                .placeholder-image {
+                  width: 100%;
+                  height: 100%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  background-color: #4a6cf7;
+                  color: white;
+                  font-weight: bold;
+                }
+                .deal-product-info {
+                  flex: 1;
+                }
+                .deal-product-name {
+                  font-size: 0.95rem;
+                  margin-bottom: 4px;
+                  white-space: nowrap;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                }
+                .deal-product-price {
+                  display: flex;
+                  align-items: center;
+                  gap: 6px;
+                  margin-bottom: 4px;
+                }
+                .current-price {
+                  font-weight: bold;
+                  color: #f72585;
+                  font-size: 0.9rem;
+                }
+                .original-price {
+                  text-decoration: line-through;
+                  color: #6c757d;
+                  font-size: 0.8rem;
+                }
+                .no-deals-message {
+                  padding: 20px 10px;
+                }
+              `}</style>
             </Card>
           </Col>
         </Row>
@@ -345,7 +462,6 @@ const AdminDashboard = () => {
             <Card className="modern-table-card">
               <Card.Header className="d-flex justify-content-between align-items-center">
                 <h5 className="mb-0">Top Selling Products</h5>
-                <button className="btn-view-all">Xem thêm</button>
               </Card.Header>
               <Card.Body className="p-0">
                 <TopProductsTable 
@@ -361,7 +477,6 @@ const AdminDashboard = () => {
             <Card className="modern-table-card">
               <Card.Header className="d-flex justify-content-between align-items-center">
                 <h5 className="mb-0">Recent Orders</h5>
-                <button className="btn-view-all">Xem thêm</button>
               </Card.Header>
               <Card.Body className="p-0">
                 <RecentOrdersTable 
@@ -432,6 +547,24 @@ const AdminDashboard = () => {
                     </BarChart>
                   </ResponsiveContainer>
                 )}
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+        
+        {/* Frequently Bought Together Table */}
+        <Row className="g-4 mt-1 mb-4">
+          <Col>
+            <Card className="modern-table-card">
+              <Card.Header className="d-flex justify-content-between align-items-center">
+                <h5 className="mb-0">Frequently Bought Together</h5>
+              </Card.Header>
+              <Card.Body className="p-0">
+                <FrequentlyBoughtTogetherTable 
+                  data={frequentlyBoughtTogetherData}
+                  loading={frequentlyBoughtTogetherLoading}
+                  error={frequentlyBoughtTogetherData === undefined && !frequentlyBoughtTogetherLoading ? { message: 'Could not load frequently bought together data' } : null}
+                />
               </Card.Body>
             </Card>
           </Col>

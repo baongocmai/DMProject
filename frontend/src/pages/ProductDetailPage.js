@@ -275,7 +275,7 @@ const ProductDetailPage = () => {
                       variant="danger" 
                       className="add-to-cart-btn"
                       onClick={handleAddToCart}
-                      disabled={productData.countInStock === 0}
+                      disabled={productData.stock === 0}
                     >
                       <FaShoppingCart /> THÊM VÀO GIỎ
                     </Button>

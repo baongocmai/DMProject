@@ -1,39 +1,80 @@
 import React from 'react';
-import { formatError } from '../utils/errorHandler';
-import Message from './Message';
+import { Alert, Spinner, Button } from 'react-bootstrap';
+import './ApiErrorBoundary.css';
 
 /**
- * Component to handle API loading states and errors
+ * A component for consistently handling API errors and loading states
  */
 const ApiErrorBoundary = ({ 
+  children, 
   isLoading, 
   error, 
   loadingComponent, 
   errorComponent,
-  children 
+  loadingText = 'Đang tải dữ liệu...',
+  errorTitle = 'Lỗi tải dữ liệu',
+  errorText,
+  retryFunction
 }) => {
-  // Show loading component if loading
-  if (isLoading) {
-    return loadingComponent || <div className="loading-indicator">Loading...</div>;
-  }
+  // Use custom loading component if provided, otherwise use default spinner
+  const renderLoadingState = () => {
+    if (loadingComponent) return loadingComponent;
+    return (
+      <div className="api-error-boundary-loading">
+        <Spinner animation="border" variant="primary" />
+        <p className="mt-3">{loadingText}</p>
+      </div>
+    );
+  };
   
-  // Show error component if there's an error
-  if (error) {
-    // Use custom error component if provided
-    if (errorComponent) {
-      return errorComponent;
+  // Use custom error component if provided, otherwise use default alert
+  const renderErrorState = () => {
+    if (errorComponent) return errorComponent;
+    
+    // Extract error message from different error formats
+    let errorMessage = errorText;
+    if (!errorMessage) {
+      if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error?.data?.message) {
+        errorMessage = error.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      } else if (error?.error) {
+        errorMessage = error.error;
+      } else if (error?.status) {
+        errorMessage = `Error ${error.status}: ${error.statusText || 'Unknown Error'}`;
+      } else {
+        errorMessage = 'Có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại sau.';
+      }
     }
     
-    // Otherwise, show default error message
-    const errorMessage = formatError(error);
     return (
-      <Message variant="error">
-        {errorMessage}
-      </Message>
+      <Alert variant="danger" className="api-error-boundary-alert">
+        <Alert.Heading>{errorTitle}</Alert.Heading>
+        <p>{errorMessage}</p>
+        {retryFunction && (
+          <div className="d-flex justify-content-end">
+            <Button onClick={retryFunction} variant="outline-danger">
+              Thử lại
+            </Button>
+          </div>
+        )}
+      </Alert>
     );
+  };
+  
+  // First, handle loading state
+  if (isLoading) {
+    return renderLoadingState();
   }
   
-  // If not loading and no error, render children
+  // Then, handle error state
+  if (error) {
+    return renderErrorState();
+  }
+  
+  // If everything is fine, render children
   return children;
 };
 

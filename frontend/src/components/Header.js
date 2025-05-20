@@ -234,10 +234,24 @@ const Header = () => {
             <Nav className="categories-nav me-auto">
               <Nav.Link 
                 as={Link} 
+                to="/deal-hot" 
+                className={`deal-hot-link ${isActive('/deal-hot') ? 'active' : ''}`}
+              >
+                Deal Hot
+              </Nav.Link>
+              <Nav.Link 
+                as={Link} 
                 to="/category/sua" 
                 className={isActive('/category/sua') ? 'active' : ''}
               >
-                  Sữa
+                Sữa các loại
+              </Nav.Link>
+              <Nav.Link 
+                as={Link} 
+                to="/category/electronics" 
+                className={isActive('/category/electronics') ? 'active' : ''}
+              >
+                Điện tử
               </Nav.Link>
               <Nav.Link 
                 as={Link} 
@@ -312,14 +326,13 @@ const Header = () => {
       <div className="mobile-category-menu d-lg-none">
         <Container>
           <Nav className="scrollable-nav">
+            <Nav.Link as={Link} to="/deal-hot" className={`${isActive('/deal-hot') ? 'active' : ''} deal-hot-mobile`}>Deal Hot</Nav.Link>
             <Nav.Link as={Link} to="/category/sua" className={isActive('/category/sua') ? 'active' : ''}>Sữa</Nav.Link>
             <Nav.Link as={Link} to="/category/raucutraicay" className={isActive('/category/raucutraicay') ? 'active' : ''}>Rau - củ - quả</Nav.Link>
             <Nav.Link as={Link} to="/category/hoapham" className={isActive('/category/hoapham') ? 'active' : ''}>Hóa phẩm</Nav.Link>
+            <Nav.Link as={Link} to="/category/electronics" className={isActive('/category/electronics') ? 'active' : ''}>Điện tử</Nav.Link>
             <Nav.Link as={Link} to="/category/beauty" className={isActive('/category/beauty') ? 'active' : ''}>Beauty</Nav.Link>
             <Nav.Link as={Link} to="/category/books" className={isActive('/category/books') ? 'active' : ''}>Books</Nav.Link>
-            <Nav.Link as={Link} to="/category/sports" className={isActive('/category/sports') ? 'active' : ''}>Sports</Nav.Link>
-            <Nav.Link as={Link} to="/category/toys" className={isActive('/category/toys') ? 'active' : ''}>Toys</Nav.Link>
-            <Nav.Link as={Link} to="/category/groceries" className={isActive('/category/groceries') ? 'active' : ''}>Groceries</Nav.Link>
           </Nav>
         </Container>
       </div>

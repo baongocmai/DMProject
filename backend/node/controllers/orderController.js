@@ -36,9 +36,9 @@ exports.createOrder = async (req, res) => {
           }
           
           // Kiểm tra tồn kho
-          if (product.countInStock < item.quantity) {
+          if (product.stock < item.quantity) {
             return res.status(400).json({ 
-              message: `Sản phẩm ${product.name} chỉ còn ${product.countInStock} sản phẩm trong kho` 
+              message: `Sản phẩm ${product.name} chỉ còn ${product.stock} sản phẩm trong kho` 
             });
           }
           
@@ -62,9 +62,9 @@ exports.createOrder = async (req, res) => {
         // Sử dụng giỏ hàng từ database
         for (const item of cart.items) {
           // Kiểm tra tồn kho
-          if (item.product.countInStock < item.quantity) {
+          if (item.product.stock < item.quantity) {
             return res.status(400).json({ 
-              message: `Sản phẩm ${item.product.name} chỉ còn ${item.product.countInStock} sản phẩm trong kho` 
+              message: `Sản phẩm ${item.product.name} chỉ còn ${item.product.stock} sản phẩm trong kho` 
             });
           }
           
@@ -101,9 +101,9 @@ exports.createOrder = async (req, res) => {
         if (guestCart && guestCart.items.length > 0) {
           for (const item of guestCart.items) {
             // Kiểm tra tồn kho
-            if (item.product.countInStock < item.quantity) {
+            if (item.product.stock < item.quantity) {
               return res.status(400).json({ 
-                message: `Sản phẩm ${item.product.name} chỉ còn ${item.product.countInStock} sản phẩm trong kho` 
+                message: `Sản phẩm ${item.product.name} chỉ còn ${item.product.stock} sản phẩm trong kho` 
               });
             }
             
@@ -140,9 +140,9 @@ exports.createOrder = async (req, res) => {
           }
           
           // Kiểm tra tồn kho
-          if (product.countInStock < item.quantity) {
+          if (product.stock < item.quantity) {
             return res.status(400).json({ 
-              message: `Sản phẩm ${product.name} chỉ còn ${product.countInStock} sản phẩm trong kho` 
+              message: `Sản phẩm ${product.name} chỉ còn ${product.stock} sản phẩm trong kho` 
             });
           }
           
@@ -191,7 +191,7 @@ exports.createOrder = async (req, res) => {
     for (const item of productsToUpdate) {
       await Product.findByIdAndUpdate(
         item.id,
-        { $inc: { countInStock: -item.qty } },
+        { $inc: { stock: -item.qty } },
         { new: true }
       );
     }

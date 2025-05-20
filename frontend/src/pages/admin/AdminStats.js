@@ -21,11 +21,11 @@ const AdminStats = () => {
 
   // Format currency
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2
-    }).format(amount || 0);
+      currency: 'VND',
+      minimumFractionDigits: 0
+    }).format((amount || 0) * 1000);
   };
 
   // Get top products data

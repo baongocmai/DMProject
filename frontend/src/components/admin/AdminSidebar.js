@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Nav } from 'react-bootstrap';
 import { Link, useLocation } from 'react-router-dom';
 import { 
-  FaHome, FaBox, FaUsers, FaShoppingBag, FaList, FaTags, FaChartPie,
+  FaHome, FaBox, FaShoppingBag, FaList, FaTags, FaChartPie,
   FaChartBar, FaCog, FaSignOutAlt, FaAngleDown, FaAngleRight, FaStore,
   FaCreditCard, FaHammer, FaImages, FaPercent, FaShieldAlt, FaBell
 } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../redux/slices/authSlice';
-import { useGetPendingOrdersQuery, useGetProcessingOrdersQuery } from '../../services/api';
+import { useGetPendingOrdersQuery, useGetProcessingOrdersQuery, useGetShippingOrdersQuery } from '../../services/api';
 import '../../styles/AdminTheme.css';
 import './AdminSidebar.css';
 
@@ -29,16 +29,24 @@ const AdminSidebar = () => {
     refetchOnMountOrArgChange: true
   });
   
+  // Fetch shipping orders to display count
+  const { data: shippingOrders } = useGetShippingOrdersQuery(undefined, {
+    pollingInterval: 60000, // Poll every minute
+    refetchOnMountOrArgChange: true
+  });
+  
   // Calculate count of pending orders
   const pendingOrderCount = pendingOrders?.length || 0;
   
   // Calculate count of processing orders
   const processingOrderCount = processingOrders?.length || 0;
   
+  // Calculate count of shipping orders
+  const shippingOrderCount = shippingOrders?.length || 0;
+  
   const [expanded, setExpanded] = useState({
     products: false,
     orders: false,
-    customers: false,
     marketing: false,
     settings: false,
   });
@@ -182,13 +190,6 @@ const AdminSidebar = () => {
           
             <div className={`admin-dropdown-menu ${expanded.orders ? 'expanded' : ''}`}>
             <Link 
-              to="/admin/orders" 
-                className={`admin-dropdown-item ${isActive('/admin/orders') ? 'active' : ''}`}
-            >
-                <span className="dropdown-bullet"></span>
-                Tất cả đơn hàng
-            </Link>
-            <Link 
               to="/admin/orders/pending" 
                 className={`admin-dropdown-item ${isActive('/admin/orders/pending') ? 'active' : ''}`}
             >
@@ -212,37 +213,17 @@ const AdminSidebar = () => {
                   </span>
                 )}
             </Link>
-          </div>
-        </Nav.Item>
-        
-        <Nav.Item>
-            <div 
-              className={`admin-menu-item dropdown-toggle ${isParentActive('/admin/customers') ? 'active' : ''}`}
-              onClick={() => toggleDropdown('customers')}
-          >
-            <FaUsers className="admin-menu-icon" />
-              <span className="admin-menu-text">Khách hàng</span>
-              {expanded.customers ? (
-                <FaAngleDown className="dropdown-icon" />
-              ) : (
-                <FaAngleRight className="dropdown-icon" />
-              )}
-            </div>
-            
-            <div className={`admin-dropdown-menu ${expanded.customers ? 'expanded' : ''}`}>
               <Link 
-                to="/admin/customers" 
-                className={`admin-dropdown-item ${isActive('/admin/customers') ? 'active' : ''}`}
+                to="/admin/orders/shipping" 
+                className={`admin-dropdown-item ${isActive('/admin/orders/shipping') ? 'active' : ''}`}
               >
                 <span className="dropdown-bullet"></span>
-                Tất cả khách hàng
-              </Link>
-              <Link 
-                to="/admin/customers/groups" 
-                className={`admin-dropdown-item ${isActive('/admin/customers/groups') ? 'active' : ''}`}
-              >
-                <span className="dropdown-bullet"></span>
-                Nhóm khách hàng
+                Đang giao
+                {shippingOrderCount > 0 && (
+                  <span className="admin-badge admin-badge-warning admin-notification-badge">
+                    {shippingOrderCount}
+                  </span>
+                )}
           </Link>
             </div>
         </Nav.Item>

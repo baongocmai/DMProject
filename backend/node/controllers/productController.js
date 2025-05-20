@@ -319,98 +319,62 @@ exports.getRelatedProducts = async (req, res) => {
 // Tạo sản phẩm mới (Admin)
 exports.createProduct = async (req, res) => {
   try {
-    const { name, price, description, category, countInStock, stock, image } = req.body;
+    const { name, price, description, category, stock, image } = req.body;
     
-    // Log dữ liệu nhận được
-    console.log("Dữ liệu sản phẩm nhận được:", req.body);
-
-    // Kiểm tra dữ liệu đầu vào cơ bản
     if (!name || !price) {
-      return res.status(400).json({ 
-        message: "Vui lòng cung cấp ít nhất tên và giá sản phẩm",
-        success: false
-      });
+      return res.status(400).json({ message: "Vui lòng cung cấp tên và giá sản phẩm" });
     }
 
-    // Sử dụng stock hoặc countInStock, ưu tiên stock nếu có
-    const stockValue = stock !== undefined ? stock : (countInStock || 0);
-
     // Tạo sản phẩm mới
-    const product = new Product({
+    const newProduct = new Product({
       name,
       price,
       description: description || "",
-      category: category || "Khác",
-      stock: stockValue,
+      category: category || "Uncategorized",
+      stock: stock || 0,
       image: image || ""
     });
 
-    // Lưu sản phẩm vào cơ sở dữ liệu
-    const createdProduct = await product.save();
-    
-    console.log("Sản phẩm đã được tạo:", createdProduct);
+    const savedProduct = await newProduct.save();
 
     res.status(201).json({
       message: "Sản phẩm đã được tạo thành công",
-      product: createdProduct,
-      success: true
+      product: savedProduct
     });
   } catch (error) {
-    console.error("Lỗi khi tạo sản phẩm:", error);
-    res.status(500).json({ 
-      message: "Lỗi khi tạo sản phẩm", 
-      error: error.message,
-      success: false
-    });
+    console.error("Error creating product:", error);
+    res.status(500).json({ message: "Lỗi khi tạo sản phẩm", error: error.message });
   }
 };
 
 // Cập nhật sản phẩm (Admin)
 exports.updateProduct = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { name, price, description, category, countInStock, stock, image } = req.body;
+    const { name, price, description, category, stock, image } = req.body;
     
-    // Log dữ liệu nhận được
-    console.log(`Cập nhật sản phẩm ID ${id}:`, req.body);
+    const product = await Product.findById(req.params.id);
     
-    // Kiểm tra xem sản phẩm có tồn tại không
-    const product = await Product.findById(id);
     if (!product) {
-      return res.status(404).json({ 
-        message: "Không tìm thấy sản phẩm", 
-        success: false 
-      });
+      return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
     }
     
-    // Sử dụng stock hoặc countInStock, ưu tiên stock nếu có
-    const stockValue = stock !== undefined ? stock : (countInStock !== undefined ? countInStock : product.stock);
-    
     // Cập nhật thông tin sản phẩm
-    product.name = name || product.name;
-    product.price = price !== undefined ? price : product.price;
-    product.description = description || product.description;
-    product.category = category || product.category;
-    product.stock = stockValue;
-    product.image = image || product.image;
+    if (name) product.name = name;
+    if (price !== undefined) product.price = price;
+    if (description !== undefined) product.description = description;
+    if (category) product.category = category;
+    if (stock !== undefined) product.stock = stock;
+    if (image) product.image = image;
     
-    // Lưu sản phẩm đã cập nhật
     const updatedProduct = await product.save();
     
-    console.log("Sản phẩm đã được cập nhật:", updatedProduct);
-    
-    res.json({
-      message: "Sản phẩm đã được cập nhật thành công",
-      product: updatedProduct,
-      success: true
+    res.status(200).json({
+      message: "Sản phẩm đã được cập nhật",
+      product: updatedProduct
     });
   } catch (error) {
-    console.error("Lỗi khi cập nhật sản phẩm:", error);
-    res.status(500).json({ 
-      message: "Lỗi khi cập nhật sản phẩm", 
-      error: error.message,
-      success: false
-    });
+    console.error("Error updating product:", error);
+    res.status(500).json({ message: "Lỗi khi cập nhật sản phẩm", error: error.message });
   }
 };
 

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { useAddToCartMutation, useAddToWishlistMutation, useRemoveFromWishlistMutation, useGetWishlistQuery } from '../services/api';
 import { FaHeart, FaRegHeart, FaShoppingCart, FaStar, FaStarHalfAlt, FaRegStar } from 'react-icons/fa';
+import { formatPrice } from '../utils/productHelpers';
 import './ProductCard.css';
 
 const ProductCard = ({ product, inWishlist = false }) => {
@@ -21,11 +22,6 @@ const ProductCard = ({ product, inWishlist = false }) => {
   
   const isWishlistLoading = isAddingToWishlist || isRemovingFromWishlist;
 
-  // Format the price with commas
-  const formatPrice = (price) => {
-    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  };
-  
   // Handle add to cart
   const handleAddToCart = async () => {
     try {
@@ -134,7 +130,7 @@ const ProductCard = ({ product, inWishlist = false }) => {
             variant="primary" 
             className="cart-button"
             onClick={handleAddToCart}
-            disabled={isAddingToCart || !product.countInStock}
+            disabled={isAddingToCart || !(product.stock || product.countInStock)}
             title="Add to Cart"
           >
             {isAddingToCart ? '...' : <FaShoppingCart />}

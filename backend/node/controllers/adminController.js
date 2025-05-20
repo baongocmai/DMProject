@@ -147,9 +147,96 @@ exports.deleteProduct = async (req, res) => {
 // @access  Admin
 exports.getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find({}).populate("user", "name email");
-    res.status(200).json(orders);
+    console.log("====== GET ALL ORDERS CALLED ======");
+    
+    // Parse pagination parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+    // Parse filtering parameters
+    const status = req.query.status || '';
+    const search = req.query.search || '';
+    const startDate = req.query.startDate;
+    const endDate = req.query.endDate;
+    const minTotal = parseFloat(req.query.minTotal) || 0;
+    const maxTotal = parseFloat(req.query.maxTotal) || Number.MAX_SAFE_INTEGER;
+    
+    // Build filter object
+    const filter = {};
+    
+    // Điều kiện cố định: Chỉ lấy đơn hàng từ 2h sáng ngày 20/05/2025
+    // Sử dụng thời gian tháng 5 năm 2025, nhưng để đảm bảo hiển thị đơn hàng hiện tại cho demo
+    // chúng ta sẽ tạm thời bỏ qua điều kiện này
+    // const fixedStartDate = new Date('2025-05-20T02:00:00.000Z');
+    // filter.createdAt = { $gte: fixedStartDate };
+    // console.log('Fixed start date filter:', fixedStartDate);
+    
+    // Filter by status
+    if (status && status !== 'all') {
+      filter.status = status;
+    }
+    
+    // Filter by user date range if provided
+    if (startDate || endDate) {
+      filter.createdAt = filter.createdAt || {};
+      if (startDate) {
+        const userStartDate = new Date(startDate);
+        filter.createdAt.$gte = userStartDate;
+      }
+      if (endDate) {
+        const endDateObj = new Date(endDate);
+        endDateObj.setHours(23, 59, 59, 999);
+        filter.createdAt.$lte = endDateObj;
+      }
+    }
+    
+    // Filter by price range
+    filter.totalPrice = { $gte: minTotal, $lte: maxTotal };
+    
+    // Search by order ID or customer name/email
+    if (search) {
+      filter.$or = [
+        { _id: { $regex: search, $options: 'i' } },
+        { 'user.name': { $regex: search, $options: 'i' } },
+        { 'user.email': { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    console.log('Query parameters:', { page, limit, status, search, startDate, endDate });
+    console.log('Final filter:', JSON.stringify(filter));
+    
+    // Get all orders first for debugging
+    const allOrders = await Order.find({}).lean();
+    console.log(`DEBUG: Total orders in DB: ${allOrders.length}`);
+    if (allOrders.length > 0) {
+      console.log(`DEBUG: First order date: ${allOrders[0].createdAt}`);
+    }
+    
+    // Get total count for pagination
+    const totalCount = await Order.countDocuments(filter);
+    console.log(`Total count with filter: ${totalCount}`);
+    
+    // Get paginated orders
+    const orders = await Order.find(filter)
+      .populate("user", "name email")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+    
+    console.log(`Found ${orders.length} orders matching filter`);
+    
+    res.status(200).json({
+      orders,
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit)
+      }
+    });
   } catch (error) {
+    console.error("Error in getAllOrders:", error);
     res.status(500).json({ message: "Lỗi lấy danh sách đơn hàng", error });
   }
 };

@@ -165,8 +165,10 @@ const InventoryManagement = () => {
       }
       
       await updateProduct({
-        _id: selectedProduct._id,
-        stock: newStock
+        id: selectedProduct._id,
+        productData: {
+          stock: newStock
+        }
       }).unwrap();
       
       setShowStockModal(false);

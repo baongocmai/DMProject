@@ -5,10 +5,10 @@ import './TopProductsTable.css';
 
 const TopProductsTable = ({ products = [], loading = false, error = null }) => {
   // Get stock status
-  const getStockStatus = (countInStock) => {
-    if (countInStock === 0) {
+  const getStockStatus = (stockValue) => {
+    if (stockValue === 0 || stockValue === null || stockValue === undefined) {
       return { variant: 'danger', text: 'Out of Stock' };
-    } else if (countInStock < 10) {
+    } else if (stockValue < 10) {
       return { variant: 'warning', text: 'Low Stock' };
     } else {
       return { variant: 'success', text: 'In Stock' };
@@ -17,11 +17,11 @@ const TopProductsTable = ({ products = [], loading = false, error = null }) => {
   
   // Format currency
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2
-    }).format(amount);
+      currency: 'VND',
+      minimumFractionDigits: 0
+    }).format(amount * 1000);
   };
   
   // Show loading spinner
@@ -70,7 +70,8 @@ const TopProductsTable = ({ products = [], loading = false, error = null }) => {
         </thead>
         <tbody>
           {products.map((product) => {
-            const stockStatus = getStockStatus(product.countInStock || 0);
+            const stockValue = product.stock !== undefined ? product.stock : (product.countInStock || 0);
+            const stockStatus = getStockStatus(stockValue);
             
             return (
               <tr key={product._id}>
@@ -119,7 +120,7 @@ const TopProductsTable = ({ products = [], loading = false, error = null }) => {
                   <Badge bg={stockStatus.variant} className="stock-badge">
                     {stockStatus.text}
                   </Badge>
-                  <span className="stock-count">{product.countInStock || 0} units</span>
+                  <span className="stock-count">{stockValue} units</span>
                 </td>
               </tr>
             );

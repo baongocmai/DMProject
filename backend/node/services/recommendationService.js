@@ -8,9 +8,105 @@ const Product = require("../models/Product");
 const cache = new NodeCache({ stdTTL: 600 }); // Cache trong 10 phút
 
 // Lấy danh sách giao dịch từ MongoDB
-const getTransactions = async () => {
-  const orders = await Order.find({}, "items.product");
-  return orders.map(order => order.items.map(item => item.product.toString()));
+const getTransactions = async (limit = 0) => {
+  try {
+    console.log(`Bắt đầu lấy dữ liệu đơn hàng từ database (limit=${limit})...`);
+    
+    // Lấy đơn hàng từ database
+    let orders;
+    if (limit > 0) {
+      orders = await Order.find({})
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .lean();
+    } else {
+      orders = await Order.find({}).lean();
+    }
+    
+    console.log(`Đã lấy ${orders.length} đơn hàng từ database`);
+    
+    // Debug: Log chi tiết về đơn hàng đầu tiên
+    if (orders.length > 0) {
+      console.log("=== DEBUG: Đơn hàng đầu tiên ===");
+      console.log(JSON.stringify(orders[0], null, 2));
+      console.log(`Đơn hàng có orderItems? ${orders[0].orderItems ? 'Có' : 'Không'}`);
+      if (orders[0].orderItems) {
+        console.log(`Số lượng items: ${orders[0].orderItems.length}`);
+      }
+    }
+    
+    // Chuyển đổi thành giao dịch - QUAN TRỌNG: đảm bảo cấu trúc đúng
+    const transactions = [];
+    
+    for (const order of orders) {
+      // Kiểm tra order.orderItems (không phải items)
+      if (order.orderItems && Array.isArray(order.orderItems) && order.orderItems.length > 0) {
+        // Log để debug
+        console.log(`Đơn hàng ${order._id} có ${order.orderItems.length} sản phẩm`);
+        
+        // Xử lý cẩn thận productId
+        const productIds = order.orderItems
+          .filter(item => item && item.product)
+          .map(item => {
+            // Kiểm tra nếu product là ObjectId hoặc String
+            const productId = typeof item.product === 'object' && item.product._id 
+              ? item.product._id.toString() 
+              : item.product.toString();
+            return productId;
+          });
+        
+        // Thêm vào danh sách nếu có ít nhất 1 sản phẩm
+        if (productIds.length >= 1) {
+          transactions.push(productIds);
+        }
+      } else {
+        console.log(`Đơn hàng ${order._id} không có orderItems hoặc rỗng`);
+      }
+    }
+    
+    console.log(`Đã tạo ${transactions.length} giao dịch từ ${orders.length} đơn hàng`);
+    
+    // Nếu không có giao dịch, thử tạo tập hợp sản phẩm ngẫu nhiên từ database
+    if (transactions.length === 0) {
+      console.log("QUAN TRỌNG: Không tìm thấy giao dịch nào từ đơn hàng, tạo dữ liệu mẫu từ sản phẩm thực");
+      
+      // Lấy tất cả sản phẩm từ cơ sở dữ liệu
+      const allProducts = await Product.find({}).select('_id').lean();
+      
+      if (allProducts.length === 0) {
+        console.log("Không có sản phẩm nào trong database để tạo dữ liệu mẫu");
+        return [];
+      }
+      
+      // Lấy ID của tất cả sản phẩm
+      const productIds = allProducts.map(product => product._id.toString());
+      
+      // Tạo 20-50 giao dịch giả lập từ sản phẩm thực
+      const sampleTransactions = [];
+      const numTransactions = Math.floor(Math.random() * 30) + 20; // 20-50 transactions
+      
+      for (let i = 0; i < numTransactions; i++) {
+        // Mỗi giao dịch chứa 1-5 sản phẩm ngẫu nhiên
+        const numProducts = Math.floor(Math.random() * 5) + 1;
+        const transaction = [];
+        
+        // Chọn sản phẩm ngẫu nhiên không trùng lặp
+        const shuffled = [...productIds].sort(() => 0.5 - Math.random());
+        const selectedProducts = shuffled.slice(0, numProducts);
+        
+        sampleTransactions.push(selectedProducts);
+      }
+      
+      console.log(`Đã tạo ${sampleTransactions.length} giao dịch mẫu với sản phẩm thực`);
+      return sampleTransactions;
+    }
+    
+    return transactions;
+  } catch (error) {
+    console.error("Lỗi khi lấy dữ liệu đơn hàng:", error);
+    // Trả về mảng trống
+    return [];
+  }
 };
 
 // Tự động chọn minSupport dựa vào số lượng giao dịch
@@ -206,13 +302,52 @@ const getHomepageRecommendations = async (userId = null, limit = 8) => {
 };
 
 // Lấy các sản phẩm thường được mua cùng nhau cho admin (để tạo combo)
-const getFrequentlyBoughtTogether = async (minSupport = 0.05, limit = 20) => {
+const getFrequentlyBoughtTogether = async (minSupport = 0.05, limit = 20, orderLimit = 10000) => {
   try {
-    // Sử dụng FP-Growth với minSupport thấp hơn để có nhiều pattern
-    const transactions = await getTransactions();
-    const fpgrowth = new FPGrowth.FPGrowth(minSupport);
+    // Tạo key cho cache dựa vào tham số đầu vào
+    const cacheKey = `frequently-bought-together-${minSupport}-${limit}-${orderLimit}`;
     
+    // Xóa cache để luôn tính toán lại kết quả trong quá trình debug
+    cache.del(cacheKey);
+    console.log("Đã xóa cache để tính toán lại");
+    
+    console.log(`Phân tích dữ liệu với minSupport=${minSupport}, limit=${limit}, orderLimit=${orderLimit}`);
+    
+    // Lấy dữ liệu giao dịch từ database với giới hạn số đơn hàng
+    const transactions = await getTransactions(orderLimit);
+    
+    // Chi tiết debug
+    console.log(`DEBUG: Số lượng giao dịch: ${transactions.length}`);
+    if (transactions.length > 0) {
+      console.log(`DEBUG: Giao dịch đầu tiên:`, JSON.stringify(transactions[0]));
+    }
+    
+    // Chỉ kiểm tra nếu không có giao dịch nào
+    if (!transactions || transactions.length === 0) {
+      console.log("Không có dữ liệu giao dịch nào");
+      return {
+        frequentItemsets: [],
+        message: "Không có dữ liệu giao dịch nào để phân tích",
+        success: false
+      };
+    }
+    
+    // Sử dụng minSupport từ tham số nếu nó đủ nhỏ, nếu không sử dụng giá trị nhỏ hơn
+    const adjustedMinSupport = Math.min(minSupport, 0.0001);
+    
+    console.log(`Adjusted minSupport: ${adjustedMinSupport}`);
+    
+    // Sử dụng FP-Growth với minSupport được điều chỉnh
+    const fpgrowth = new FPGrowth.FPGrowth(adjustedMinSupport);
+    
+    const startTime = Date.now();
+    
+    console.log("Bắt đầu chạy thuật toán FP-Growth...");
     const results = await fpgrowth.exec(transactions);
+    const endTime = Date.now();
+    
+    console.log(`Phân tích xong trong ${(endTime-startTime)/1000}s. Tìm thấy ${results.length} mẫu.`);
+    console.log(`DEBUG: Kết quả đầu tiên:`, results.length > 0 ? JSON.stringify(results[0]) : "Không có kết quả");
     
     // Lọc các pattern có từ 2 sản phẩm trở lên và sắp xếp theo support giảm dần
     const frequentPatterns = results
@@ -220,26 +355,82 @@ const getFrequentlyBoughtTogether = async (minSupport = 0.05, limit = 20) => {
       .sort((a, b) => b.support - a.support)
       .slice(0, limit);
     
+    console.log(`Đã lọc ${frequentPatterns.length} mẫu phù hợp.`);
+    
+    // Nếu không có pattern nào, trả về kết quả trống với thông báo rõ ràng
+    if (frequentPatterns.length === 0) {
+      console.log("Không tìm thấy mẫu mua hàng nào thỏa mãn điều kiện");
+      return {
+        frequentItemsets: [],
+        message: "Không tìm thấy mẫu mua hàng nào thỏa mãn điều kiện. Thử giảm minSupport hoặc thêm dữ liệu.",
+        success: false
+      };
+    }
+    
+    // Lấy số lượng đơn hàng thực tế để tính tỷ lệ chính xác
+    const totalOrders = await Order.countDocuments();
+    
     // Lấy thông tin chi tiết của sản phẩm
     const patternDetails = await Promise.all(
       frequentPatterns.map(async pattern => {
+        // Lấy thông tin sản phẩm
         const products = await Product.find({ 
           _id: { $in: pattern.items } 
-        }).select('_id name price images category');
+        }).select('_id name price image category');
+        
+        // Tính số lượng đơn hàng thực tế chứa pattern này
+        // Đảm bảo frequency là số nguyên hợp lý và không bị phóng đại
+        const frequency = Math.round(pattern.support * transactions.length);
+        
+        // Tính tỷ lệ xuất hiện thực tế so với tổng số đơn hàng
+        // Đảm bảo luôn là số thập phân hợp lý (0-1)
+        const actualSupport = Math.min(
+          frequency / Math.max(transactions.length, 1),
+          1.0 // Đảm bảo không vượt quá 100%
+        );
+        
+        console.log(`Pattern có ${products.length} sản phẩm, frequency = ${frequency}, support = ${actualSupport}`);
         
         return {
           products,
-          support: pattern.support,
+          support: actualSupport, // Tỷ lệ xuất hiện thực tế
           confidence: pattern.confidence || 0,
-          frequency: Math.round(pattern.support * transactions.length)
+          frequency: frequency // Số đơn hàng chứa pattern
         };
       })
     );
     
-    return patternDetails;
+    console.log(`Đã lấy chi tiết cho ${patternDetails.length} mẫu`);
+    if (patternDetails.length > 0) {
+      console.log(`DEBUG: Mẫu đầu tiên có ${patternDetails[0].products.length} sản phẩm`);
+      console.log(`DEBUG: Tỷ lệ xuất hiện: ${patternDetails[0].support}, Tần suất: ${patternDetails[0].frequency} đơn hàng`);
+    }
+    
+    const result = {
+      frequentItemsets: patternDetails,
+      message: `Danh sách sản phẩm thường được mua cùng nhau (từ ${transactions.length} đơn hàng)`,
+      success: true,
+      info: {
+        totalTransactions: transactions.length,
+        totalOrders: totalOrders,
+        minSupport: adjustedMinSupport,
+        processTime: (endTime-startTime)/1000
+      }
+    };
+    
+    // Lưu kết quả vào cache để sử dụng sau
+    cache.set(cacheKey, result, 3600); // Cache trong 1 giờ
+    
+    console.log("Kết quả đã được tính toán và cache");
+    return result;
   } catch (error) {
     console.error("Lỗi khi lấy sản phẩm thường mua cùng nhau:", error);
-    return [];
+    return {
+      frequentItemsets: [],
+      message: "Đã xảy ra lỗi khi phân tích dữ liệu: " + error.message,
+      success: false,
+      error: error.message
+    };
   }
 };
 

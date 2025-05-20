@@ -24,6 +24,7 @@ import PaymentPage from './pages/PaymentPage';
 import LoadingDemoPage from './pages/LoadingDemoPage';
 import EmptyOrderPage from './pages/EmptyOrderPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import DealHotPage from './pages/DealHotPage';
 
 // Import missing page components
 import OrdersPage from './pages/OrdersPage';
@@ -46,6 +47,7 @@ import AdminRoute from './components/AdminRoute';
 import UnderConstructionPage from './pages/admin/UnderConstructionPage';
 import PendingOrders from './pages/admin/PendingOrders';
 import ProcessingOrders from './pages/admin/ProcessingOrders';
+import ShippingOrders from './pages/admin/ShippingOrders';
 import CustomerList from './pages/admin/CustomerList';
 import CustomerGroups from './pages/admin/CustomerGroups';
 import DiscountList from './pages/admin/DiscountList';
@@ -54,6 +56,7 @@ import BannerList from './pages/admin/BannerList';
 import GeneralSettings from './pages/admin/GeneralSettings';
 import PaymentSettings from './pages/admin/PaymentSettings';
 import ShippingSettings from './pages/admin/ShippingSettings';
+import ProductAnalytics from './pages/admin/ProductAnalytics';
 
 function App() {
   return (
@@ -71,6 +74,7 @@ function App() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/product/:id" element={<ProductDetailPage />} />
         <Route path="/category/:categoryName" element={<CategoryPage />} />
+        <Route path="/deal-hot" element={<DealHotPage />} />
         
         {/* Redirect cart to home with cart drawer param */}
         <Route path="/cart" element={<Navigate to="/?drawer=cart" replace />} />
@@ -162,7 +166,7 @@ function App() {
             <OrderList />
           </AdminRoute>
         } />
-        <Route path="/admin/orders/:id" element={
+        <Route path="/admin/order/:id" element={
           <AdminRoute>
             <OrderDetail />
           </AdminRoute>
@@ -180,6 +184,11 @@ function App() {
         <Route path="/admin/orders/processing" element={
           <AdminRoute>
             <ProcessingOrders />
+          </AdminRoute>
+        } />
+        <Route path="/admin/orders/shipping" element={
+          <AdminRoute>
+            <ShippingOrders />
           </AdminRoute>
         } />
         <Route path="/admin/customers" element={
@@ -235,6 +244,11 @@ function App() {
         <Route path="/admin/profile" element={
           <AdminRoute>
             <AdminProfile />
+          </AdminRoute>
+        } />
+        <Route path="/admin/analytics/product" element={
+          <AdminRoute>
+            <ProductAnalytics />
           </AdminRoute>
         } />
       </Routes>

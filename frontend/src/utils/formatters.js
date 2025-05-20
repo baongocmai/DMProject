@@ -62,21 +62,24 @@ export const formatDate = (date, options = {}) => {
 /**
  * Format a number as currency
  * @param {number} amount - Amount to format
- * @param {string} currency - Currency code (default: USD)
+ * @param {string} currency - Currency code (default: VND)
  * @returns {string} Formatted currency string
  */
-export const formatCurrency = (amount, currency = 'USD') => {
+export const formatCurrency = (amount, currency = 'VND') => {
   if (amount === undefined || amount === null) return 'N/A';
   
   try {
-    return new Intl.NumberFormat('en-US', {
+    // Nhân giá trị với 1000 để hiển thị đúng định dạng tiền tệ
+    const amountInVND = amount * 1000;
+    
+    return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency,
-      minimumFractionDigits: 2
-    }).format(amount);
+      minimumFractionDigits: 0
+    }).format(amountInVND);
   } catch (error) {
     console.error('Currency formatting error:', error);
-    return `${amount}`;
+    return `${amount * 1000} ${currency}`;
   }
 };
 
