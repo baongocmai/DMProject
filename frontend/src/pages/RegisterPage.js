@@ -37,19 +37,19 @@ const RegisterPage = () => {
     
     // Validation
     if (!name || !email || !password || !confirmPassword) {
-      setErrorMessage('Please fill in all fields');
+      setErrorMessage('Vui lòng điền đủ thông tin');
       return;
     }
     
     if (password !== confirmPassword) {
-      setErrorMessage('Passwords do not match');
+      setErrorMessage('Mật khẩu không khớp');
       return;
     }
 
     try {
       const response = await register({ name, email, password }).unwrap();
       setUserId(response.userId);
-      setSuccessMessage(response.message || 'OTP sent to your email. Please verify.');
+      setSuccessMessage(response.message || 'Mã OTP đã được gửi đến email của bạn. Vui lòng xác thực.');
       setShowOtpForm(true);
     } catch (err) {
       setErrorMessage(formatError(err));
@@ -61,13 +61,13 @@ const RegisterPage = () => {
     setErrorMessage('');
     
     if (!otp) {
-      setErrorMessage('Please enter the OTP');
+      setErrorMessage('Vui lòng nhập mã OTP');
       return;
     }
 
     try {
       await verifyOTP({ userId, otp }).unwrap();
-      setSuccessMessage('Registration successful! Redirecting to login...');
+      setSuccessMessage('Đăng ký thành công! Chuyển hướng đăng nhập...');
       setTimeout(() => {
         navigate('/login');
       }, 2000);
@@ -80,7 +80,7 @@ const RegisterPage = () => {
     <div className="auth-container">
       <div className="auth-box">
         <div className="auth-sidebar">
-          <div className="auth-logo">
+          <div className="auth-logo-block">
             <img src="/logo.png" alt="2NADH" className="logo-image" />
           </div>
         </div>
@@ -89,20 +89,20 @@ const RegisterPage = () => {
           <div className="auth-form-wrapper">
             <div className="back-to-home">
               <Link to="/" className="btn-back">
-                <i className="fas fa-home"></i> Back to Home
+                <i className="fas fa-home"></i> Quay lại trang chủ
               </Link>
             </div>
             
             {!showOtpForm ? (
               <>
-                <h2>Create Account</h2>
+                <h2>Tạo tài khoản</h2>
                 
                 {errorMessage && <Message variant="error">{errorMessage}</Message>}
                 {successMessage && <Message variant="success">{successMessage}</Message>}
                 
                 <form className="auth-form" onSubmit={handleRegister}>
                   <div className="form-group">
-                    <label htmlFor="fullName">Full Name</label>
+                    <label htmlFor="fullName">Tên người dùng</label>
                     <input
                       type="text"
                       id="fullName"
@@ -124,7 +124,7 @@ const RegisterPage = () => {
                   </div>
                   
                   <div className="form-group">
-                    <label htmlFor="password">Password</label>
+                    <label htmlFor="password">Mật khẩu</label>
                     <input
                       type="password"
                       id="password"
@@ -135,7 +135,7 @@ const RegisterPage = () => {
                   </div>
                   
                   <div className="form-group">
-                    <label htmlFor="confirmPassword">Confirm Password</label>
+                    <label htmlFor="confirmPassword">Xác nhận mật khẩu</label>
                     <input
                       type="password"
                       id="confirmPassword"
@@ -150,29 +150,29 @@ const RegisterPage = () => {
                     className="btn-login"
                     disabled={isRegisterLoading}
                   >
-                    {isRegisterLoading ? <Loader /> : 'Sign up'}
+                    {isRegisterLoading ? <Loader /> : 'Đăng ký'}
                   </button>
                   
                   <div className="auth-link">
-                    Already have an account? <Link to="/login">Login</Link>
+                    Đã có tài khỏa? <Link to="/login">Đăng nhập</Link>
                   </div>
                 </form>
               </>
             ) : (
               <>
-                <h2>Verify OTP</h2>
+                <h2>Xác thực mã OTP</h2>
                 
                 {errorMessage && <Message variant="error">{errorMessage}</Message>}
                 {successMessage && <Message variant="success">{successMessage}</Message>}
                 
                 <form className="auth-form" onSubmit={handleVerifyOTP}>
                   <div className="form-group">
-                    <label htmlFor="otp">Enter OTP</label>
+                    <label htmlFor="otp">Nhập mã OTP</label>
                     <input
                       type="text"
                       id="otp"
                       className="form-control"
-                      placeholder="Enter OTP sent to your email"
+                      placeholder="Nhập mã OTP đã được gửi đến email của bạn"
                       value={otp}
                       onChange={(e) => setOtp(e.target.value)}
                     />
@@ -192,7 +192,7 @@ const RegisterPage = () => {
                       className="btn-link"
                       onClick={() => setShowOtpForm(false)}
                     >
-                      Back to Register
+                      Quay lại đăng ký
                     </button>
                   </div>
                 </form>

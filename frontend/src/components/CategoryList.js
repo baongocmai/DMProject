@@ -17,16 +17,16 @@ import {
 const CategoryList = () => {
   // Enhanced categories with icons and colors
   const categories = [
-    { id: 1, name: 'Electronics', icon: <FaLaptop />, color: '#4a90e2', image: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=500&auto=format&fit=crop&q=60' },
-    { id: 2, name: 'Fashion', icon: <FaTshirt />, color: '#ff6b6b', image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=500&auto=format&fit=crop&q=60' },
-    { id: 3, name: 'Mobile', icon: <FaMobile />, color: '#20bf6b', image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500&auto=format&fit=crop&q=60' },
-    { id: 4, name: 'Headphones', icon: <FaHeadphones />, color: '#f7b731', image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=60' },
-    { id: 5, name: 'Home', icon: <FaHome />, color: '#9b59b6', image: 'https://images.unsplash.com/photo-1484154218962-a197022b5858?w=500&auto=format&fit=crop&q=60' },
-    { id: 6, name: 'Gifts', icon: <FaGift />, color: '#e74c3c', image: 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?w=500&auto=format&fit=crop&q=60' },
-    { id: 7, name: 'Books', icon: <FaBook />, color: '#3498db', image: 'https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=500&auto=format&fit=crop&q=60' },
-    { id: 8, name: 'Kids', icon: <FaBabyCarriage />, color: '#1abc9c', image: 'https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?w=500&auto=format&fit=crop&q=60' },
-    { id: 9, name: 'Sports', icon: <FaFootballBall />, color: '#27ae60', image: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=500&auto=format&fit=crop&q=60' },
-    { id: 10, name: 'Kitchen', icon: <FaUtensils />, color: '#e67e22', image: 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=500&auto=format&fit=crop&q=60' },
+    { id: 1, name: 'Sữa', icon: <FaLaptop />, color: '#4a90e2', image: 'https://nhabep24h.com/wp-content/uploads/sua-hat-dinh-duong.jpg' },
+    { id: 2, name: 'Rau - Củ - Trái cây', icon: <FaTshirt />, color: '#ff6b6b', image: 'https://assets.unileversolutions.com/v1/60221576.png' },
+    { id: 3, name: 'Hóa phẩm', icon: <FaMobile />, color: '#20bf6b', image: 'https://hcm.fstorage.vn/images/2023/06/artboard-15-20230608080726.gif' },
+    { id: 4, name: 'Chăm Sóc Cá Nhân', icon: <FaHeadphones />, color: '#f7b731', image: 'https://tse2.mm.bing.net/th?id=OIP.v5CPlXASwQf7o_eojPJQpgHaHa&pid=Api&P=0&h=180' },
+    { id: 5, name: 'Văn phòng phẩm - Đồ chơi', icon: <FaHome />, color: '#9b59b6', image: 'https://tse1.mm.bing.net/th?id=OIP.5FbVgzH6eQ7OiGqTT8BRkwHaFj&pid=Api&P=0&h=180' },
+    { id: 6, name: 'Bánh Kẹo', icon: <FaGift />, color: '#e74c3c', image: 'https://www.dacsanhuongviet.vn/site/wp-content/uploads/2022/12/Banh-keo-ngay-xua-1-1536x1151.jpg' },
+    { id: 7, name: 'Đồ uống - Giải khát', icon: <FaBook />, color: '#3498db', image: 'https://tse3.mm.bing.net/th?id=OIP.WPLeUTEXLTybj9PgkZrf5AHaE8&pid=Api&P=0&h=180' },
+    { id: 8, name: 'Mì - Thực Phẩm Ăn Liền', icon: <FaBabyCarriage />, color: '#1abc9c', image: 'https://tse3.mm.bing.net/th?id=OIP.9wO_Bv1f9SHYqn7M2m_PZQHaHa&pid=Api&P=0&h=180' },
+    { id: 9, name: 'Deal hot', icon: <FaFootballBall />, color: '#27ae60', image: 'https://img.freepik.com/premium-vector/hot-deals-vector-icon-flat-promotion-banner-hot-deal-price-tag-sale-offer-price_567423-966.jpg?w=2000' },
+
   ];
 
   return (

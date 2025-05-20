@@ -46,12 +46,12 @@ const LoginPage = () => {
     setInfoMessage('');
     
     if (!email || !password) {
-      setErrorMessage('Please enter both email and password');
+      setErrorMessage('Vui lòng nhập email và mật khẩu');
       return;
     }
 
     try {
-      setInfoMessage('Logging in...');
+      setInfoMessage('Đang đăng nhập...');
       
       // Clear any existing auth data before login
       removeToken();
@@ -73,21 +73,21 @@ const LoginPage = () => {
       
       // Show the destinations and add a slight delay for state to settle
       if (userData.role === 'admin' || userData.isAdmin === true) {
-        console.log('🚀 Navigating to admin dashboard...');
-        setInfoMessage('Login successful! Redirecting to admin dashboard...');
+        console.log('🚀 Chuyển hướng tới trang quản lý...');
+        setInfoMessage('Đăng nhập thành công! Đang chuyển hướng tới trang quản lý...');
         
         // Add a small delay to ensure state is updated
         setTimeout(() => {
           navigate('/admin/dashboard');
         }, 500);
       } else {
-        setInfoMessage('Login successful! Redirecting...');
+        setInfoMessage('Đăng nhập thành công! Đang chuyển trang...');
         setTimeout(() => {
           navigate(redirect);
         }, 300);
       }
     } catch (err) {
-      console.error('❌ Login error:', err);
+      console.error('❌ Lỗi đăng nhập:', err);
       setErrorMessage(formatError(err));
     }
   };
@@ -105,11 +105,11 @@ const LoginPage = () => {
           <div className="auth-form-wrapper">
             <div className="back-to-home">
               <Link to="/" className="btn-back">
-                <i className="fas fa-home"></i> Back to Home
+                <i className="fas fa-home"></i> Quay lại trang chủ
               </Link>
             </div>
             
-            <h2>Sign-in</h2>
+            <h2>Đăng nhập</h2>
             
             {errorMessage && <Message variant="error">{errorMessage}</Message>}
             {infoMessage && <Message variant="info">{infoMessage}</Message>}
@@ -127,7 +127,7 @@ const LoginPage = () => {
               </div>
               
               <div className="form-group">
-                <label htmlFor="password">Password</label>
+                <label htmlFor="password">Mật khẩu</label>
                 <input
                   type="password"
                   id="password"
@@ -142,11 +142,11 @@ const LoginPage = () => {
                 className="btn-login"
                 disabled={isLoading}
               >
-                {isLoading ? <Loader /> : 'Login'}
+                {isLoading ? <Loader /> : 'Đăng nhập'}
               </button>
               
               <div className="auth-link">
-                Don't have an account? <Link to="/register">Signup Here</Link>
+                Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link>
               </div>
             </form>
           </div>

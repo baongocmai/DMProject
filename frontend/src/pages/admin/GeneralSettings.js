@@ -387,7 +387,7 @@ const GeneralSettings = () => {
                               name="metaTags.title"
                               value={formData.metaTags.title}
                               onChange={handleChange}
-                              placeholder="2NADH - Premium Electronics Store"
+                              placeholder="2NADH - Premium Sữa Store"
                             />
                             <Form.Text className="text-muted">
                               Tiêu đề hiển thị trên kết quả tìm kiếm và tab trình duyệt
@@ -402,7 +402,7 @@ const GeneralSettings = () => {
                               name="metaTags.description"
                               value={formData.metaTags.description}
                               onChange={handleChange}
-                              placeholder="Shop the latest electronics, gadgets, and tech accessories"
+                              placeholder="Shop the latest Sữa, gadgets, and tech accessories"
                             />
                             <Form.Text className="text-muted">
                               Mô tả hiển thị dưới tiêu đề trong kết quả tìm kiếm
@@ -416,7 +416,7 @@ const GeneralSettings = () => {
                               name="metaTags.keywords"
                               value={formData.metaTags.keywords}
                               onChange={handleChange}
-                              placeholder="electronics, gadgets, smartphones, laptops, Vietnam"
+                              placeholder="Sữa, gadgets, smartphones, laptops, Vietnam"
                             />
                             <Form.Text className="text-muted">
                               Các từ khóa ngăn cách bởi dấu phẩy

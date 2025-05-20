@@ -15,7 +15,7 @@ export const mockProductAnalytics = {
     {
       _id: '1',
       name: 'Smartphone X Pro',
-      category: { name: 'Electronics' },
+      category: { name: 'Sữa' },
       price: 12000000,
       salePrice: 10500000,
       countInStock: 45,
@@ -55,7 +55,7 @@ export const mockProductAnalytics = {
     {
       _id: '5',
       name: '4K Ultra HD TV',
-      category: { name: 'Electronics' },
+      category: { name: 'Sữa' },
       price: 18000000,
       salePrice: null,
       countInStock: 8,
@@ -64,7 +64,7 @@ export const mockProductAnalytics = {
     }
   ],
   salesByCategory: [
-    { name: 'Electronics', value: 485000000 },
+    { name: 'Sữa', value: 485000000 },
     { name: 'Computers', value: 320000000 },
     { name: 'Wearables', value: 175000000 },
     { name: 'Audio', value: 145000000 },
@@ -173,8 +173,8 @@ export const mockOrderAnalytics = {
 export const mockCategories = [
   {
     _id: '1',
-    name: 'Electronics',
-    slug: 'electronics',
+    name: 'Sữa',
+    slug: 'Sữa',
     description: 'Electronic devices and accessories',
     image: 'https://via.placeholder.com/100',
     parent: null,
@@ -208,7 +208,7 @@ export const mockCategories = [
     _id: '4',
     name: 'Clothing',
     slug: 'clothing',
-    description: 'Fashion and apparel',
+    description: 'Rau - củ - quả and apparel',
     image: 'https://via.placeholder.com/100',
     parent: null,
     isActive: true,
@@ -489,8 +489,8 @@ export const mockDiscounts = [
   },
   {
     _id: '2',
-    name: 'Electronics Flash Sale',
-    description: 'Limited time discount on electronics',
+    name: 'Sữa Flash Sale',
+    description: 'Limited time discount on Sữa',
     type: 'percentage',
     value: 15,
     startDate: '2023-08-10T00:00:00Z',
@@ -585,10 +585,10 @@ export const mockBanners = [
   },
   {
     _id: '2',
-    title: 'New Electronics Arrivals',
+    title: 'New Sữa Arrivals',
     description: 'Check out the latest gadgets with special launch offers',
     image: 'https://via.placeholder.com/1200x400',
-    url: '/category/electronics',
+    url: '/category/sua',
     isActive: true,
     position: 'home_middle',
     startDate: '2023-08-01T00:00:00Z',
@@ -624,9 +624,9 @@ export const mockGeneralSettings = {
     instagram: 'https://instagram.com/2NADH'
   },
   metaTags: {
-    title: '2NADH - Premium Electronics Store',
-    description: 'Shop the latest electronics, gadgets, and tech accessories',
-    keywords: 'electronics, gadgets, smartphones, laptops, Vietnam'
+    title: '2NADH - Premium Sữa Store',
+    description: 'Shop the latest Sữa, gadgets, and tech accessories',
+    keywords: 'Sữa, gadgets, smartphones, laptops, Vietnam'
   },
   currencyCode: 'VND',
   currencySymbol: '₫',

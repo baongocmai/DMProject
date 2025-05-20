@@ -122,12 +122,12 @@ const HomePage = () => {
     },
     {
       id: 2,
-      title: "Premium Electronics",
+      title: "Premium Sữa",
       subtitle: "Công nghệ mới nhất",
       description: "Khám phá các sản phẩm công nghệ mới nhất với giá cực kỳ ưu đãi.",
       buttonText: "Khám phá thêm",
       image: "https://images.unsplash.com/photo-1468495244123-6c6c332eeece?q=80&w=1200&auto=format&fit=crop",
-      link: "/category/electronics"
+      link: "/category/sua"
     },
     {
       id: 3,
@@ -136,7 +136,7 @@ const HomePage = () => {
       description: "Tìm kiếm những món đồ khiến ngôi nhà của bạn trở thành tổ ấm đích thực.",
       buttonText: "Xem bộ sưu tập",
       image: "https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=1200&auto=format&fit=crop",
-      link: "/category/home"
+      link: "/category/hoapham"
     }
   ];
 

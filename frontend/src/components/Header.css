@@ -29,12 +29,15 @@
 .topbar-links {
   display: flex;
   gap: 20px;
+  flex-wrap: wrap; /* Cho phép xuống dòng nếu cần */
+  max-width: 100%;
 }
 
 .topbar-links a {
-  color: #e0e0e0;
-  text-decoration: none;
-  transition: color 0.2s ease;
+  white-space: nowrap; /* Không bị xuống dòng giữa chữ */
+  overflow: hidden;     /* Ẩn phần vượt quá nếu có */
+  text-overflow: ellipsis; /* Hiển thị ... nếu quá dài */
+  max-width: 200px;      /* Hoặc bạn có thể điều chỉnh kích thước phù hợp */
 }
 
 .topbar-links a:hover {
@@ -83,7 +86,7 @@
   border: 1px solid #e0e0e0;
   padding-left: 15px;
   transition: border-color 0.3s ease;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
 }
 
 .search-input:focus {

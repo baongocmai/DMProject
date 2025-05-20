@@ -27,10 +27,10 @@ const Footer = () => {
       <Container>
         <Row className="mb-4">
           <Col lg={4} md={6} className="mb-4 mb-lg-0">
-            <h5 className="text-uppercase mb-4">Retail Store</h5>
+            <h5 className="text-uppercase mb-4">Siêu thị bán lẻ</h5>
             <p>
-              Your one-stop destination for quality products at affordable prices.
-              We offer a wide range of items across multiple categories.
+              Chúng tôi sử dụng công nghệ khai phá dữ liệu để gợi ý các combo ưu đãi phù hợp với bạn.
+              Hệ thống tự động phân tích các sản phẩm thường được mua cùng nhau và đề xuất những gói khuyến mãi giúp bạn tiết kiệm hơn.
             </p>
             <div className="social-icons">
               <a href="#!" className="me-3"><FaFacebook size={20} /></a>
@@ -44,45 +44,45 @@ const Footer = () => {
             <h5 className="text-uppercase mb-4">Shop</h5>
             <ul className="list-unstyled">
               <li className="mb-2">
-                <a href="/category/electronics" className="footer-link">Electronics</a>
+                <a href="/category/sua" className="footer-link">Sữa</a>
               </li>
               <li className="mb-2">
-                <a href="/category/clothing" className="footer-link">Clothing</a>
+                <a href="/category/hoapham" className="footer-link">Hóa phẩm</a>
               </li>
               <li className="mb-2">
-                <a href="/category/books" className="footer-link">Books</a>
+                <a href="/category/banhkeo" className="footer-link">Bánh kẹo</a>
               </li>
               <li className="mb-2">
-                <a href="/category/home" className="footer-link">Home & Kitchen</a>
+                <a href="/category/vanphongphamdochoi" className="footer-link">Văn phòng phẩm - Đồ chơi</a>
               </li>
             </ul>
           </Col>
           
           <Col lg={2} md={6} className="mb-4 mb-lg-0">
-            <h5 className="text-uppercase mb-4">Support</h5>
+            <h5 className="text-uppercase mb-4">Hỗ trợ</h5>
             <ul className="list-unstyled">
               <li className="mb-2">
-                <a href="/help" className="footer-link">Help Center</a>
+                <a href="#" className="footer-link">Trung tâm trợ giúp</a>
               </li>
               <li className="mb-2">
-                <a href="/shipping" className="footer-link">Shipping Info</a>
+                <a href="#" className="footer-link">Thông tin giao hàng</a>
               </li>
               <li className="mb-2">
-                <a href="/returns" className="footer-link">Returns & Refunds</a>
+                <a href="#" className="footer-link">Hoàn tiền</a>
               </li>
               <li className="mb-2">
-                <a href="/contact" className="footer-link">Contact Us</a>
+                <a href="#" className="footer-link">Liên hệ</a>
               </li>
             </ul>
           </Col>
           
           <Col lg={4} md={6}>
-            <h5 className="text-uppercase mb-4">Newsletter</h5>
-            <p>Subscribe to receive updates, access to exclusive deals, and more.</p>
+            <h5 className="text-uppercase mb-4">Bản tin</h5>
+            <p>Đăng ký để nhận cập nhật, ưu đãi độc quyền và nhiều thông tin khác.</p>
             <Form onSubmit={handleSubscribe}>
               <InputGroup className="mb-3">
                 <Form.Control
-                  placeholder="Your email"
+                  placeholder="Email của bạn"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -90,12 +90,12 @@ const Footer = () => {
                 />
                 <Button type="submit" variant="primary">
                   <FaEnvelope className="me-2" />
-                  Subscribe
+                  Đăng ký
                 </Button>
               </InputGroup>
               {subscribed && (
                 <p className="text-success small">
-                  Thank you for subscribing to our newsletter!
+                  Cảm ơn bạn vì đã đăng ký!
                 </p>
               )}
             </Form>
@@ -107,25 +107,25 @@ const Footer = () => {
         <Row className="align-items-center">
           <Col md={7} className="mb-3 mb-md-0">
             <p className="small mb-0">
-              &copy; {new Date().getFullYear()} Retail Store. All rights reserved.
+              &copy; {new Date().getFullYear()} Siêu thị bán lẻ. Bản quyền thuộc về 2NADH.
             </p>
           </Col>
           <Col md={5} className="text-md-end">
             <ul className="list-inline mb-0">
               <li className="list-inline-item">
-                <a href="/privacy" className="footer-link small">Privacy Policy</a>
+                <a href="/" className="footer-link small">Chính sách quyền riêng tư</a>
               </li>
               <li className="list-inline-item">
                 <span className="mx-2">•</span>
               </li>
               <li className="list-inline-item">
-                <a href="/terms" className="footer-link small">Terms of Use</a>
+                <a href="/" className="footer-link small">Điều khoản</a>
               </li>
               <li className="list-inline-item">
                 <span className="mx-2">•</span>
               </li>
               <li className="list-inline-item">
-                <a href="/cookies" className="footer-link small">Cookie Policy</a>
+                <a href="/" className="footer-link small">Cookie</a>
               </li>
             </ul>
           </Col>

@@ -403,7 +403,7 @@ const BannerList = () => {
                       name="linkTo"
                       value={formData.linkTo}
                       onChange={handleChange}
-                      placeholder="Nhập URL đích khi nhấp vào banner (ví dụ: /category/electronics)"
+                      placeholder="Nhập URL đích khi nhấp vào banner (ví dụ: /category/sua)"
                     />
                     <Form.Text className="text-muted">
                       URL đích khi người dùng nhấp vào banner.

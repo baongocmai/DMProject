@@ -12,6 +12,18 @@ const CategoryPage = () => {
   const { categoryName } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   
+  const categorySlugMap = {
+  'sua': 'Sữa các loại',
+  'raucutraicay': 'Rau - Củ - Trái cây',
+  'hoapham': 'Hóa Phẩm - Tẩy rửa',
+  'chamsoccanhan': 'Chăm Sóc Cá Nhân',
+  'vanphongphamdochoi': 'Văn phòng phẩm - Đồ chơi',
+  'banhkeo': 'Bánh Kẹo',
+  'douonggiaikhat': 'Đồ uống - Giải khát',
+  'mithucphamanlien': 'Mì - Thực Phẩm Ăn Liền',
+  // thêm các danh mục khác tại đây
+};
+
   // Get page from URL or default to 1
   const page = parseInt(searchParams.get('page') || '1');
   
@@ -26,12 +38,15 @@ const CategoryPage = () => {
   const [rating, setRating] = useState(searchParams.get('rating') || '');
   
   // Prepare the query params
-  const queryParams = {
-    category: categoryName,
-    page,
-    sortBy: sortOption,
-    limit: 12
-  };
+  const displayCategoryName = categorySlugMap[categoryName] || categoryName;
+
+const queryParams = {
+  category: displayCategoryName,
+  page,
+  sortBy: sortOption,
+  limit: 12
+};
+
   
   // Add filters if they exist
   if (priceRange.min) queryParams.minPrice = priceRange.min;
@@ -112,7 +127,7 @@ const CategoryPage = () => {
           <Breadcrumb.Item active>{categoryName}</Breadcrumb.Item>
         </Breadcrumb>
         
-        <h1 className="mb-4 text-capitalize">{categoryName}</h1>
+        <h1 className="mb-4 text-capitalize">{displayCategoryName}</h1>
         
         <Row>
           {/* Filters sidebar */}
@@ -211,7 +226,7 @@ const CategoryPage = () => {
               </Message>
             ) : products.length === 0 ? (
               <Message variant="info">
-                No products found in this category with the selected filters.
+                Không tìm thấy sản phẩm nào trong danh mục này với các bộ lọc đã chọn.
               </Message>
             ) : (
               <>

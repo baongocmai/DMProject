@@ -137,7 +137,7 @@ const Header = () => {
             </div>
             <div className="topbar-links">
               {isAuthenticated ? (
-                <a href="#" onClick={openAccountDrawer} className="welcome-message">Chào mừng, {user?.name?.split(' ')[0] || 'User'}</a>
+                <a href="#" onClick={openAccountDrawer} className="welcome-message">Chào mừng, {user?.name || 'Người dùng'}</a>
               ) : (
                 <a href="#" onClick={openAccountDrawer}>Đăng nhập / Đăng ký</a>
               )}
@@ -220,7 +220,7 @@ const Header = () => {
               <InputGroup>
               <Form.Control
                 type="search"
-                  placeholder="Tìm kiếm ..."
+                  placeholder="Tìm kiếm ở đây ..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                   className="search-input"
@@ -234,38 +234,32 @@ const Header = () => {
             <Nav className="categories-nav me-auto">
               <Nav.Link 
                 as={Link} 
-                to="/category/electronics" 
-                className={isActive('/category/electronics') ? 'active' : ''}
+                to="/category/sua" 
+                className={isActive('/category/sua') ? 'active' : ''}
               >
-                  Electronics
+                  Sữa
               </Nav.Link>
               <Nav.Link 
                 as={Link} 
-                to="/category/fashion" 
-                className={isActive('/category/fashion') ? 'active' : ''}
+                to="/category/banhkeo" 
+                className={isActive('/category/banhkeo') ? 'active' : ''}
               >
-                Fashion
+                Bánh Kẹo
               </Nav.Link>
               <Nav.Link 
                 as={Link} 
-                to="/category/home" 
-                className={isActive('/category/home') ? 'active' : ''}
+                to="/category/hoapham" 
+                className={isActive('/category/hoapham') ? 'active' : ''}
               >
-                Home
+                Hóa phẩm
               </Nav.Link>
-                <Nav.Link 
-                as={Link} 
-                to="/category/beauty" 
-                className={isActive('/category/beauty') ? 'active' : ''}
-                >
-                Beauty
-                </Nav.Link>
             
                   <NavDropdown title="Xem thêm" id="more-dropdown">
-                    <NavDropdown.Item as={Link} to="/category/books">Books</NavDropdown.Item>
-                    <NavDropdown.Item as={Link} to="/category/sports">Sports</NavDropdown.Item>
-                    <NavDropdown.Item as={Link} to="/category/toys">Toys & Games</NavDropdown.Item>
-                    <NavDropdown.Item as={Link} to="/category/groceries">Groceries</NavDropdown.Item>
+                    <NavDropdown.Item as={Link} to="/category/vanphongphamdochoi">Văn phòng phẩm - Đồ chơi</NavDropdown.Item>
+                    <NavDropdown.Item as={Link} to="/category/raucutraicay">Rau - Củ - Quả</NavDropdown.Item>
+                    <NavDropdown.Item as={Link} to="/category/douonggiaikhat">Đồ uống - Giải khát</NavDropdown.Item>
+                    <NavDropdown.Item as={Link} to="/category/mithucphamanlien">Mì - Thực Phẩm Ăn Liền</NavDropdown.Item>
+                    <NavDropdown.Item as={Link} to="/category/chamsoccanhan">Chăm sóc cá nhân</NavDropdown.Item>
                   </NavDropdown>
                 
             </Nav>
@@ -318,9 +312,9 @@ const Header = () => {
       <div className="mobile-category-menu d-lg-none">
         <Container>
           <Nav className="scrollable-nav">
-            <Nav.Link as={Link} to="/category/electronics" className={isActive('/category/electronics') ? 'active' : ''}>Electronics</Nav.Link>
-            <Nav.Link as={Link} to="/category/fashion" className={isActive('/category/fashion') ? 'active' : ''}>Fashion</Nav.Link>
-            <Nav.Link as={Link} to="/category/home" className={isActive('/category/home') ? 'active' : ''}>Home</Nav.Link>
+            <Nav.Link as={Link} to="/category/sua" className={isActive('/category/sua') ? 'active' : ''}>Sữa</Nav.Link>
+            <Nav.Link as={Link} to="/category/raucutraicay" className={isActive('/category/raucutraicay') ? 'active' : ''}>Rau - củ - quả</Nav.Link>
+            <Nav.Link as={Link} to="/category/hoapham" className={isActive('/category/hoapham') ? 'active' : ''}>Hóa phẩm</Nav.Link>
             <Nav.Link as={Link} to="/category/beauty" className={isActive('/category/beauty') ? 'active' : ''}>Beauty</Nav.Link>
             <Nav.Link as={Link} to="/category/books" className={isActive('/category/books') ? 'active' : ''}>Books</Nav.Link>
             <Nav.Link as={Link} to="/category/sports" className={isActive('/category/sports') ? 'active' : ''}>Sports</Nav.Link>
