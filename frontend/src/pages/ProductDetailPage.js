@@ -227,13 +227,9 @@ const ProductDetailPage = () => {
                     <h2 className="product-name-in-card">{productData.name}</h2>
                   </div>
                   
+              
                   <div className="product-detail-row">
-                    <div className="detail-label">Giá niêm yết</div>
-                    <div className="detail-value original-price">{formatPrice(productData.originalPrice)}</div>
-                    </div>
-                    
-                  <div className="product-detail-row">
-                    <div className="detail-label">Giá khuyến mãi</div>
+                    <div className="detail-label">Giá ưu đãi</div>
                     <div className="detail-value current-price">{formatPrice(productData.price)}</div>
                 </div>
                 

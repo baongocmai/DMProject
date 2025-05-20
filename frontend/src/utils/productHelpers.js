@@ -4,16 +4,14 @@
  * @param {String} currency - Currency code (default: USD)
  * @returns {String} Formatted price
  */
-export const formatPrice = (price, currency = 'USD') => {
-  if (price === undefined || price === null) return '';
-  
-  const formatter = new Intl.NumberFormat('en-US', {
+export const formatPrice = (price) => {
+  return price.toLocaleString('vi-VN', {
     style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
+    currency: 'VND',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
   });
   
-  return formatter.format(price);
 };
 
 /**

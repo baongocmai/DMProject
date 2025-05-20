@@ -100,6 +100,10 @@ const HomePage = () => {
     console.log('Products data from API:', productsData);
     console.log('Recommendations data from API:', recommendationsData);
   }, [productsData, recommendationsData]);
+  const scrollToBottom = () => {
+  window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+};
+
   
   // Extract products array from API response or use empty array as fallback
   const products = productsData?.products || [];
@@ -111,33 +115,33 @@ const HomePage = () => {
 
   // Hero banners data
   const heroBanners = [
-    {
-      id: 1,
-      title: "Summer Collection",
-      subtitle: "New arrivals for the season",
-      description: "Discover our latest collection with up to 40% off selected items.",
-      buttonText: "Mua sắm ngay",
-      image: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=1200&auto=format&fit=crop",
-      link: "/category/summer"
-    },
-    {
-      id: 2,
-      title: "Premium Sữa",
-      subtitle: "Công nghệ mới nhất",
-      description: "Khám phá các sản phẩm công nghệ mới nhất với giá cực kỳ ưu đãi.",
-      buttonText: "Khám phá thêm",
-      image: "https://images.unsplash.com/photo-1468495244123-6c6c332eeece?q=80&w=1200&auto=format&fit=crop",
-      link: "/category/sua"
-    },
-    {
-      id: 3,
-      title: "Home Essentials",
-      subtitle: "Thay đổi diện mạo không gian sống",
-      description: "Tìm kiếm những món đồ khiến ngôi nhà của bạn trở thành tổ ấm đích thực.",
-      buttonText: "Xem bộ sưu tập",
-      image: "https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=1200&auto=format&fit=crop",
-      link: "/category/hoapham"
-    }
+      {
+    id: 1,
+    title: "Lợi ích khi mua theo combo",
+    subtitle: "Tiết kiệm & tiện lợi",
+    description: "Mua combo sản phẩm được đề xuất giúp bạn tiết kiệm lên đến 25% so với mua lẻ từng món.",
+    buttonText: "Xem combo ngay",
+    image: "/banner.png",
+    link: "/?category=deal%20hot"
+  },
+  {
+    id: 2,
+    title: "Các deal hot độc quyền",
+    subtitle: "Siêu tiết kiệm",
+    description: "Khám phá các deal hot độc quyền chỉ có tại cửa hàng chúng tôi.",
+    buttonText: "Khám phá ngay",
+    image: "/banner2.png",
+    link: "/?category=deal%20hot"
+  },
+  {
+    id: 3,
+    title: "Ưu đãi hấp dẫn",
+    subtitle: "Chương trình khuyến mãi đặc biệt",
+    description: "Nhận ngay ưu đãi lên đến 40% cho đơn hàng đầu tiên khi đăng ký thành viên của chúng tôi.",
+    buttonText: "Đăng ký nhận ưu đãi",
+    image: "/banner3.png",
+    link: "/"
+  }
   ];
 
   return (
@@ -149,32 +153,56 @@ const HomePage = () => {
       {/* Hero Banner Carousel */}
       {!filters.keyword && !filters.category && (
         <div className="hero-section">
-          <Carousel fade interval={5000} pause="hover">
+          <Carousel 
+  fade 
+  interval={2000} 
+  pause="hover" 
+  ride="carousel" 
+  wrap={true} 
+  controls={true}
+>
+
             {heroBanners.map(banner => (
-              <Carousel.Item key={banner.id}>
-                <div 
-                  className="hero-banner" 
-                  style={{ 
-                    backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6)), url(${banner.image})`,
-                  }}
+  <Carousel.Item key={banner.id}>
+    <div 
+      className="hero-banner" 
+      style={{ 
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6)), url(${banner.image})`,
+      }}
+    >
+      <Container>
+        <Row className="hero-content">
+          <Col md={7} lg={6}>
+            <div className="banner-content">
+              <p className="banner-subtitle">{banner.subtitle}</p>
+              <h1 className="banner-title">{banner.title}</h1>
+              <p className="banner-description">{banner.description}</p>
+              {banner.id === 3 ? (
+                <Button 
+                  variant="light" 
+                  size="lg" 
+                  className="banner-button"
+                  onClick={scrollToBottom}
                 >
-                  <Container>
-                    <Row className="hero-content">
-                      <Col md={7} lg={6}>
-                        <div className="banner-content">
-                          <p className="banner-subtitle">{banner.subtitle}</p>
-                          <h1 className="banner-title">{banner.title}</h1>
-                          <p className="banner-description">{banner.description}</p>
-                          <Button variant="light" size="lg" href={banner.link} className="banner-button">
-                            {banner.buttonText} <FaArrowRight className="ms-2" />
-                          </Button>
-                        </div>
-                      </Col>
-                    </Row>
-                  </Container>
-                </div>
-              </Carousel.Item>
-            ))}
+                  {banner.buttonText} <FaArrowRight className="ms-2" />
+                </Button>
+              ) : (
+                <Button 
+                  variant="light" 
+                  size="lg" 
+                  href={banner.link} 
+                  className="banner-button"
+                >
+                  {banner.buttonText} <FaArrowRight className="ms-2" />
+                </Button>
+              )}
+            </div>
+          </Col>
+        </Row>
+      </Container>
+    </div>
+  </Carousel.Item>
+))}
           </Carousel>
         </div>
       )}
@@ -218,21 +246,21 @@ const HomePage = () => {
       </Message>
     )}
 
-    <Row
-      className={`g-3 ${displayProducts.length === 1 ? 'justify-content-center' : ''}`}
+    <Row className="g-3">
+  {displayProducts.map((product) => (
+    <Col
+      key={product._id}
+      xs={12}
+      sm={6}
+      md={4}
+      lg={2} // Cứ để vậy, nhưng ta sẽ override bằng CSS bên dưới
+      style={{ flex: '0 0 20%', maxWidth: '20%' }} // Chia 5 cột
     >
-      {displayProducts.map((product) => (
-        <Col
-          key={product._id}
-          xs={12}
-          sm={8} // rộng hơn khi chỉ có 1
-          md={6}
-          lg={4}
-        >
-          <ProductCard product={product} />
-        </Col>
-      ))}
-    </Row>
+      <ProductCard product={product} />
+    </Col>
+  ))}
+</Row>
+
 
     {displayProducts.length === 0 && (
       <Message>

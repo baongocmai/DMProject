@@ -26,6 +26,7 @@ const CategoryList = () => {
     { id: 7, name: 'Đồ uống - Giải khát', icon: <FaBook />, color: '#3498db', image: 'https://tse3.mm.bing.net/th?id=OIP.WPLeUTEXLTybj9PgkZrf5AHaE8&pid=Api&P=0&h=180' },
     { id: 8, name: 'Mì - Thực Phẩm Ăn Liền', icon: <FaBabyCarriage />, color: '#1abc9c', image: 'https://tse3.mm.bing.net/th?id=OIP.9wO_Bv1f9SHYqn7M2m_PZQHaHa&pid=Api&P=0&h=180' },
     { id: 9, name: 'Deal hot', icon: <FaFootballBall />, color: '#27ae60', image: 'https://img.freepik.com/premium-vector/hot-deals-vector-icon-flat-promotion-banner-hot-deal-price-tag-sale-offer-price_567423-966.jpg?w=2000' },
+    { id: 10, name: 'Combo', icon: <FaFootballBall />, color: '#27ae60', image: 'https://static.vecteezy.com/system/resources/previews/023/053/406/original/combo-offer-banner-template-megaphone-icon-illustration-flat-design-vector.jpg' },
 
   ];
 

@@ -8,7 +8,7 @@
   margin-bottom: 0;
   background-color: #fff;
   overflow: hidden;
-  border: 1px solid rgba(0,0,0,0.04);
+  border: 1px solid rgba(1, 0, 0, 0.929);
   text-align: center;
 }
 
@@ -103,13 +103,13 @@
 }
 
 .original-price {
-  font-size: 0.85rem;
+  font-size: 0.6rem;
   color: #6c757d;
   text-decoration: line-through;
 }
 
 .current-price {
-  font-size: 1.1rem;
+  font-size: 0.6rem;
   font-weight: 700;
   color: #d9534f;
 }
