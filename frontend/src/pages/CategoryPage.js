@@ -119,10 +119,10 @@ const queryParams = {
         {/* Breadcrumbs */}
         <Breadcrumb className="mb-4">
           <Breadcrumb.Item linkAs={Link} linkProps={{ to: '/' }}>
-            Home
+            Trang chủ
           </Breadcrumb.Item>
           <Breadcrumb.Item linkAs={Link} linkProps={{ to: '/categories' }}>
-            Categories
+            Danh mục
           </Breadcrumb.Item>
           <Breadcrumb.Item active>{categoryName}</Breadcrumb.Item>
         </Breadcrumb>
@@ -133,16 +133,16 @@ const queryParams = {
           {/* Filters sidebar */}
           <Col md={3}>
             <div className="filters-section p-3 border rounded mb-4">
-              <h4>Filters</h4>
+              <h4>Lọc</h4>
               <hr />
               
               {/* Price range filter */}
               <Form.Group className="mb-3">
-                <Form.Label>Price Range</Form.Label>
+                <Form.Label>Mức giá</Form.Label>
                 <div className="d-flex">
                   <Form.Control
                     type="number"
-                    placeholder="Min"
+                    placeholder="Nhỏ nhất"
                     value={priceRange.min}
                     onChange={(e) => setPriceRange({ ...priceRange, min: e.target.value })}
                     min="0"
@@ -150,7 +150,7 @@ const queryParams = {
                   />
                   <Form.Control
                     type="number"
-                    placeholder="Max"
+                    placeholder="Thấp nhất"
                     value={priceRange.max}
                     onChange={(e) => setPriceRange({ ...priceRange, max: e.target.value })}
                     min="0"
@@ -160,16 +160,16 @@ const queryParams = {
               
               {/* Rating filter */}
               <Form.Group className="mb-3">
-                <Form.Label>Minimum Rating</Form.Label>
+                <Form.Label>Đánh giá tối thiểu</Form.Label>
                 <Form.Select
                   value={rating}
                   onChange={(e) => setRating(e.target.value)}
                 >
-                  <option value="">Any Rating</option>
-                  <option value="4">4+ Stars</option>
-                  <option value="3">3+ Stars</option>
-                  <option value="2">2+ Stars</option>
-                  <option value="1">1+ Stars</option>
+                  <option value="">Tất cả các đánh giá</option>
+                  <option value="4">4+ sao</option>
+                  <option value="3">3+ sao</option>
+                  <option value="2">2+ sao</option>
+                  <option value="1">1+ sao</option>
                 </Form.Select>
               </Form.Group>
               
@@ -179,13 +179,13 @@ const queryParams = {
                   className="btn btn-primary me-2"
                   onClick={applyFilters}
                 >
-                  Apply Filters
+                  Áp dụng bộ lọc
                 </button>
                 <button
                   className="btn btn-outline-secondary"
                   onClick={resetFilters}
                 >
-                  Reset
+                  Đặt lại
                 </button>
               </div>
             </div>
@@ -198,7 +198,7 @@ const queryParams = {
               <div>
                 {products.length > 0 && (
                   <p className="mb-0">
-                    Showing {products.length} products
+                    Hiển thị {products.length} sản phẩm
                   </p>
                 )}
               </div>
@@ -208,11 +208,11 @@ const queryParams = {
                   value={sortOption}
                   onChange={handleSortChange}
                 >
-                  <option value="newest">Newest</option>
-                  <option value="price-asc">Price: Low to High</option>
-                  <option value="price-desc">Price: High to Low</option>
-                  <option value="rating">Best Rating</option>
-                  <option value="popular">Most Popular</option>
+                  <option value="newest">Mới nhất</option>
+                  <option value="price-asc">Giá: Thấp tới cao</option>
+                  <option value="price-desc">Giá: Cao tới thấp</option>
+                  <option value="rating">Đánh giá tốt nhất</option>
+                  <option value="popular">Phổ biến nhất</option>
                 </Form.Select>
               </Form.Group>
             </div>

@@ -71,16 +71,16 @@ const WishlistPage = () => {
             </div>
           </Alert>
         ) : (
-          <Row className="wishlist-grid">
-            {wishlist.map((item) => (
-              <Col key={item._id} sm={6} md={4} lg={3} className="mb-4">
+          <Row className={`wishlist-grid ${wishlist.length === 1 ? 'single-item' : ''}`}>
+  {wishlist.map((item) => (
+    <Col key={item._id} sm={6} md={4} lg={3} className="mb-4">
                 <Card className="wishlist-item">
-                  <div className="product-image-container">
+                  <div className="product-image22-container">
                     <Card.Img 
                       variant="top" 
                       src={item.image || '/images/product-placeholder.png'} 
                       alt={item.name}
-                      className="product-image cursor-pointer"
+                      className="product-image22 cursor-pointer"
                       onClick={() => navigate(`/product/${item._id}`)}
                     />
                   </div>
@@ -109,7 +109,7 @@ const WishlistPage = () => {
                         onClick={() => handleAddToCart(item)}
                         disabled={isAddingToCart}
                       >
-                        <FaShoppingCart /> Thêm vào giỏ hàng
+                        <FaShoppingCart /> 
                       </Button>
                     </div>
                   </Card.Body>

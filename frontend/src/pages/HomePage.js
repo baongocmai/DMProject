@@ -193,7 +193,7 @@ const HomePage = () => {
         {(filters.keyword || filters.category) && (
           <div className="search-results-header">
             <h2>
-              {filters.keyword ? `Search Results for "${filters.keyword}"` : ''}
+              {filters.keyword ? `Kết quả tìm kiếm cho "${filters.keyword}"` : ''}
               {filters.category ? `Category: ${filters.category}` : ''}
             </h2>
           </div>
@@ -202,35 +202,60 @@ const HomePage = () => {
         {/* Products Section */}
         <div className="products-section py-4">
           <div className="d-flex justify-content-between align-items-center mb-4">
-            <h2 className="section-title">Các sản phẩm phổ biến</h2>
-            <Button variant="outline-primary" href="/products" className="view-all-btn">Xem thêm</Button>
-          </div>
+  <h2 className="section-title">Các sản phẩm phổ biến</h2>
+</div>
+
         
-        <ApiErrorBoundary
-          isLoading={productsLoading}
-          error={productsError}
-          loadingComponent={<Loader />}
+ <ApiErrorBoundary
+  isLoading={productsLoading}
+  error={productsError}
+  loadingComponent={<Loader />}
+>
+  <>
+    {productsError && (
+      <Message variant="error">
+        Lỗi tải dữ liệu sản phẩm: {JSON.stringify(productsError)}
+      </Message>
+    )}
+
+    <Row
+      className={`g-3 ${displayProducts.length === 1 ? 'justify-content-center' : ''}`}
+    >
+      {displayProducts.map((product) => (
+        <Col
+          key={product._id}
+          xs={12}
+          sm={8} // rộng hơn khi chỉ có 1
+          md={6}
+          lg={4}
         >
-          <>
-            {productsError && (
-              <Message variant="error">
-                Lỗi tải dữ liệu sản phẩm: {JSON.stringify(productsError)}
-              </Message>
-            )}
-            
-              <Row className="product-grid g-3">
-                {displayProducts.map((product) => (
-                  <div key={product._id} className="col-5-products">
-                    <ProductCard product={product} />
-                  </div>
-                ))}
-              </Row>
-            
-            {displayProducts.length === 0 && (
-              <Message>Không có sản phẩm phù hợp. Vui lòng thử thay đổi bộ lọc.</Message>
-            )}
-          </>
-        </ApiErrorBoundary>
+          <ProductCard product={product} />
+        </Col>
+      ))}
+    </Row>
+
+    {displayProducts.length === 0 && (
+      <Message>
+        Không có sản phẩm phù hợp. Vui lòng thử thay đổi bộ lọc.
+      </Message>
+    )}
+
+    {/* CHỈ HIỆN NÚT KHI CÒN SẢN PHẨM */}
+    {displayProducts.length < products.length && (
+      <div className="d-flex justify-content-center mt-4">
+        <Button
+          variant="outline-primary"
+          href="/products"
+          className="view-all-btn"
+        >
+          Xem thêm
+        </Button>
+      </div>
+    )}
+  </>
+</ApiErrorBoundary>
+
+
       </div>
 
         {/* Featured Section */}
@@ -266,13 +291,23 @@ const HomePage = () => {
               <h2 className="section-title">Gợi ý cho bạn</h2>
               <Button variant="outline-primary" href="/recommendations" className="view-all-btn">Xem tất cả</Button>
             </div>
-            <Row className="product-grid g-3">
+            {/* <Row className="product-grid g-3">
               {recommendedProducts.slice(0, 5).map((product) => (
                 <div key={product._id} className="col-5-products">
                   <ProductCard product={product} />
                 </div>
               ))}
-            </Row>
+            </Row> */}
+             <Row className={`g-3 ${displayProducts.length === 1 ? 'justify-content-center' : ''}`}>
+  {displayProducts.map((product) => (
+    <Col key={product._id} xs={12} sm={6} md={4} lg={3}>
+      <div className="col-12 col-sm-6 col-md-4 col-lg-3">
+  <ProductCard product={product} />
+</div>
+
+    </Col>
+  ))}
+</Row>
           </div>
         )}
         
