@@ -57,6 +57,7 @@ import GeneralSettings from './pages/admin/GeneralSettings';
 import PaymentSettings from './pages/admin/PaymentSettings';
 import ShippingSettings from './pages/admin/ShippingSettings';
 import ProductAnalytics from './pages/admin/ProductAnalytics';
+import DealHotManagement from './pages/admin/DealHotManagement';
 
 function App() {
   return (
@@ -249,6 +250,11 @@ function App() {
         <Route path="/admin/analytics/product" element={
           <AdminRoute>
             <ProductAnalytics />
+          </AdminRoute>
+        } />
+        <Route path="/admin/marketing/deal-hot" element={
+          <AdminRoute>
+            <DealHotManagement />
           </AdminRoute>
         } />
       </Routes>

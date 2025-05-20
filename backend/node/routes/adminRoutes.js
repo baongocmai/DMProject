@@ -71,6 +71,30 @@ router.post("/marketing/banners", protect, isAdmin, adminController.createBanner
 router.put("/marketing/banners/:id", protect, isAdmin, adminController.updateBanner);
 router.delete("/marketing/banners/:id", protect, isAdmin, adminController.deleteBanner);
 
+// Deal Hot routes
+router.get("/marketing/deal-hot", protect, isAdmin, async (req, res) => {
+  try {
+    const Product = require("../models/Product");
+    
+    // Query for products that are marked as Deal Hot
+    const dealHotProducts = await Product.find({
+      $or: [
+        { category: 'Deal hot' },
+        { tags: 'deal-hot' }
+      ]
+    }).sort({ createdAt: -1 });
+    
+    if (!dealHotProducts || dealHotProducts.length === 0) {
+      return res.status(200).json({ products: [] });
+    }
+    
+    res.status(200).json({ products: dealHotProducts });
+  } catch (error) {
+    console.error("Error fetching deal hot products:", error);
+    res.status(500).json({ message: "Error fetching deal hot products", error: error.toString() });
+  }
+});
+
 // Add discount routes
 router.get("/marketing/discounts", protect, isAdmin, adminController.getDiscounts);
 router.post("/marketing/discounts", protect, isAdmin, adminController.createDiscount);
@@ -244,29 +268,10 @@ router.get("/reports/frequently-bought-together", protect, isAdmin, async (req, 
       console.log("Result structure:", JSON.stringify(result));
     }
     
-    // Use sample data if no real data found
+    // If no patterns were found, return an empty array
     if (frequentItemsets.length === 0) {
-      console.log("Using sample data as fallback");
-      frequentItemsets = [
-        {
-          products: [
-            { _id: 'sample1', name: 'Áo thun nam', price: 250000, image: 'https://via.placeholder.com/50', category: 'Thời trang nam' },
-            { _id: 'sample2', name: 'Quần jean nam', price: 450000, image: 'https://via.placeholder.com/50', category: 'Thời trang nam' }
-          ],
-          support: 0.15,
-          confidence: 0.75,
-          frequency: 33
-        },
-        {
-          products: [
-            { _id: 'sample3', name: 'Điện thoại iPhone 13', price: 18500000, image: 'https://via.placeholder.com/50', category: 'Điện tử' },
-            { _id: 'sample4', name: 'Ốp lưng iPhone', price: 150000, image: 'https://via.placeholder.com/50', category: 'Phụ kiện' }
-          ],
-          support: 0.12,
-          confidence: 0.65,
-          frequency: 28
-        }
-      ];
+      console.log("No frequent itemsets found in the database");
+      frequentItemsets = [];
     }
     
     res.status(200).json({
@@ -277,32 +282,11 @@ router.get("/reports/frequently-bought-together", protect, isAdmin, async (req, 
   } catch (error) {
     console.error("Error getting frequently bought together products:", error);
     
-    // Return sample data in case of error
-    const sampleFrequentItemsets = [
-      {
-        products: [
-          { _id: 'sample1', name: 'Áo thun nam', price: 250000, image: 'https://via.placeholder.com/50', category: 'Thời trang nam' },
-          { _id: 'sample2', name: 'Quần jean nam', price: 450000, image: 'https://via.placeholder.com/50', category: 'Thời trang nam' }
-        ],
-        support: 0.15,
-        confidence: 0.75,
-        frequency: 33
-      },
-      {
-        products: [
-          { _id: 'sample3', name: 'Điện thoại iPhone 13', price: 18500000, image: 'https://via.placeholder.com/50', category: 'Điện tử' },
-          { _id: 'sample4', name: 'Ốp lưng iPhone', price: 150000, image: 'https://via.placeholder.com/50', category: 'Phụ kiện' }
-        ],
-        support: 0.12,
-        confidence: 0.65,
-        frequency: 28
-      }
-    ];
-    
-    res.status(200).json({ 
-      frequentItemsets: sampleFrequentItemsets,
-      message: "Dữ liệu mẫu (không thể lấy dữ liệu thực tế)", 
-      success: true
+    res.status(500).json({ 
+      frequentItemsets: [],
+      message: "Không thể lấy dữ liệu sản phẩm thường được mua cùng nhau", 
+      success: false,
+      error: error.toString()
     });
   }
 });

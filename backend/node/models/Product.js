@@ -22,7 +22,11 @@ const productSchema = new mongoose.Schema({
   numReviews: { type: Number, default: 0 },
   discount: { type: Number, default: 0 }, // Percentage discount
   featured: { type: Boolean, default: false },
-  tags: [{ type: String }]
+  tags: [{ type: String }],
+  // Add new fields for Deal Hot functionality
+  salePrice: { type: Number, default: 0 },
+  dealStartDate: { type: Date },
+  dealEndDate: { type: Date }
 }, {
   timestamps: true
 });

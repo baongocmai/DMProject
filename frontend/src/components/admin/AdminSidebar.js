@@ -261,6 +261,20 @@ const AdminSidebar = () => {
                 <span className="dropdown-bullet"></span>
                 Mã giảm giá
               </Link>
+              <Link 
+                to="/admin/marketing/banners" 
+                className={`admin-dropdown-item ${isActive('/admin/marketing/banners') ? 'active' : ''}`}
+              >
+                <span className="dropdown-bullet"></span>
+                Quản lý banner
+              </Link>
+              <Link 
+                to="/admin/marketing/deal-hot" 
+                className={`admin-dropdown-item ${isActive('/admin/marketing/deal-hot') ? 'active' : ''}`}
+              >
+                <span className="dropdown-bullet"></span>
+                Deal Hot
+              </Link>
             </div>
           </Nav.Item>
         

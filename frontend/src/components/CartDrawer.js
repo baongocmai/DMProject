@@ -146,7 +146,12 @@ const CartDrawer = ({ isOpen, onClose }) => {
                   >
                     {item.name}
                   </h4>
-                  <div className="cart-drawer-item-price">{formatPrice(item.price)}</div>
+                  <div className="cart-drawer-item-price">
+                    {formatPrice(item.price)}
+                    {item.originalPrice && item.price < item.originalPrice && (
+                      <span className="original-price ms-2">{formatPrice(item.originalPrice)}</span>
+                    )}
+                  </div>
                   
                   <div className="cart-drawer-item-actions">
                     <div className="quantity-control">

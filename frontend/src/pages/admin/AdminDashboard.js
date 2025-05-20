@@ -33,9 +33,9 @@ const AdminDashboard = () => {
   const { data: userAnalytics, isLoading: userLoading } = useGetUserAnalyticsQuery();
   const { data: orderAnalytics, isLoading: orderLoading } = useGetOrderAnalyticsQuery();
   const { data: frequentlyBoughtTogetherData, isLoading: frequentlyBoughtTogetherLoading } = useGetFrequentlyBoughtTogetherQuery({
-    minSupport: 0.01,
-    limit: 5,
-    orderLimit: 10000
+    minSupport: 0.00001,
+    limit: 20,
+    orderLimit: 1000000
   });
   
   // Debug user authentication
@@ -144,7 +144,6 @@ const AdminDashboard = () => {
       return [];
     }
     
-    // Return only real data, no sample data
     return filteredData;
   };
   

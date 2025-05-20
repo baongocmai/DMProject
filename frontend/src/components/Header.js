@@ -234,13 +234,6 @@ const Header = () => {
             <Nav className="categories-nav me-auto">
               <Nav.Link 
                 as={Link} 
-                to="/deal-hot" 
-                className={`deal-hot-link ${isActive('/deal-hot') ? 'active' : ''}`}
-              >
-                Deal Hot
-              </Nav.Link>
-              <Nav.Link 
-                as={Link} 
                 to="/category/sua" 
                 className={isActive('/category/sua') ? 'active' : ''}
               >
@@ -326,7 +319,6 @@ const Header = () => {
       <div className="mobile-category-menu d-lg-none">
         <Container>
           <Nav className="scrollable-nav">
-            <Nav.Link as={Link} to="/deal-hot" className={`${isActive('/deal-hot') ? 'active' : ''} deal-hot-mobile`}>Deal Hot</Nav.Link>
             <Nav.Link as={Link} to="/category/sua" className={isActive('/category/sua') ? 'active' : ''}>Sữa</Nav.Link>
             <Nav.Link as={Link} to="/category/raucutraicay" className={isActive('/category/raucutraicay') ? 'active' : ''}>Rau - củ - quả</Nav.Link>
             <Nav.Link as={Link} to="/category/hoapham" className={isActive('/category/hoapham') ? 'active' : ''}>Hóa phẩm</Nav.Link>

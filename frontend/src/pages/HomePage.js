@@ -5,7 +5,6 @@ import { useGetProductsQuery, useGetRecommendedProductsQuery, useGetDealHotQuery
 import Layout from '../components/Layout';
 import CategoryList from '../components/CategoryList';
 import ProductCard from '../components/ProductCard';
-import DealOfTheDay from '../components/DealOfTheDay';
 import CartDrawer from '../components/CartDrawer';
 import AccountDrawer from '../components/AccountDrawer';
 import Loader from '../components/Loader';
@@ -91,18 +90,6 @@ const HomePage = () => {
     skip: !!filters.keyword || !!filters.category,
   });
   
-  // Create a stable deal object that doesn't change on every render
-  const dealOfDay = useMemo(() => {
-    const dayProduct = productsData?.products?.find(p => p.dealOfTheWeek) || null;
-    if (dayProduct) {
-      return {
-        ...dayProduct,
-        expiresAt: dayProduct.expiresAt || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-      };
-    }
-    return null; // DealOfTheDay component will use its default deal
-  }, [productsData?.products]);
-
   // Debug info
   useEffect(() => {
     console.log('Products data from API:', productsData);
@@ -189,20 +176,16 @@ const HomePage = () => {
       )}
       
       <Container>
-        {/* Deal Hot Section - Place this immediately after hero and before categories */}
+        {/* Categories Section */}
+        {!filters.keyword && !filters.category && (
+          <>
+            <CategoryList />
+          </>
+        )}
+        
+        {/* Deal Hot Section */}
         {!filters.keyword && !filters.category && (
           <div className="deal-hot-section py-4 mt-4">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-              <h2 className="section-title">
-                <span className="text-danger">Deal Hot</span>
-                <span className="deal-hot-timer badge bg-danger ms-2">
-                  <FaRegClock className="me-1" /> 24h
-                </span>
-              </h2>
-              <Button variant="danger" as={Link} to="/deal-hot" className="view-all-btn">
-                Xem tất cả <FaArrowRight className="ms-2" />
-              </Button>
-            </div>
             <DealHot 
               products={dealHotData?.products || []} 
               loading={!dealHotData && !productsLoading} 
@@ -212,14 +195,6 @@ const HomePage = () => {
           </div>
         )}
         
-        {/* Categories Section */}
-        {!filters.keyword && !filters.category && (
-  <>
-    <CategoryList />
-    <DealOfTheDay deal={dealOfDay} />
-  </>
-)}
-      
         {/* Search Results Header */}
         {(filters.keyword || filters.category) && (
           <div className="search-results-header">

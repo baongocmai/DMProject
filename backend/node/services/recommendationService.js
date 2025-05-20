@@ -1,5 +1,5 @@
 const FPGrowth = require("node-fpgrowth");
-const { Apriori } = require("apriori");
+const apriori = require("apriori");
 const NodeCache = require("node-cache");
 const Order = require("../models/Order");
 const Product = require("../models/Product");
@@ -125,23 +125,32 @@ const getAprioriRecommendations = async () => {
   const minSupport = getDynamicMinSupport(transactions.length);
   const minConfidence = 0.3;
   
-  const apriori = new Apriori({ minSupport, minConfidence });
-
-  return new Promise(resolve => {
-    apriori.on("data", result => {
-      const rules = result.itemsets
-        .filter(itemset => itemset.items.length > 1)
-        .map(itemset => ({
-          items: itemset.items,
-          support: itemset.support
-        }));
-      
-      cache.set("apriori", rules); // Lưu cache
-      resolve(rules);
-    });
+  // Fix lỗi constructor
+  try {
+    // apriori package version 1.0.7 dùng khác với hướng dẫn
+    const Apriori = apriori.Apriori;
+    const AprioriMiner = new Apriori(minSupport, minConfidence);
     
-    apriori.exec(transactions);
-  });
+    console.log("Bắt đầu phân tích tập dữ liệu với Apriori...");
+    
+    // Execute the apriori algorithm
+    const itemsets = AprioriMiner.exec(transactions);
+    console.log(`Đã tìm thấy ${itemsets.length} itemsets thỏa mãn.`);
+    
+    const rules = itemsets
+      .filter(itemset => itemset.items && itemset.items.length > 1)
+      .map(itemset => ({
+        items: itemset.items,
+        support: itemset.support
+      }));
+    
+    cache.set("apriori", rules); // Lưu cache
+    return rules;
+  } catch (error) {
+    console.error("Lỗi khi chạy thuật toán Apriori:", error);
+    // Trả về mảng rỗng nếu có lỗi
+    return [];
+  }
 };
 
 // Thuật toán FP-Growth với minSupport động
@@ -172,54 +181,86 @@ const getFPGrowthRecommendations = async () => {
 const getCartRecommendations = async (cartItems, limit = 4) => {
   try {
     // Lấy IDs của sản phẩm trong giỏ hàng
-    const cartProductIds = cartItems.map(item => item.product.toString());
+    const cartProductIds = cartItems.map(item => {
+      // Đảm bảo lấy được id dù product là object hay string
+      if (typeof item.product === 'object' && item.product._id) {
+        return item.product._id.toString();
+      }
+      return item.product.toString();
+    }).filter(id => id); // Loại bỏ các ID không hợp lệ
+    
+    console.log("Cart product IDs:", cartProductIds);
     
     if (cartProductIds.length === 0) {
       // Nếu giỏ hàng trống, trả về sản phẩm nổi bật
-      const featuredProducts = await Product.find({ isFeatured: true })
+      console.log("Giỏ hàng trống, đề xuất sản phẩm nổi bật");
+      const featuredProducts = await Product.find({ featured: true })
         .limit(limit)
-        .select('_id name price images rating numReviews');
+        .select('_id name price image rating numReviews');
       return featuredProducts;
     }
     
     // Lấy luật kết hợp từ thuật toán Apriori
     const rules = await getAprioriRecommendations();
+    console.log(`Đã lấy ${rules.length} luật kết hợp từ Apriori`);
     
     // Tìm các luật có chứa ít nhất một sản phẩm trong giỏ hàng
     const relevantRules = rules.filter(rule => 
-      rule.items.some(item => cartProductIds.includes(item))
+      rule.items && rule.items.some(item => cartProductIds.includes(item))
     );
+    
+    console.log(`Tìm thấy ${relevantRules.length} luật liên quan đến sản phẩm trong giỏ hàng`);
     
     // Lấy các sản phẩm được đề xuất (loại bỏ các sản phẩm đã có trong giỏ hàng)
     let recommendedProductIds = new Set();
     
     relevantRules.forEach(rule => {
-      rule.items.forEach(item => {
-        if (!cartProductIds.includes(item)) {
-          recommendedProductIds.add(item);
-        }
-      });
+      if (rule.items && Array.isArray(rule.items)) {
+        rule.items.forEach(item => {
+          if (!cartProductIds.includes(item)) {
+            recommendedProductIds.add(item);
+          }
+        });
+      }
     });
     
     // Chuyển Set thành Array và giới hạn số lượng
     recommendedProductIds = [...recommendedProductIds].slice(0, limit);
     
+    console.log(`Các ID sản phẩm được đề xuất: ${recommendedProductIds.join(', ')}`);
+    
+    // Nếu không có sản phẩm đề xuất từ luật kết hợp, trả về sản phẩm nổi bật
+    if (recommendedProductIds.length === 0) {
+      console.log("Không tìm thấy đề xuất từ luật kết hợp, trả về sản phẩm nổi bật");
+      const featuredProducts = await Product.find({ 
+        featured: true,
+        _id: { $nin: cartProductIds }
+      })
+      .limit(limit)
+      .select('_id name price image rating numReviews');
+      return featuredProducts;
+    }
+    
     // Lấy thông tin chi tiết sản phẩm
     const recommendedProducts = await Product.find({ 
       _id: { $in: recommendedProductIds } 
-    }).select('_id name price images rating numReviews');
+    }).select('_id name price image rating numReviews');
+    
+    console.log(`Tìm thấy ${recommendedProducts.length} sản phẩm đề xuất`);
     
     // Nếu không đủ sản phẩm đề xuất, bổ sung thêm sản phẩm nổi bật
     if (recommendedProducts.length < limit) {
       const additionalCount = limit - recommendedProducts.length;
       const existingIds = recommendedProducts.map(p => p._id.toString());
       
+      console.log(`Bổ sung thêm ${additionalCount} sản phẩm nổi bật`);
+      
       const additionalProducts = await Product.find({ 
         _id: { $nin: [...cartProductIds, ...existingIds] },
-        isFeatured: true
+        featured: true
       })
       .limit(additionalCount)
-      .select('_id name price images rating numReviews');
+      .select('_id name price image rating numReviews');
       
       return [...recommendedProducts, ...additionalProducts];
     }
@@ -227,7 +268,18 @@ const getCartRecommendations = async (cartItems, limit = 4) => {
     return recommendedProducts;
   } catch (error) {
     console.error("Lỗi khi tạo đề xuất giỏ hàng:", error);
-    return [];
+    
+    // Nếu lỗi, trả về một số sản phẩm nổi bật
+    try {
+      console.log("Trả về sản phẩm nổi bật do có lỗi trong quá trình đề xuất");
+      const fallbackProducts = await Product.find({ featured: true })
+        .limit(limit)
+        .select('_id name price image rating numReviews');
+      return fallbackProducts;
+    } catch (fallbackError) {
+      console.error("Lỗi khi lấy sản phẩm nổi bật:", fallbackError);
+      return [];
+    }
   }
 };
 

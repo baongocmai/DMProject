@@ -347,34 +347,82 @@ exports.createProduct = async (req, res) => {
   }
 };
 
-// Cập nhật sản phẩm (Admin)
+// Tìm hàm updateProduct và cập nhật để hỗ trợ tốt hơn các trường Deal Hot
 exports.updateProduct = async (req, res) => {
   try {
-    const { name, price, description, category, stock, image } = req.body;
+    const productId = req.params.id;
     
-    const product = await Product.findById(req.params.id);
-    
+    // Validate if product exists
+    const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
     }
     
-    // Cập nhật thông tin sản phẩm
-    if (name) product.name = name;
-    if (price !== undefined) product.price = price;
-    if (description !== undefined) product.description = description;
-    if (category) product.category = category;
-    if (stock !== undefined) product.stock = stock;
-    if (image) product.image = image;
+    // Log thông tin cho debug
+    console.log("Updating product:", productId);
+    console.log("Product data:", JSON.stringify(req.body, null, 2));
     
-    const updatedProduct = await product.save();
+    // Handle deal hot specific fields
+    const updateData = { ...req.body };
     
-    res.status(200).json({
-      message: "Sản phẩm đã được cập nhật",
-      product: updatedProduct
+    // Convert salePrice to Number if it exists
+    if (updateData.salePrice !== undefined) {
+      updateData.salePrice = Number(updateData.salePrice);
+      console.log(`Converting salePrice to number: ${updateData.salePrice}`);
+    }
+    
+    // Handle dates
+    if (updateData.dealStartDate) {
+      try {
+        updateData.dealStartDate = new Date(updateData.dealStartDate);
+        console.log(`Setting dealStartDate: ${updateData.dealStartDate}`);
+      } catch (e) {
+        console.error("Invalid dealStartDate format:", updateData.dealStartDate);
+      }
+    }
+    
+    if (updateData.dealEndDate) {
+      try {
+        updateData.dealEndDate = new Date(updateData.dealEndDate);
+        console.log(`Setting dealEndDate: ${updateData.dealEndDate}`);
+      } catch (e) {
+        console.error("Invalid dealEndDate format:", updateData.dealEndDate);
+      }
+    }
+    
+    // Handle dealStartDate and dealEndDate correctly
+    if (updateData.dealStartDate === null) {
+      updateData.dealStartDate = undefined; // MongoDB sẽ xóa trường này
+      console.log("Removing dealStartDate field");
+    }
+    
+    if (updateData.dealEndDate === null) {
+      updateData.dealEndDate = undefined; // MongoDB sẽ xóa trường này
+      console.log("Removing dealEndDate field");
+    }
+    
+    // Cập nhật sản phẩm với dữ liệu mới
+    const updatedProduct = await Product.findByIdAndUpdate(
+      productId,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    );
+    
+    if (!updatedProduct) {
+      return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
+    }
+    
+    console.log("Product updated successfully:");
+    console.log("Updated fields:", JSON.stringify(updateData, null, 2));
+    console.log("Result:", JSON.stringify(updatedProduct, null, 2));
+    
+    res.status(200).json({ 
+      message: "Cập nhật sản phẩm thành công",
+      product: updatedProduct 
     });
   } catch (error) {
-    console.error("Error updating product:", error);
-    res.status(500).json({ message: "Lỗi khi cập nhật sản phẩm", error: error.message });
+    console.error("Lỗi khi cập nhật sản phẩm:", error);
+    res.status(500).json({ message: "Lỗi khi cập nhật sản phẩm", error: error.toString() });
   }
 };
 
@@ -442,5 +490,54 @@ exports.getProductCountsByCategory = async (req, res) => {
       error: error.message,
       success: false
     });
+  }
+};
+
+// Thêm endpoint mới để lấy danh sách Deal Hot
+exports.getDealHot = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    const now = new Date();
+    
+    // Cập nhật query để kiểm tra ngày hợp lệ
+    const query = {
+      $or: [
+        { category: 'Deal hot' },
+        { tags: 'deal-hot' }
+      ],
+      salePrice: { $exists: true, $gt: 0 },
+      $and: [
+        // Deal chưa kết thúc hoặc không có ngày kết thúc
+        { $or: [
+          { dealEndDate: { $exists: false } },
+          { dealEndDate: null },
+          { dealEndDate: { $gt: now } }
+        ]},
+        // Deal đã bắt đầu hoặc không có ngày bắt đầu
+        { $or: [
+          { dealStartDate: { $exists: false } },
+          { dealStartDate: null },
+          { dealStartDate: { $lte: now } }
+        ]}
+      ]
+    };
+    
+    // Log query để debug
+    console.log('Deal Hot query:', JSON.stringify(query, null, 2));
+    
+    const products = await Product.find(query)
+      .sort({ createdAt: -1 })
+      .limit(limit);
+    
+    if (!products || products.length === 0) {
+      console.log('Không tìm thấy sản phẩm Deal Hot');
+      return res.status(200).json({ products: [] });
+    }
+    
+    console.log(`Tìm thấy ${products.length} sản phẩm Deal Hot`);
+    res.status(200).json({ products });
+  } catch (error) {
+    console.error('Lỗi khi lấy sản phẩm Deal Hot:', error);
+    res.status(500).json({ message: 'Lỗi khi lấy sản phẩm Deal Hot' });
   }
 };

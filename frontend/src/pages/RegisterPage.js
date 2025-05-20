@@ -154,7 +154,7 @@ const RegisterPage = () => {
                   </button>
                   
                   <div className="auth-link">
-                    Đã có tài khỏa? <Link to="/login">Đăng nhập</Link>
+                    Đã có tài khỏan? <Link to="/login">Đăng nhập</Link>
                   </div>
                 </form>
               </>
