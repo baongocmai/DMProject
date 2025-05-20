@@ -29,12 +29,18 @@ const initialState = {
   user: normalizeUserData(getUserData()),
   token: getToken(),
   isAuthenticated: isTokenValid(),
+  loading: false,
+  error: null
 };
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+    authStart: (state) => {
+      state.loading = true;
+      state.error = null;
+    },
     setCredentials: (state, action) => {
       // Handle both formats (with and without nested user object)
       const userData = action.payload.user || action.payload;
@@ -46,6 +52,8 @@ const authSlice = createSlice({
       state.user = user;
       state.token = token;
       state.isAuthenticated = true;
+      state.loading = false;
+      state.error = null;
       
       // Save normalized data to localStorage
       setUserData(user);
@@ -53,10 +61,16 @@ const authSlice = createSlice({
       
       console.log('Auth state updated with user data:', user);
     },
+    authFail: (state, action) => {
+      state.loading = false;
+      state.error = action.payload;
+    },
     logout: (state) => {
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
+      state.loading = false;
+      state.error = null;
       removeUserData();
       removeToken();
       console.log('User logged out');
@@ -72,8 +86,19 @@ const authSlice = createSlice({
       setUserData(updatedUser);
       console.log('User profile updated:', updatedUser);
     },
+    clearAuthError: (state) => {
+      state.error = null;
+    }
   },
 });
 
-export const { setCredentials, logout, updateUserProfile } = authSlice.actions;
+export const { 
+  setCredentials, 
+  logout, 
+  updateUserProfile, 
+  authStart, 
+  authFail,
+  clearAuthError
+} = authSlice.actions;
+
 export default authSlice.reducer; 

@@ -7,6 +7,7 @@ const { protect, isAdmin, optionalAuth, isUser } = require("../middlewares/authM
 router.get("/", productController.getProducts);
 router.get("/featured", optionalAuth, productController.getFeaturedProducts);
 router.get("/counts-by-category", productController.getProductCountsByCategory);
+router.get("/deal-hot", productController.getDealHot);
 router.get("/:id", productController.getProductById);
 router.get("/:id/reviews", productController.getProductReviews);
 router.get("/:id/related", productController.getRelatedProducts);

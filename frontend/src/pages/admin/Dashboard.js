@@ -1,19 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Container, Row, Col, Card, Table, Badge, Button, Tabs, Tab, Spinner } from 'react-bootstrap';
+import { FaUsers, FaBoxOpen, FaMoneyBillAlt, FaShoppingCart, FaArrowUp, FaArrowDown, FaEye, FaDownload } from 'react-icons/fa';
 import { 
-  Row, Col, Card, Table, Spinner, Dropdown, Button, 
-  ProgressBar, Tab, Tabs
-} from 'react-bootstrap';
-import {
-  AreaChart, Area, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  PieChart, Pie, Cell
 } from 'recharts';
-import { 
-  FaShoppingCart, FaUsers, FaMoneyBillWave, FaClipboard, 
-  FaArrowUp, FaArrowDown, FaBoxOpen, FaShippingFast, 
-  FaExclamationTriangle, FaCalendarAlt, FaChartLine, 
-  FaStore, FaEllipsisV, FaStar, FaDownload
-} from 'react-icons/fa';
-import AdminLayout from '../../components/admin/AdminLayout';
+import AdminSidebar from '../../components/admin/AdminSidebar';
+import AdminHeader from '../../components/admin/AdminHeader';
+import AdminFooter from '../../components/admin/AdminFooter';
 import { 
   useGetDashboardStatsQuery,
   useGetProductAnalyticsQuery,
@@ -22,88 +16,6 @@ import {
 } from '../../services/api';
 import '../../styles/AdminTheme.css';
 import './Dashboard.css';
-
-// Sample data (replace with actual API data)
-const sampleRecentOrders = [
-  {
-    id: '1001',
-    customer: 'Nguyễn Văn An',
-    date: '2023-08-15T08:30:00Z',
-    total: 1250000,
-    status: 'delivered'
-  },
-  {
-    id: '1002',
-    customer: 'Trần Thị Bình',
-    date: '2023-08-15T09:45:00Z',
-    total: 780000,
-    status: 'processing'
-  },
-  {
-    id: '1003',
-    customer: 'Lê Văn Cường',
-    date: '2023-08-14T14:20:00Z',
-    total: 1650000,
-    status: 'shipped'
-  },
-  {
-    id: '1004',
-    customer: 'Phạm Thị Dung',
-    date: '2023-08-14T10:15:00Z',
-    total: 450000,
-    status: 'pending'
-  },
-  {
-    id: '1005',
-    customer: 'Hoàng Văn Eo',
-    date: '2023-08-13T16:50:00Z',
-    total: 2100000,
-    status: 'cancelled'
-  }
-];
-
-const sampleTopProducts = [
-  {
-    id: '101',
-    name: 'iPhone 13 Pro',
-    category: 'Điện thoại',
-    price: 25990000,
-    sold: 354,
-    revenue: 9200460000
-  },
-  {
-    id: '102',
-    name: 'Samsung Galaxy S22',
-    category: 'Điện thoại',
-    price: 19990000,
-    sold: 287,
-    revenue: 5736530000
-  },
-  {
-    id: '103',
-    name: 'Áo Polo Nam',
-    category: 'Thời trang',
-    price: 350000,
-    sold: 1245,
-    revenue: 435750000
-  },
-  {
-    id: '104',
-    name: 'Tai nghe Bluetooth JBL',
-    category: 'Âm thanh',
-    price: 1290000,
-    sold: 892,
-    revenue: 1150680000
-  },
-  {
-    id: '105',
-    name: 'Laptop Dell XPS 15',
-    category: 'Máy tính',
-    price: 32990000,
-    sold: 128,
-    revenue: 4222720000
-  }
-];
 
 const Dashboard = () => {
   const [timeRange, setTimeRange] = useState('month');
@@ -181,24 +93,7 @@ const Dashboard = () => {
   // Get sales data based on time range
   const getSalesData = () => {
     if (!orderAnalytics || !orderAnalytics.salesByPeriod) {
-      // Sample data if API data not available
-      return [
-        { name: '01/08', revenue: 12500000, orders: 45 },
-        { name: '02/08', revenue: 15800000, orders: 53 },
-        { name: '03/08', revenue: 14200000, orders: 49 },
-        { name: '04/08', revenue: 18900000, orders: 62 },
-        { name: '05/08', revenue: 17300000, orders: 57 },
-        { name: '06/08', revenue: 19500000, orders: 64 },
-        { name: '07/08', revenue: 22100000, orders: 75 },
-        { name: '08/08', revenue: 20700000, orders: 68 },
-        { name: '09/08', revenue: 23400000, orders: 81 },
-        { name: '10/08', revenue: 21800000, orders: 73 },
-        { name: '11/08', revenue: 25200000, orders: 89 },
-        { name: '12/08', revenue: 24100000, orders: 85 },
-        { name: '13/08', revenue: 26500000, orders: 92 },
-        { name: '14/08', revenue: 28900000, orders: 97 },
-        { name: '15/08', revenue: 27300000, orders: 94 }
-      ];
+      return [];
     }
     
     // Filter by timeRange
@@ -213,14 +108,7 @@ const Dashboard = () => {
   // Get category distribution data
   const getCategoryData = () => {
     if (!productAnalytics || !productAnalytics.salesByCategory) {
-      // Sample data if API data not available
-      return [
-        { name: 'Điện thoại', value: 35 },
-        { name: 'Laptop', value: 25 },
-        { name: 'Thời trang', value: 20 },
-        { name: 'Đồ gia dụng', value: 12 },
-        { name: 'Mỹ phẩm', value: 8 }
-      ];
+      return [];
     }
     
     return productAnalytics.salesByCategory;
@@ -232,7 +120,7 @@ const Dashboard = () => {
       title: 'Doanh thu tháng này',
       value: dashboardStats?.monthlyRevenue || 325470000,
       prevValue: dashboardStats?.prevMonthRevenue || 298560000,
-      icon: <FaMoneyBillWave />,
+      icon: <FaMoneyBillAlt />,
       color: 'admin-stat-card-primary',
       format: 'currency'
     },
@@ -240,7 +128,7 @@ const Dashboard = () => {
       title: 'Đơn hàng tháng này',
       value: dashboardStats?.monthlyOrders || 1247,
       prevValue: dashboardStats?.prevMonthOrders || 1105,
-      icon: <FaClipboard />,
+      icon: <FaShoppingCart />,
       color: 'admin-stat-card-info',
       format: 'number'
     },
@@ -256,7 +144,7 @@ const Dashboard = () => {
       title: 'Tỷ lệ chuyển đổi',
       value: dashboardStats?.conversionRate || 3.8,
       prevValue: dashboardStats?.prevMonthConversionRate || 3.2,
-      icon: <FaChartLine />,
+      icon: <FaShoppingCart />,
       color: 'admin-stat-card-warning',
       format: 'percent',
       decimals: 1

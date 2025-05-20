@@ -7,7 +7,7 @@ import {
   FaSearch, FaPlus, FaEdit, FaTrash, FaSort, 
   FaSortUp, FaSortDown, FaImage, FaFilter, FaTimes 
 } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   useGetProductsQuery, 
   useDeleteProductMutation
@@ -18,9 +18,16 @@ import { formatCurrency } from '../../utils/formatters';
 import './ProductList.css';
 
 const ProductList = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Parse query parameters
+  const queryParams = new URLSearchParams(location.search);
+  const searchQuery = queryParams.get('search') || '';
+  
   // State for filters and pagination
   const [filters, setFilters] = useState({
-    search: '',
+    search: searchQuery,
     category: '',
     price: { min: '', max: '' },
     stock: { min: '', max: '' },
@@ -75,10 +82,18 @@ const ProductList = () => {
   const totalProducts = productsData?.totalCount || 0;
   const totalPages = Math.ceil(totalProducts / limit);
   
-  // Set up filters when component loads
+  // Update filters when URL query parameters change
   useEffect(() => {
-    // Optionally initialize filters from URL query params
-  }, []);
+    const search = queryParams.get('search') || '';
+    
+    if (search !== filters.search) {
+      setFilters(prev => ({
+        ...prev,
+        search: search
+      }));
+      setPage(1); // Reset to first page when search changes
+    }
+  }, [location.search]);
   
   // Handle search input change
   const handleSearchChange = (e) => {
@@ -92,6 +107,14 @@ const ProductList = () => {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     setPage(1); // Reset to first page when searching
+    
+    // Update URL with search parameter
+    const params = new URLSearchParams();
+    if (filters.search) {
+      params.set('search', filters.search);
+    }
+    navigate({ search: params.toString() });
+    
     refetchProducts();
   };
   
@@ -121,6 +144,14 @@ const ProductList = () => {
   // Apply filters
   const applyFilters = () => {
     setPage(1); // Reset to first page when filtering
+    
+    // Update URL with search parameter
+    const params = new URLSearchParams();
+    if (filters.search) {
+      params.set('search', filters.search);
+    }
+    navigate({ search: params.toString() });
+    
     refetchProducts();
   };
   
@@ -134,6 +165,10 @@ const ProductList = () => {
       status: ''
     });
     setPage(1);
+    
+    // Clear URL parameters
+    navigate({ search: '' });
+    
     refetchProducts();
   };
   
@@ -243,10 +278,10 @@ const ProductList = () => {
   
   // Perform delete
   const performDelete = async () => {
-      try {
-        await deleteProduct(productToDelete._id).unwrap();
-        setShowDeleteModal(false);
-        refetchProducts();
+    try {
+      await deleteProduct(productToDelete._id).unwrap();
+      setShowDeleteModal(false);
+      refetchProducts();
     } catch (error) {
       console.error('Failed to delete product:', error);
     }
@@ -276,15 +311,18 @@ const ProductList = () => {
   
   // Render stock badge
   const renderStockBadge = (product) => {
-    if (product.countInStock === 0 || product.countInStock === null || product.countInStock === undefined) {
+    // Ưu tiên sử dụng trường stock, sau đó mới dùng countInStock
+    const stockValue = product.stock !== undefined ? product.stock : (product.countInStock || 0);
+    
+    if (stockValue === 0 || stockValue === null || stockValue === undefined) {
       return <Badge bg="danger">Out of Stock</Badge>;
     }
     
-    if (product.countInStock < 10) {
-      return <Badge bg="warning" text="dark">Low Stock: {product.countInStock}</Badge>;
+    if (stockValue < 10) {
+      return <Badge bg="warning" text="dark">Low Stock: {stockValue}</Badge>;
     }
     
-    return <Badge bg="success">In Stock: {product.countInStock}</Badge>;
+    return <Badge bg="success">In Stock: {stockValue}</Badge>;
   };
   
   return (
@@ -471,11 +509,11 @@ const ProductList = () => {
                         </th>
                         <th 
                           className="sortable" 
-                          onClick={() => handleSort('countInStock')}
+                          onClick={() => handleSort('stock')}
                           style={{ cursor: 'pointer' }}
                         >
                           <div className="d-flex align-items-center">
-                            Stock {getSortIcon('countInStock')}
+                            Stock {getSortIcon('stock')}
                           </div>
                         </th>
                         <th 

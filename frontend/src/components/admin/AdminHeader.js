@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Navbar, Nav, Form, InputGroup, Dropdown, Button } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
-  FaBars, FaSearch, FaBell, FaEnvelope, FaUser, 
+  FaSearch, FaBell, FaEnvelope, FaUser, 
   FaCog, FaSignOutAlt, FaMoon, FaSun 
 } from 'react-icons/fa';
 import { useSelector, useDispatch } from 'react-redux';
@@ -13,6 +13,7 @@ import './AdminHeader.css';
 const AdminHeader = ({ toggleSidebar }) => {
   const [searchValue, setSearchValue] = useState('');
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { user } = useSelector(state => state.auth);
   const { theme } = useSelector(state => state.ui);
   
@@ -22,8 +23,31 @@ const AdminHeader = ({ toggleSidebar }) => {
   
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    // Handle search logic here
-    console.log('Search for:', searchValue);
+    
+    if (!searchValue.trim()) return;
+    
+    // Determine which section to search based on search value
+    if (searchValue.toLowerCase().includes('đơn') || 
+        searchValue.toLowerCase().includes('order') || 
+        searchValue.match(/^#\d+$/)) {
+      // Search orders
+      navigate(`/admin/orders?search=${encodeURIComponent(searchValue)}`);
+    } else if (searchValue.toLowerCase().includes('sản phẩm') || 
+               searchValue.toLowerCase().includes('product')) {
+      // Search products
+      navigate(`/admin/products?search=${encodeURIComponent(searchValue)}`);
+    } else if (searchValue.toLowerCase().includes('khách') || 
+               searchValue.toLowerCase().includes('customer') || 
+               searchValue.toLowerCase().includes('user')) {
+      // Search customers
+      navigate(`/admin/customers?search=${encodeURIComponent(searchValue)}`);
+    } else {
+      // Default to product search
+      navigate(`/admin/products?search=${encodeURIComponent(searchValue)}`);
+    }
+    
+    // Clear the search input after submitting
+    setSearchValue('');
   };
   
   const handleLogout = () => {
@@ -39,20 +63,12 @@ const AdminHeader = ({ toggleSidebar }) => {
   return (
     <Navbar className="admin-header">
       <div className="admin-header-container">
-        {/* Left side - Menu toggle and search */}
+        {/* Left side - search only */}
         <div className="admin-header-left">
-          <Button 
-            variant="link" 
-            className="sidebar-toggle-btn" 
-            onClick={toggleSidebar}
-          >
-            <FaBars />
-          </Button>
-          
           <Form className="admin-search-form" onSubmit={handleSearchSubmit}>
             <InputGroup>
               <Form.Control
-                placeholder="Search..."
+                placeholder="Tìm kiếm sản phẩm, đơn hàng, khách hàng..."
                 value={searchValue}
                 onChange={handleSearchChange}
               />

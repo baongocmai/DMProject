@@ -1,5 +1,5 @@
 .admin-sidebar {
-  width: 260px;
+  width: 220px;
   height: 100vh;
   background: linear-gradient(180deg, #1a237e, #303f9f);
   color: #fff;
@@ -8,19 +8,19 @@
   left: 0;
   top: 0;
   z-index: 1000;
-  overflow-y: auto;
-  overflow-x: hidden;
-  transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
+  transition: all 0.3s ease;
 }
 
 .admin-sidebar-header {
-  padding: 1.5rem;
+  padding: 0.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
 }
 
 .admin-logo-container {
@@ -47,23 +47,24 @@
 }
 
 .admin-user-profile {
-  padding: 1.5rem;
+  padding: 1rem;
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
 }
 
 .admin-user-avatar {
-  width: 50px;
-  height: 50px;
-  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   background: linear-gradient(135deg, #4361ee, #4cc9f0);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 600;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
@@ -73,43 +74,54 @@
 }
 
 .admin-user-name {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 600;
   margin: 0;
   color: white;
 }
 
 .admin-user-role {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.7);
   margin: 0;
-  margin-top: 0.25rem;
+  margin-top: 0.15rem;
 }
 
 .admin-menu {
   display: flex;
   flex-direction: column;
-  padding: 1rem 0;
+  padding: 0;
   flex: 1;
-  overflow-y: auto;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.5) rgba(0, 0, 0, 0.2);
+  max-height: calc(100vh - 150px);
 }
 
 .admin-menu-section {
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
 
 .admin-menu-label {
+  width: 100%;
   font-size: 0.75rem;
-  padding: 0 1.75rem;
-  margin-bottom: 0.75rem;
+  padding: 0.25rem 1rem;
+  margin-bottom: 0;
   color: rgba(255, 255, 255, 0.5);
   text-transform: uppercase;
   letter-spacing: 1px;
   font-weight: 600;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .admin-menu-item {
-  padding: 0.85rem 1.75rem;
+  width: 100%;
+  padding: 0.5rem 1rem;
   color: rgba(255, 255, 255, 0.8);
   display: flex;
   align-items: center;
@@ -117,8 +129,8 @@
   transition: all 0.2s ease;
   position: relative;
   cursor: pointer;
-  gap: 0.75rem;
-  border-left: 3px solid transparent;
+  gap: 0.5rem;
+  margin-bottom: 0;
 }
 
 .admin-menu-item:hover {
@@ -129,13 +141,12 @@
 .admin-menu-item.active {
   color: #fff;
   background-color: rgba(67, 97, 238, 0.3);
-  border-left: 3px solid #4cc9f0;
-  padding-left: 1.75rem;
+  padding-left: 1rem;
 }
 
 .admin-menu-icon {
-  font-size: 1.1rem;
-  min-width: 20px;
+  font-size: 1rem;
+  min-width: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -160,6 +171,7 @@
 }
 
 .admin-dropdown-menu {
+  width: 100%;
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.3s ease;
@@ -168,26 +180,29 @@
 
 .admin-dropdown-menu.expanded {
   max-height: 500px;
+  margin-bottom: 0;
 }
 
 .admin-dropdown-item {
-  padding: 0.7rem 1rem 0.7rem 3.5rem;
+  width: 100%;
+  padding: 0.4rem 0.5rem 0.4rem 2rem;
   color: rgba(255, 255, 255, 0.7);
   display: flex;
   text-decoration: none;
   transition: all 0.2s ease;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   align-items: center;
   position: relative;
+  margin-bottom: 0;
 }
 
 .dropdown-bullet {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   background-color: rgba(255, 255, 255, 0.5);
   border-radius: 50%;
   display: inline-block;
-  margin-right: 10px;
+  margin-right: 8px;
 }
 
 .admin-dropdown-item:hover {
@@ -205,33 +220,33 @@
 }
 
 .admin-notification-badge {
-  margin-left: 0.5rem;
-  font-size: 0.7rem;
-  padding: 0.15rem 0.4rem;
-  border-radius: 1rem;
+  margin-left: 0.35rem;
+  font-size: 0.65rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.75rem;
   background-color: #f72585;
 }
 
 .admin-sidebar-footer {
-  padding: 1.5rem;
+  padding: 1rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  margin-top: auto;
+  flex-shrink: 0;
 }
 
 .admin-logout-button {
   width: 100%;
-  padding: 0.85rem;
+  padding: 0.7rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
   background-color: rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.8);
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 500;
 }
 
@@ -241,11 +256,32 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
+.admin-menu::-webkit-scrollbar {
+  width: 8px;
+  display: block;
+}
+
+.admin-menu::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 0;
+}
+
+.admin-menu::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+  border: none;
+}
+
+.admin-menu:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.6);
+}
+
 /* Responsive sidebar for mobile */
 @media (max-width: 992px) {
   .admin-sidebar {
     transform: translateX(-100%);
     box-shadow: none;
+    width: 200px;
   }
   
   .admin-sidebar.expanded {

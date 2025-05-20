@@ -279,6 +279,7 @@ const OrderList = () => {
       <div className="order-list">
         <div className="order-list-header">
           <h1>Quản lý đơn hàng</h1>
+          <div className="d-flex">
           <Button 
             variant="success" 
             className="mb-3 d-flex align-items-center" 
@@ -289,7 +290,6 @@ const OrderList = () => {
             {isLoading ? "Đang làm mới..." : "Làm mới dữ liệu"}
           </Button>
           
-          {/* Date filter toggle button */}
           <Button 
             variant={showDateFilter ? "primary" : "outline-primary"}
             className="mb-3 ms-2 d-flex align-items-center"
@@ -298,6 +298,7 @@ const OrderList = () => {
             <FaCalendar className="me-2" /> 
             Lọc theo thời gian
           </Button>
+          </div>
           
           {/* Date filter form */}
           {showDateFilter && (

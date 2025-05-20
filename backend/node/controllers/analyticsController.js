@@ -5,6 +5,15 @@ const Order = require("../models/Order");
 const asyncHandler = require("express-async-handler");
 const mongoose = require("mongoose");
 
+// Helper function to get week number
+Date.prototype.getWeek = function() {
+  const date = new Date(this.getTime());
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+  const week1 = new Date(date.getFullYear(), 0, 4);
+  return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+};
+
 // @desc    Track user behavior
 // @route   POST /api/analytics/track
 // @access  Private
@@ -233,6 +242,7 @@ exports.getProductAnalytics = asyncHandler(async (req, res) => {
           name: "$productDetails.name",
           category: "$productDetails.category",
           price: "$productDetails.price",
+          stock: "$productDetails.stock",
           salePrice: "$productDetails.salePrice",
           countInStock: "$productDetails.countInStock",
           totalSales: 1,
@@ -420,7 +430,8 @@ exports.getOrderAnalytics = asyncHandler(async (req, res) => {
     
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     
-    const orderData = await Order.aggregate([
+    // Get monthly data
+    const orderDataByMonth = await Order.aggregate([
       { $match: { createdAt: { $gte: monthsAgo } } },
       { $group: {
           _id: { month: { $month: "$createdAt" }, year: { $year: "$createdAt" } },
@@ -429,6 +440,45 @@ exports.getOrderAnalytics = asyncHandler(async (req, res) => {
         }
       },
       { $sort: { "_id.year": 1, "_id.month": 1 } }
+    ]);
+    
+    // Get weekly data
+    const weeksAgo = new Date();
+    weeksAgo.setDate(weeksAgo.getDate() - 7 * 8); // Get data for last 8 weeks
+    
+    const orderDataByWeek = await Order.aggregate([
+      { $match: { createdAt: { $gte: weeksAgo } } },
+      {
+        $project: {
+          totalPrice: 1,
+          week: { $week: "$createdAt" },
+          year: { $year: "$createdAt" }
+        }
+      },
+      {
+        $group: {
+          _id: { week: "$week", year: "$year" },
+          revenue: { $sum: "$totalPrice" },
+          orders: { $sum: 1 }
+        }
+      },
+      { $sort: { "_id.year": 1, "_id.week": 1 } }
+    ]);
+    
+    // Get yearly data
+    const yearsAgo = new Date();
+    yearsAgo.setFullYear(yearsAgo.getFullYear() - 5); // Get data for last 5 years
+    
+    const orderDataByYear = await Order.aggregate([
+      { $match: { createdAt: { $gte: yearsAgo } } },
+      {
+        $group: {
+          _id: { year: { $year: "$createdAt" } },
+          revenue: { $sum: "$totalPrice" },
+          orders: { $sum: 1 }
+        }
+      },
+      { $sort: { "_id.year": 1 } }
     ]);
     
     // Format data for frontend chart
@@ -443,7 +493,7 @@ exports.getOrderAnalytics = asyncHandler(async (req, res) => {
       
       const monthName = months[month];
       
-      const data = orderData.find(
+      const data = orderDataByMonth.find(
         item => item._id.month === month + 1 && item._id.year === year
       );
       
@@ -452,6 +502,43 @@ exports.getOrderAnalytics = asyncHandler(async (req, res) => {
         revenue: data ? data.revenue : 0,
         orders: data ? data.orders : 0,
         period: 'month'
+      });
+    }
+    
+    // Create last 8 weeks of data
+    for (let i = 0; i < 8; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() - (7 * (7 - i)));
+      const week = date.getWeek();
+      const year = date.getFullYear();
+      
+      const weekName = `Tuần ${i+1}`;
+      
+      const data = orderDataByWeek.find(
+        item => item._id.week === week && item._id.year === year
+      );
+      
+      revenueByPeriod.push({
+        name: weekName,
+        revenue: data ? data.revenue : 0,
+        orders: data ? data.orders : 0,
+        period: 'week'
+      });
+    }
+    
+    // Create last 5 years of data
+    for (let i = 0; i < 5; i++) {
+      const year = new Date().getFullYear() - 4 + i;
+      
+      const data = orderDataByYear.find(
+        item => item._id.year === year
+      );
+      
+      revenueByPeriod.push({
+        name: year.toString(),
+        revenue: data ? data.revenue : 0,
+        orders: data ? data.orders : 0,
+        period: 'year'
       });
     }
     

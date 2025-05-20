@@ -29,39 +29,6 @@
   gap: 0.75rem;
 }
 
-.dashboard-action-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background-color: white;
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
-  color: #495057;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-
-.dashboard-action-btn:hover {
-  background-color: #f8f9fa;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.08);
-}
-
-.notification-btn {
-  position: relative;
-}
-
-.notification-badge {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  font-size: 0.7rem;
-  padding: 0.15rem 0.35rem;
-  border-radius: 50%;
-}
-
 /* Stats cards styling */
 .stats-row {
   margin-bottom: 1rem;
@@ -281,14 +248,5 @@
     width: 45px;
     height: 45px;
     font-size: 1.2rem;
-  }
-  
-  .dashboard-action-btn {
-    padding: 0.4rem 0.75rem;
-    font-size: 0.85rem;
-  }
-  
-  .dashboard-action-btn span {
-    display: none;
   }
 } 

@@ -117,6 +117,36 @@
   position: relative;
 }
 
+/* Special styling for Deal Hot link */
+.categories-nav .deal-hot-link {
+  color: #fff !important;
+  background-color: #ff3d71;
+  border-radius: 4px;
+  font-weight: 600;
+  padding: 6px 12px;
+  margin-right: 8px;
+  transition: all 0.3s ease;
+}
+
+.categories-nav .deal-hot-link:hover, 
+.categories-nav .deal-hot-link.active {
+  background-color: #e82f61;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(255, 61, 113, 0.3);
+}
+
+.categories-nav .deal-hot-link:after {
+  display: none;
+}
+
+/* Mobile Deal Hot link */
+.scrollable-nav .deal-hot-mobile {
+  color: #fff !important;
+  background-color: #ff3d71;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
 .categories-nav .nav-link:after {
   content: '';
   position: absolute;

@@ -24,7 +24,23 @@ const store = configureStore({
     getDefaultMiddleware({
       serializableCheck: {
         // Ignore these action types for serializability check
-        ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
+        ignoredActions: [
+          'persist/PERSIST', 
+          'persist/REHYDRATE',
+          'api/executeMutation/pending',
+          'api/executeMutation/fulfilled',
+          'api/executeMutation/rejected',
+          'api/executeQuery/pending',
+          'api/executeQuery/fulfilled',
+          'api/queries/queryResultPatched',
+          'api/invalidation/updateProvidedBy',
+        ],
+        // Ignore these paths in the Redux state for serializability check
+        ignoredPaths: [
+          'api.queries.getProducts.data.products',
+          'api.mutations.updateProduct',
+          'api.queries.getDealHot'
+        ],
       },
     })
       .concat(api.middleware)

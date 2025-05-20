@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Badge, Spinner, Alert } from 'react-bootstrap';
-import { FaEye, FaCheckCircle } from 'react-icons/fa';
+import { FaEye, FaCheck } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/admin/AdminLayout';
-import { useGetPendingOrdersQuery, useUpdateOrderStatusMutation } from '../../services/api';
+import { useGetShippingOrdersQuery, useUpdateOrderStatusMutation } from '../../services/api';
 
-const PendingOrders = () => {
-  const { data: pendingOrders, isLoading, error, refetch } = useGetPendingOrdersQuery(undefined, {
+const ShippingOrders = () => {
+  const { data: shippingOrders, isLoading, error, refetch } = useGetShippingOrdersQuery(undefined, {
     pollingInterval: 30000 // Tự động refresh mỗi 30 giây
   });
   const [updateOrderStatus, { isLoading: isUpdating }] = useUpdateOrderStatusMutation();
@@ -14,11 +14,11 @@ const PendingOrders = () => {
 
   // Cập nhật state khi dữ liệu thay đổi
   useEffect(() => {
-    if (pendingOrders) {
-      console.log('Pending orders data:', pendingOrders);
-      setOrders(pendingOrders);
+    if (shippingOrders) {
+      console.log('Shipping orders data:', shippingOrders);
+      setOrders(shippingOrders);
     }
-  }, [pendingOrders]);
+  }, [shippingOrders]);
 
   // Format date
   const formatDate = (dateString) => {
@@ -45,11 +45,11 @@ const PendingOrders = () => {
     }
   };
 
-  // Xử lý chuyển đơn hàng sang trạng thái đang xử lý
-  const handleProcessOrder = async (orderId) => {
+  // Xử lý chuyển đơn hàng sang trạng thái đã giao
+  const handleDelivered = async (orderId) => {
     try {
-      await updateOrderStatus({ id: orderId, status: 'processing' }).unwrap();
-      alert('Đơn hàng đã chuyển sang trạng thái đang xử lý');
+      await updateOrderStatus({ id: orderId, status: 'delivered' }).unwrap();
+      alert('Đơn hàng đã chuyển sang trạng thái đã giao hàng');
       refetch();
     } catch (err) {
       console.error('Failed to update order status:', err);
@@ -59,9 +59,9 @@ const PendingOrders = () => {
 
   return (
     <AdminLayout>
-      <div className="pending-orders">
+      <div className="shipping-orders">
         <div className="d-flex justify-content-between align-items-center mb-4">
-          <h1>Đơn hàng chờ xử lý</h1>
+          <h1>Đơn hàng đang giao</h1>
           <Button 
             variant="outline-primary" 
             onClick={() => refetch()}
@@ -80,10 +80,10 @@ const PendingOrders = () => {
         {isLoading ? (
           <div className="text-center my-5">
             <Spinner animation="border" variant="primary" />
-            <p className="mt-2">Đang tải đơn hàng chờ xử lý...</p>
+            <p className="mt-2">Đang tải đơn hàng đang giao...</p>
           </div>
         ) : (
-          <Table striped bordered hover responsive className="pending-orders-table">
+          <Table striped bordered hover responsive className="shipping-orders-table">
             <thead>
               <tr>
                 <th>Mã đơn</th>
@@ -119,10 +119,10 @@ const PendingOrders = () => {
                         <Button 
                           variant="success" 
                           size="sm" 
-                          onClick={() => handleProcessOrder(orderId)}
+                          onClick={() => handleDelivered(orderId)}
                           disabled={isUpdating}
                         >
-                          <FaCheckCircle /> Xử lý đơn
+                          <FaCheck /> Đã giao
                         </Button>
                       </td>
                     </tr>
@@ -131,7 +131,7 @@ const PendingOrders = () => {
               ) : (
                 <tr>
                   <td colSpan="7" className="text-center py-4">
-                    Không có đơn hàng nào đang chờ xử lý
+                    Không có đơn hàng nào đang giao
                   </td>
                 </tr>
               )}
@@ -143,4 +143,4 @@ const PendingOrders = () => {
   );
 };
 
-export default PendingOrders; 
+export default ShippingOrders; 

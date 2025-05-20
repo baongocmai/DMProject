@@ -19,70 +19,32 @@ const OrderStatusPage = () => {
     return () => clearInterval(interval);
   }, [refetch]);
 
-  // Sample order data (to be replaced with actual API data)
-  const sampleOrder = {
-    _id: id || '43554645',
-    orderItems: [
-      {
-        _id: 'item1',
-        name: 'Turkish Steak',
-        image: '/images/product-small-placeholder.png',
-        price: 25,
-        quantity: 2,
-      },
-      {
-        _id: 'item2',
-        name: 'Salmon',
-        image: '/images/product-small-placeholder.png',
-        price: 30,
-        quantity: 1,
-      },
-    ],
-    shippingAddress: {
-      address: 'Old Student House 56 Street',
-    },
-    paymentMethod: 'credit',
-    itemsPrice: 80,
-    shippingPrice: 14,
-    totalPrice: 94,
-    isPaid: true,
-    isDelivered: false,
-    status: 'processing',
-    createdAt: '2023-07-24T08:25:00Z',
-    statusEvents: [
-      {
-        status: 'placed',
-        time: '2023-07-24T08:25:00Z',
-        isCompleted: true,
-      },
-      {
-        status: 'confirmed',
-        time: '2023-07-24T08:54:00Z',
-        isCompleted: true,
-      },
-      {
-        status: 'shipping',
-        time: '2023-07-24T09:30:00Z',
-        isCompleted: false,
-      },
-      {
-        status: 'delivered',
-        time: null,
-        isCompleted: false,
-      },
-    ],
-    shipper: {
-      name: 'Jazzy Jr',
-      phone: '+1 24123 45353 2342',
-    },
-  };
+  // No order data available - will handle in the rendering logic
+  if (isLoading || !order) {
+    return (
+      <Layout>
+        <div className="order-status-container">
+          <Loader />
+        </div>
+      </Layout>
+    );
+  }
 
-  // Use sample data if API data isn't available yet
-  const orderData = order || sampleOrder;
+  if (error) {
+    return (
+      <Layout>
+        <div className="order-status-container">
+          <Message variant="error">
+            {error?.data?.message || 'Không thể tải thông tin đơn hàng'}
+          </Message>
+        </div>
+      </Layout>
+    );
+  }
 
   // Prepare status events if missing from API response
-  const statusEvents = orderData.statusEvents || [
-    { status: 'placed', time: orderData.createdAt, isCompleted: true },
+  const statusEvents = order.statusEvents || [
+    { status: 'placed', time: order.createdAt, isCompleted: true },
     { status: 'confirmed', time: null, isCompleted: false },
     { status: 'shipping', time: null, isCompleted: false },
     { status: 'delivered', time: null, isCompleted: false }
@@ -90,7 +52,7 @@ const OrderStatusPage = () => {
 
   // Get current status
   const getCurrentStatus = () => {
-    if (!orderData) return 'placed';
+    if (!order) return 'placed';
     
     const currentEvent = statusEvents.find(event => !event.isCompleted);
     return currentEvent ? currentEvent.status : 'delivered';
@@ -105,7 +67,7 @@ const OrderStatusPage = () => {
 
   // Get estimated delivery time
   const getEstimatedTime = () => {
-    if (orderData.isDelivered) return 'Đã giao hàng';
+    if (order.isDelivered) return 'Đã giao hàng';
     
     const deliveryEvent = statusEvents.find(event => event.status === 'delivered');
     if (deliveryEvent && deliveryEvent.time) {
@@ -128,10 +90,10 @@ const OrderStatusPage = () => {
           <h3>{title}</h3>
           <p className="status-time">{formatDate(event.time)}</p>
           {index === 0 && event.isCompleted && <p>**** **** **** 5454</p>}
-          {index === 2 && (event.isCompleted || getCurrentStatus() === 'shipping') && orderData.shipper && (
+          {index === 2 && (event.isCompleted || getCurrentStatus() === 'shipping') && order.shipper && (
             <>
-              <p>{orderData.shipper.name || 'Đang giao hàng'}</p>
-              <p>{orderData.shipper.phone || 'Đang cập nhật'}</p>
+              <p>{order.shipper.name || 'Đang giao hàng'}</p>
+              <p>{order.shipper.phone || 'Đang cập nhật'}</p>
             </>
           )}
         </div>
@@ -142,51 +104,41 @@ const OrderStatusPage = () => {
   return (
     <Layout>
       <div className="order-status-container">
-        {isLoading ? (
-          <Loader />
-        ) : error ? (
-          <Message variant="error">
-            {error?.data?.message || 'Không thể tải thông tin đơn hàng'}
-          </Message>
-        ) : (
-          <>
-            <div className="order-number">
-              <h1>Trạng thái đơn hàng</h1>
-              <p>#{orderData._id}</p>
+        <div className="order-number">
+          <h1>Trạng thái đơn hàng</h1>
+          <p>#{order._id}</p>
+        </div>
+        
+        <div className="status-timeline">
+          {/* Order Placed Status */}
+          {renderStatusItem(0, <FaClipboardCheck />, "Đã đặt hàng")}
+          
+          {/* Order Confirmed Status */}
+          {renderStatusItem(1, <FaClock />, "Đã xác nhận")}
+          
+          {/* Shipping Status */}
+          {renderStatusItem(2, <FaShippingFast />, "Đang giao hàng")}
+          
+          {/* Delivery Status */}
+          {renderStatusItem(3, <FaBox />, "Giao hàng")}
+          
+          {/* Ready Status */}
+          <div className="status-item">
+            <div className={`status-icon ${order.isDelivered ? 'active' : ''}`}>
+              <FaHourglassHalf />
             </div>
-            
-            <div className="status-timeline">
-              {/* Order Placed Status */}
-              {renderStatusItem(0, <FaClipboardCheck />, "Đã đặt hàng")}
-              
-              {/* Order Confirmed Status */}
-              {renderStatusItem(1, <FaClock />, "Đã xác nhận")}
-              
-              {/* Shipping Status */}
-              {renderStatusItem(2, <FaShippingFast />, "Đang giao hàng")}
-              
-              {/* Delivery Status */}
-              {renderStatusItem(3, <FaBox />, "Giao hàng")}
-              
-              {/* Ready Status */}
-              <div className="status-item">
-                <div className={`status-icon ${orderData.isDelivered ? 'active' : ''}`}>
-                  <FaHourglassHalf />
-                </div>
-                <div className="status-info">
-                  <h3>Tình trạng</h3>
-                  <p className="status-time">{getEstimatedTime()}</p>
-                </div>
-              </div>
+            <div className="status-info">
+              <h3>Tình trạng</h3>
+              <p className="status-time">{getEstimatedTime()}</p>
             </div>
-            
-            <div className="order-status-actions">
-              <Link to="/" className="btn-primary">
-                Trở về trang chủ
-              </Link>
-            </div>
-          </>
-        )}
+          </div>
+        </div>
+        
+        <div className="order-status-actions">
+          <Link to="/" className="btn-primary">
+            Trở về trang chủ
+          </Link>
+        </div>
       </div>
     </Layout>
   );

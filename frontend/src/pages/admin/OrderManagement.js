@@ -32,7 +32,7 @@ const OrderManagement = () => {
   });
   
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
   const [sortConfig, setSortConfig] = useState({ field: 'createdAt', direction: 'desc' });
   const [showFilters, setShowFilters] = useState(false);
   
@@ -41,10 +41,31 @@ const OrderManagement = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
   
+  // Prepare query params for API
+  const queryParams = {
+    page: currentPage,
+    limit: itemsPerPage,
+    status: activeTab !== 'all' ? activeTab : '',
+    search: filters.search || '',
+    startDate: filters.minDate || '',
+    endDate: filters.maxDate || '',
+    minTotal: filters.minTotal || 0,
+    maxTotal: filters.maxTotal || undefined
+  };
+  
   // API hooks
-  const { data: ordersData, isLoading, error, refetch } = useGetAdminOrdersQuery();
+  const { data: ordersResponse, isLoading, error, refetch } = useGetAdminOrdersQuery(queryParams);
   const [updateOrderToDelivered, { isLoading: isUpdatingDelivery }] = useUpdateOrderToDeliveredMutation();
   const [updateOrderToPaid, { isLoading: isUpdatingPayment }] = useUpdateOrderToPaidMutation();
+  
+  // Extract orders and pagination info from response
+  const orders = ordersResponse?.orders || [];
+  const pagination = ordersResponse?.pagination || {
+    page: 1,
+    limit: 20,
+    totalCount: 0,
+    totalPages: 1
+  };
   
   // Sample payment method options
   const paymentMethods = [
@@ -89,7 +110,18 @@ const OrderManagement = () => {
   // Handle filter change
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFilters({ ...filters, [name]: value });
+    setFilters({
+      ...filters,
+      [name]: value,
+    });
+    // Reset to page 1 when filters change
+    setCurrentPage(1);
+  };
+  
+  // Handle filter submit
+  const handleFilterSubmit = (e) => {
+    e.preventDefault();
+    refetch();
   };
   
   // Clear all filters
@@ -103,61 +135,18 @@ const OrderManagement = () => {
       maxTotal: '',
       paymentMethod: ''
     });
+    setCurrentPage(1);
   };
   
-  // Apply filters to orders
-  const applyFilters = (orders) => {
-    if (!orders) return [];
-    
-    return orders.filter(order => {
-      // Search filter (order ID, customer name, email, phone)
-      const searchMatch = !filters.search || 
-        order._id.toLowerCase().includes(filters.search.toLowerCase()) ||
-        (order.user?.name && order.user.name.toLowerCase().includes(filters.search.toLowerCase())) ||
-        (order.user?.email && order.user.email.toLowerCase().includes(filters.search.toLowerCase())) ||
-        (order.shippingAddress?.phone && order.shippingAddress.phone.includes(filters.search));
-      
-      // Status filter
-      const statusMatch = !filters.status || order.status === filters.status;
-      
-      // Date filters
-      const orderDate = new Date(order.createdAt);
-      const minDateFilter = filters.minDate ? new Date(filters.minDate) : null;
-      const maxDateFilter = filters.maxDate ? new Date(filters.maxDate) : null;
-      
-      const dateMatch = 
-        (!minDateFilter || orderDate >= minDateFilter) &&
-        (!maxDateFilter || orderDate <= maxDateFilter);
-      
-      // Total amount filters
-      const totalMatch = 
-        (!filters.minTotal || order.totalPrice >= parseFloat(filters.minTotal)) &&
-        (!filters.maxTotal || order.totalPrice <= parseFloat(filters.maxTotal));
-      
-      // Payment method filter
-      const paymentMethodMatch = !filters.paymentMethod || order.paymentMethod === filters.paymentMethod;
-      
-      return searchMatch && statusMatch && dateMatch && totalMatch && paymentMethodMatch;
-    });
-  };
-  
-  // Filter orders by tab
-  const filterByTab = (orders) => {
-    if (!orders) return [];
-    
-    switch (activeTab) {
-      case 'pending':
-        return orders.filter(order => ['pending', 'placed'].includes(order.status));
-      case 'processing':
-        return orders.filter(order => ['confirmed', 'processing'].includes(order.status));
-      case 'shipping':
-        return orders.filter(order => order.status === 'shipping');
-      case 'delivered':
-        return orders.filter(order => order.status === 'delivered');
-      case 'cancelled':
-        return orders.filter(order => order.status === 'cancelled');
-      default:
-        return orders;
+  // Handle tab change
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setCurrentPage(1); // Reset to page 1 when changing tabs
+    // Update status in query params when tab changes
+    if (tab !== 'all') {
+      setFilters({...filters, status: tab});
+    } else {
+      setFilters({...filters, status: ''});
     }
   };
   
@@ -208,21 +197,16 @@ const OrderManagement = () => {
     return <FaSortDown className="ms-1 text-primary" />;
   };
   
-  // Prepare orders with filtering, sorting, and pagination
+  // Get displayed orders
   const getDisplayedOrders = () => {
-    if (!ordersData) return [];
+    if (!orders) return { orders: [], totalItems: 0 };
     
-    const filteredByTab = filterByTab(ordersData);
-    const filtered = applyFilters(filteredByTab);
-    const sorted = sortOrders(filtered);
-    
-    // Calculate pagination
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    // Apply sorting (server already handles filtering and pagination)
+    const sorted = sortOrders(orders);
     
     return {
-      orders: sorted.slice(indexOfFirstItem, indexOfLastItem),
-      totalItems: sorted.length
+      orders: sorted,
+      totalItems: pagination.totalCount
     };
   };
   
@@ -255,7 +239,7 @@ const OrderManagement = () => {
   };
   
   // Pagination controls
-  const totalPages = Math.ceil(getDisplayedOrders().totalItems / itemsPerPage);
+  const totalPages = pagination.totalPages;
   
   const handlePreviousPage = () => {
     if (currentPage > 1) {
@@ -287,6 +271,12 @@ const OrderManagement = () => {
     }
     
     return pages;
+  };
+  
+  // Handle change items per page
+  const handleChangeItemsPerPage = (e) => {
+    setItemsPerPage(parseInt(e.target.value));
+    setCurrentPage(1); // Reset to page 1 when items per page changes
   };
   
   // Get status badge
@@ -326,7 +316,7 @@ const OrderManagement = () => {
               <Card.Body className="admin-p-0">
                 <Tabs 
                   activeKey={activeTab} 
-                  onSelect={tab => setActiveTab(tab)}
+                  onSelect={tab => handleTabChange(tab)}
                   className="admin-tabs admin-mb-3"
                 >
                   <Tab eventKey="all" title="Tất cả đơn hàng" />
@@ -351,11 +341,11 @@ const OrderManagement = () => {
                 onChange={handleFilterChange}
                 className="admin-form-control"
               />
-              <Button variant="outline-primary" className="admin-btn">
+              <Button variant="outline-primary" className="admin-btn" onClick={handleFilterSubmit}>
                 <FaSearch />
               </Button>
               <Button 
-                variant={showFilters ? "primary" : "outline-secondary"}
+                variant={showFilters ? "primary" : "outline-primary"}
                 onClick={() => setShowFilters(!showFilters)}
                 className="admin-btn"
               >
@@ -367,12 +357,12 @@ const OrderManagement = () => {
             <Form.Select 
               className="admin-form-control"
               value={itemsPerPage}
-              onChange={(e) => setItemsPerPage(parseInt(e.target.value))}
+              onChange={handleChangeItemsPerPage}
             >
-              <option value={10}>10 đơn hàng</option>
-              <option value={25}>25 đơn hàng</option>
+              <option value={20}>20 đơn hàng</option>
               <option value={50}>50 đơn hàng</option>
               <option value={100}>100 đơn hàng</option>
+              <option value={200}>200 đơn hàng</option>
             </Form.Select>
           </Col>
         </Row>
@@ -381,6 +371,7 @@ const OrderManagement = () => {
           <Card className="admin-card admin-mb-4">
             <Card.Body>
               <h5 className="admin-mb-3">Bộ lọc nâng cao</h5>
+              <Form onSubmit={handleFilterSubmit}>
               <Row>
                 <Col md={3}>
                   <Form.Group className="admin-mb-3">
@@ -393,7 +384,9 @@ const OrderManagement = () => {
                     >
                       <option value="">Tất cả trạng thái</option>
                       {statusOptions.map(option => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
                       ))}
                     </Form.Select>
                   </Form.Group>
@@ -409,8 +402,10 @@ const OrderManagement = () => {
                       className="admin-form-control"
                     >
                       <option value="">Tất cả phương thức</option>
-                      {paymentMethods.map(option => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
+                        {paymentMethods.map(method => (
+                          <option key={method.value} value={method.value}>
+                            {method.label}
+                          </option>
                       ))}
                     </Form.Select>
                   </Form.Group>
@@ -418,10 +413,11 @@ const OrderManagement = () => {
                 
                 <Col md={3}>
                   <Form.Group className="admin-mb-3">
-                    <Form.Label>Ngày đặt hàng</Form.Label>
+                      <Form.Label>Thời gian đặt hàng</Form.Label>
                     <div className="admin-d-flex">
                       <Form.Control
                         type="date"
+                          placeholder="Từ ngày"
                         name="minDate"
                         value={filters.minDate}
                         onChange={handleFilterChange}
@@ -429,6 +425,7 @@ const OrderManagement = () => {
                       />
                       <Form.Control
                         type="date"
+                          placeholder="Đến ngày"
                         name="maxDate"
                         value={filters.maxDate}
                         onChange={handleFilterChange}
@@ -468,79 +465,89 @@ const OrderManagement = () => {
                   variant="outline-secondary" 
                   onClick={clearFilters}
                   className="admin-btn admin-me-2"
+                    type="button"
                 >
                   Xóa bộ lọc
                 </Button>
                 <Button 
                   variant="primary"
-                  onClick={() => refetch()}
+                    type="submit"
                   className="admin-btn"
                 >
                   Áp dụng
                 </Button>
               </div>
+              </Form>
             </Card.Body>
           </Card>
         )}
         
+        <Card className="admin-card admin-mb-4">
+          <Card.Body className="admin-p-0">
         {isLoading ? (
           <div className="text-center admin-py-5">
             <Spinner animation="border" variant="primary" />
-            <p className="admin-mt-3">Đang tải dữ liệu đơn hàng...</p>
+                <p className="mt-2">Đang tải dữ liệu...</p>
           </div>
         ) : error ? (
-          <Alert variant="danger">
-            Có lỗi xảy ra khi tải dữ liệu đơn hàng. Vui lòng thử lại sau.
+              <Alert variant="danger" className="m-3">
+                <Alert.Heading>Lỗi tải dữ liệu</Alert.Heading>
+                <p>{error.message || 'Có lỗi xảy ra khi tải dữ liệu đơn hàng'}</p>
           </Alert>
         ) : (
-          <>
-            <Card className="admin-card">
               <div className="admin-table-responsive">
-                <Table className="admin-table admin-table-hover admin-mb-0">
-                  <thead>
+                <Table hover className="admin-table admin-mb-0">
+                  <thead className="admin-thead">
                     <tr>
-                      <th width="120px" onClick={() => handleSort('_id')} style={{ cursor: 'pointer' }}>
+                      <th onClick={() => handleSort('_id')} className="admin-sortable">
                         Mã đơn hàng {getSortIcon('_id')}
                       </th>
-                      <th>Khách hàng</th>
-                      <th onClick={() => handleSort('createdAt')} style={{ cursor: 'pointer' }}>
+                      <th onClick={() => handleSort('user.name')} className="admin-sortable">
+                        Khách hàng {getSortIcon('user.name')}
+                      </th>
+                      <th onClick={() => handleSort('createdAt')} className="admin-sortable">
                         Ngày đặt {getSortIcon('createdAt')}
                       </th>
-                      <th>Phương thức thanh toán</th>
-                      <th onClick={() => handleSort('totalPrice')} style={{ cursor: 'pointer' }}>
+                      <th onClick={() => handleSort('totalPrice')} className="admin-sortable">
                         Tổng tiền {getSortIcon('totalPrice')}
                       </th>
-                      <th>Trạng thái</th>
-                      <th width="180px">Thao tác</th>
+                      <th onClick={() => handleSort('status')} className="admin-sortable">
+                        Trạng thái {getSortIcon('status')}
+                      </th>
+                      <th onClick={() => handleSort('paymentMethod')} className="admin-sortable">
+                        Thanh toán {getSortIcon('paymentMethod')}
+                      </th>
+                      <th>Thao tác</th>
                     </tr>
                   </thead>
                   <tbody>
                     {getDisplayedOrders().orders.map((order, index) => (
                       <tr key={order._id}>
                         <td>
-                          <span className="admin-order-id">{order._id}</span>
+                          <span className="admin-order-id">
+                            #{order.orderNumber || order._id.substring(0, 8)}
+                          </span>
                         </td>
                         <td>
                           <div className="admin-customer-info">
-                            <div className="admin-customer-name">
-                              {order.user?.name || order.guestInfo?.name || 'Khách hàng'}
-                            </div>
-                            <div className="admin-customer-email text-muted">
-                              {order.user?.email || order.guestInfo?.email || 'N/A'}
-                            </div>
+                            <span className="admin-customer-name">
+                              {order.user?.name || 'Khách vãng lai'}
+                            </span>
+                            {order.user?.email && (
+                              <span className="admin-customer-email">{order.user.email}</span>
+                            )}
                           </div>
                         </td>
+                        <td>{formatDate(order.createdAt)}</td>
+                        <td>{formatCurrency(order.totalPrice)}</td>
+                        <td>{getStatusBadge(order.status)}</td>
                         <td>
-                          {formatDate(order.createdAt)}
+                          {order.isPaid ? (
+                            <Badge bg="success">Đã thanh toán</Badge>
+                          ) : (
+                            <Badge bg="warning" text="dark">Chưa thanh toán</Badge>
+                          )}
                         </td>
-                        <td>
-                          {getPaymentMethodLabel(order.paymentMethod)}
-                          {order.isPaid && <Badge bg="success" className="ms-2">Đã thanh toán</Badge>}
-                        </td>
-                        <td className="admin-fw-medium">
-                          {formatCurrency(order.totalPrice || 0)}
-                        </td>
-                        <td>{getStatusBadge(order.status || 'placed')}</td>
                         <td>
                           <div className="admin-order-actions">
                             <Button 
@@ -560,8 +567,13 @@ const OrderManagement = () => {
                             >
                               <FaPrint />
                             </Link>
-                            <Dropdown align="end">
-                              <Dropdown.Toggle variant="light" size="sm" className="admin-btn admin-btn-icon admin-btn-sm">
+                            
+                            <Dropdown>
+                              <Dropdown.Toggle 
+                                variant="light" 
+                                id={`dropdown-${order._id}`}
+                                className="admin-btn admin-btn-icon admin-btn-sm"
+                              >
                                 <FaEllipsisV />
                               </Dropdown.Toggle>
                               <Dropdown.Menu>
@@ -569,30 +581,18 @@ const OrderManagement = () => {
                                   <Dropdown.Item 
                                     onClick={() => handleMarkAsDelivered(order._id)}
                                     className="admin-dropdown-item"
-                                    disabled={isUpdatingDelivery}
                                   >
-                                    <FaShippingFast className="admin-me-2" />
-                                    Đánh dấu đã giao hàng
+                                    <FaShippingFast className="admin-me-2" /> Đánh dấu đã giao
                                   </Dropdown.Item>
                                 )}
                                 {!order.isPaid && (
                                   <Dropdown.Item 
                                     onClick={() => handleMarkAsPaid(order._id)}
                                     className="admin-dropdown-item"
-                                    disabled={isUpdatingPayment}
                                   >
-                                    <FaMoneyBill className="admin-me-2" />
-                                    Đánh dấu đã thanh toán
+                                    <FaMoneyBill className="admin-me-2" /> Đánh dấu đã thanh toán
                                   </Dropdown.Item>
                                 )}
-                                <Dropdown.Item 
-                                  as={Link} 
-                                  to={`/admin/orders/edit/${order._id}`}
-                                  className="admin-dropdown-item"
-                                >
-                                  <FaClipboard className="admin-me-2" />
-                                  Cập nhật đơn hàng
-                                </Dropdown.Item>
                               </Dropdown.Menu>
                             </Dropdown>
                           </div>
@@ -603,7 +603,9 @@ const OrderManagement = () => {
                 </Table>
               </div>
               
-              {getDisplayedOrders().orders.length === 0 && (
+            )}
+              
+            {!isLoading && getDisplayedOrders().orders.length === 0 && (
                 <div className="text-center admin-py-5">
                   <FaBoxOpen className="admin-empty-icon" />
                   <h4>Không tìm thấy đơn hàng nào</h4>
@@ -611,61 +613,43 @@ const OrderManagement = () => {
                 </div>
               )}
               
+            {!isLoading && pagination.totalCount > 0 && (
               <Card.Footer className="admin-d-flex admin-justify-content-between admin-align-items-center">
-                <div className="admin-pagination-info">
-                  Hiển thị {getDisplayedOrders().orders.length} / {getDisplayedOrders().totalItems} đơn hàng
+                <div className="admin-text-muted">
+                  Hiển thị {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, pagination.totalCount)} trên {pagination.totalCount} đơn hàng
                 </div>
-                
-                <Pagination className="admin-pagination admin-mb-0">
+                <Pagination className="admin-mb-0">
                   <Pagination.Prev 
-                    disabled={currentPage === 1}
                     onClick={handlePreviousPage}
+                    disabled={currentPage === 1}
                   />
                   
-                  {currentPage > 2 && (
-                    <>
-                      <Pagination.Item onClick={() => setCurrentPage(1)}>1</Pagination.Item>
-                      {currentPage > 3 && <Pagination.Ellipsis disabled />}
-                    </>
-                  )}
-                  
-                  {getPageNumbers().map(number => (
+                  {getPageNumbers().map(page => (
                     <Pagination.Item 
-                      key={number} 
-                      active={number === currentPage}
-                      onClick={() => setCurrentPage(number)}
+                      key={page}
+                      active={page === currentPage}
+                      onClick={() => setCurrentPage(page)}
                     >
-                      {number}
+                      {page}
                     </Pagination.Item>
                   ))}
                   
-                  {currentPage < totalPages - 1 && (
-                    <>
-                      {currentPage < totalPages - 2 && <Pagination.Ellipsis disabled />}
-                      <Pagination.Item onClick={() => setCurrentPage(totalPages)}>
-                        {totalPages}
-                      </Pagination.Item>
-                    </>
-                  )}
-                  
                   <Pagination.Next 
-                    disabled={currentPage === totalPages}
                     onClick={handleNextPage}
+                    disabled={currentPage === totalPages}
                   />
                 </Pagination>
               </Card.Footer>
+            )}
+          </Card.Body>
             </Card>
-          </>
-        )}
       </div>
       
-      {/* Order Details Modal */}
       <Modal
         show={showDetailsModal}
         onHide={() => setShowDetailsModal(false)}
-        centered
         size="lg"
-        className="admin-modal"
+        centered
       >
         <Modal.Header closeButton>
           <Modal.Title>Chi tiết đơn hàng</Modal.Title>
@@ -718,15 +702,21 @@ const OrderManagement = () => {
                   <div className="admin-order-detail-section">
                     <h5 className="admin-order-detail-title">Thông tin khách hàng</h5>
                     <div className="admin-order-detail-row">
-                      <div className="admin-order-detail-label">Tên khách hàng:</div>
+                      <div className="admin-order-detail-label">Tên:</div>
                       <div className="admin-order-detail-value">
-                        {selectedOrder.user?.name || selectedOrder.guestInfo?.name || 'Không có thông tin'}
+                        {selectedOrder.user?.name || selectedOrder.shippingAddress?.fullName || 'Không có thông tin'}
                       </div>
                     </div>
                     <div className="admin-order-detail-row">
                       <div className="admin-order-detail-label">Email:</div>
                       <div className="admin-order-detail-value">
-                        {selectedOrder.user?.email || selectedOrder.guestInfo?.email || 'Không có thông tin'}
+                        {selectedOrder.user?.email || 'Không có thông tin'}
+                      </div>
+                    </div>
+                    <div className="admin-order-detail-row">
+                      <div className="admin-order-detail-label">Địa chỉ:</div>
+                      <div className="admin-order-detail-value">
+                        {selectedOrder.shippingAddress?.address}, {selectedOrder.shippingAddress?.city}
                       </div>
                     </div>
                     <div className="admin-order-detail-row">
@@ -735,122 +725,93 @@ const OrderManagement = () => {
                         {selectedOrder.shippingAddress?.phone || 'Không có thông tin'}
                       </div>
                     </div>
-                    <div className="admin-order-detail-row">
-                      <div className="admin-order-detail-label">Địa chỉ giao hàng:</div>
-                      <div className="admin-order-detail-value">
-                        {selectedOrder.shippingAddress ? (
-                          <>
-                            {selectedOrder.shippingAddress.address}, {selectedOrder.shippingAddress.ward}, 
-                            {selectedOrder.shippingAddress.district}, {selectedOrder.shippingAddress.province}
-                          </>
-                        ) : 'Không có thông tin'}
-                      </div>
-                    </div>
                   </div>
                 </Col>
               </Row>
               
-              <hr className="admin-my-4" />
-              
               <div className="admin-order-detail-section">
-                <h5 className="admin-order-detail-title">Sản phẩm đã đặt</h5>
-                <div className="admin-table-responsive">
-                  <Table className="admin-table admin-table-striped">
+                <h5 className="admin-order-detail-title">Sản phẩm</h5>
+                <Table striped bordered hover size="sm">
                     <thead>
                       <tr>
-                        <th style={{ width: '60px' }}>#</th>
                         <th>Sản phẩm</th>
-                        <th style={{ width: '100px' }}>Đơn giá</th>
-                        <th style={{ width: '80px' }}>SL</th>
-                        <th style={{ width: '120px' }} className="text-end">Thành tiền</th>
+                      <th className="text-center">Số lượng</th>
+                      <th className="text-end">Đơn giá</th>
+                      <th className="text-end">Thành tiền</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {selectedOrder.orderItems?.map((item, index) => (
-                        <tr key={item._id || index}>
-                          <td>{index + 1}</td>
+                    {selectedOrder.orderItems.map((item, index) => (
+                      <tr key={index}>
                           <td>
-                            <div className="admin-product-info">
+                          <div className="d-flex align-items-center">
                               {item.image && (
-                                <div className="admin-product-image admin-product-image-sm">
-                                  <img src={item.image} alt={item.name} />
-                                </div>
-                              )}
-                              <span className="admin-product-name">{item.name}</span>
+                              <img 
+                                src={item.image} 
+                                alt={item.name} 
+                                className="admin-product-image-sm" 
+                              />
+                            )}
+                            <span>{item.name}</span>
                             </div>
                           </td>
-                          <td>{formatCurrency(item.price)}</td>
-                          <td>{item.qty}</td>
+                        <td className="text-center">{item.qty}</td>
+                        <td className="text-end">{formatCurrency(item.price)}</td>
                           <td className="text-end">{formatCurrency(item.price * item.qty)}</td>
                         </tr>
                       ))}
                     </tbody>
                     <tfoot>
                       <tr>
-                        <td colSpan="4" className="text-end"><strong>Tạm tính:</strong></td>
-                        <td className="text-end">{formatCurrency(selectedOrder.itemsPrice || selectedOrder.totalPrice)}</td>
+                      <td colSpan={3} className="text-end admin-fw-bold">Tạm tính:</td>
+                      <td className="text-end">{formatCurrency(selectedOrder.itemsPrice)}</td>
                       </tr>
-                      {selectedOrder.shippingPrice > 0 && (
                         <tr>
-                          <td colSpan="4" className="text-end">Phí vận chuyển:</td>
+                      <td colSpan={3} className="text-end admin-fw-bold">Phí vận chuyển:</td>
                           <td className="text-end">{formatCurrency(selectedOrder.shippingPrice)}</td>
                         </tr>
-                      )}
                       {selectedOrder.taxPrice > 0 && (
                         <tr>
-                          <td colSpan="4" className="text-end">Thuế:</td>
+                        <td colSpan={3} className="text-end admin-fw-bold">Thuế:</td>
                           <td className="text-end">{formatCurrency(selectedOrder.taxPrice)}</td>
                         </tr>
                       )}
+                    {selectedOrder.discountPrice > 0 && (
                       <tr>
-                        <td colSpan="4" className="text-end"><strong>Tổng cộng:</strong></td>
+                        <td colSpan={3} className="text-end admin-fw-bold">Giảm giá:</td>
+                        <td className="text-end">-{formatCurrency(selectedOrder.discountPrice)}</td>
+                      </tr>
+                    )}
+                    <tr>
+                      <td colSpan={3} className="text-end admin-fw-bold">Tổng cộng:</td>
                         <td className="text-end admin-fw-bold">{formatCurrency(selectedOrder.totalPrice)}</td>
                       </tr>
                     </tfoot>
                   </Table>
+              </div>
+              
+              {selectedOrder.note && (
+                <div className="admin-order-detail-section">
+                  <h5 className="admin-order-detail-title">Ghi chú</h5>
+                  <div className="admin-p-3 admin-bg-light">
+                    {selectedOrder.note}
                 </div>
               </div>
+              )}
             </>
           )}
         </Modal.Body>
         <Modal.Footer>
-          <Button 
-            variant="outline-secondary" 
-            onClick={() => setShowDetailsModal(false)}
-            className="admin-btn"
-          >
+          <Button variant="outline-secondary" onClick={() => setShowDetailsModal(false)}>
             Đóng
           </Button>
-          
-          {selectedOrder && !selectedOrder.isDelivered && (
-            <Button 
-              variant="success" 
-              onClick={() => {
-                handleMarkAsDelivered(selectedOrder._id);
-                setShowDetailsModal(false);
-              }}
-              className="admin-btn"
-              disabled={isUpdatingDelivery}
+          <Link 
+            to={selectedOrder ? `/admin/orders/print/${selectedOrder._id}` : '#'} 
+            className="btn btn-primary"
+            target="_blank"
             >
-              <FaShippingFast className="admin-me-1" /> 
-              {isUpdatingDelivery ? 'Đang cập nhật...' : 'Đánh dấu đã giao hàng'}
-            </Button>
-          )}
-          
-          {selectedOrder && !selectedOrder.isPaid && (
-            <Button 
-              variant="primary" 
-              onClick={() => {
-                handleMarkAsPaid(selectedOrder._id);
-                setShowDetailsModal(false);
-              }}
-              className="admin-btn"
-              disabled={isUpdatingPayment}
-            >
-              <FaMoneyBill className="admin-me-1" /> 
-              {isUpdatingPayment ? 'Đang cập nhật...' : 'Đánh dấu đã thanh toán'}
-            </Button>
-          )}
+            <FaPrint className="me-2" /> In đơn hàng
+          </Link>
         </Modal.Footer>
       </Modal>
     </AdminLayout>

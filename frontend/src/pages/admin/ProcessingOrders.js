@@ -113,7 +113,7 @@ const ProcessingOrders = () => {
                       <td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPrice)}</td>
                       <td>{formatPaymentMethod(order.paymentMethod)}</td>
                       <td className="actions">
-                        <Link to={`/admin/orders/${orderId}`} className="btn btn-info btn-sm me-2">
+                        <Link to={`/admin/order/${orderId}`} className="btn btn-info btn-sm me-2">
                           <FaEye /> Chi tiết
                         </Link>
                         <Button 

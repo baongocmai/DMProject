@@ -1,17 +1,22 @@
 /**
  * Format price with currency symbol
  * @param {Number} price - Product price
- * @param {String} currency - Currency code (default: USD)
+ * @param {String} currency - Currency code (default: VND)
  * @returns {String} Formatted price
  */
-export const formatPrice = (price) => {
-  return price.toLocaleString('vi-VN', {
+export const formatPrice = (price, currency = 'VND') => {
+  if (price === undefined || price === null) return '';
+  
+  // Nhân giá trị với 1000 để hiển thị đúng định dạng tiền tệ
+  const priceInVND = price * 1000;
+  
+  const formatter = new Intl.NumberFormat('vi-VN', {
     style: 'currency',
-    currency: 'VND',
+    currency,
     minimumFractionDigits: 0,
-    maximumFractionDigits: 0
   });
   
+  return formatter.format(priceInVND);
 };
 
 /**
@@ -30,11 +35,16 @@ export const calculateDiscount = (originalPrice, currentPrice) => {
 
 /**
  * Check if product is in stock
- * @param {Number} countInStock - Product stock count
+ * @param {Object} product - Product object with stock or countInStock
  * @returns {Boolean} True if product is in stock
  */
-export const isInStock = (countInStock) => {
-  return countInStock > 0;
+export const isInStock = (product) => {
+  // Ưu tiên sử dụng trường stock, nếu không có thì dùng countInStock
+  const stockValue = 
+    product.stock !== undefined ? product.stock : 
+    (product.countInStock !== undefined ? product.countInStock : 0);
+  
+  return stockValue > 0;
 };
 
 /**

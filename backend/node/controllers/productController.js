@@ -319,98 +319,110 @@ exports.getRelatedProducts = async (req, res) => {
 // Tạo sản phẩm mới (Admin)
 exports.createProduct = async (req, res) => {
   try {
-    const { name, price, description, category, countInStock, stock, image } = req.body;
+    const { name, price, description, category, stock, image } = req.body;
     
-    // Log dữ liệu nhận được
-    console.log("Dữ liệu sản phẩm nhận được:", req.body);
-
-    // Kiểm tra dữ liệu đầu vào cơ bản
     if (!name || !price) {
-      return res.status(400).json({ 
-        message: "Vui lòng cung cấp ít nhất tên và giá sản phẩm",
-        success: false
-      });
+      return res.status(400).json({ message: "Vui lòng cung cấp tên và giá sản phẩm" });
     }
 
-    // Sử dụng stock hoặc countInStock, ưu tiên stock nếu có
-    const stockValue = stock !== undefined ? stock : (countInStock || 0);
-
     // Tạo sản phẩm mới
-    const product = new Product({
+    const newProduct = new Product({
       name,
       price,
       description: description || "",
-      category: category || "Khác",
-      stock: stockValue,
+      category: category || "Uncategorized",
+      stock: stock || 0,
       image: image || ""
     });
 
-    // Lưu sản phẩm vào cơ sở dữ liệu
-    const createdProduct = await product.save();
-    
-    console.log("Sản phẩm đã được tạo:", createdProduct);
+    const savedProduct = await newProduct.save();
 
     res.status(201).json({
       message: "Sản phẩm đã được tạo thành công",
-      product: createdProduct,
-      success: true
+      product: savedProduct
     });
   } catch (error) {
-    console.error("Lỗi khi tạo sản phẩm:", error);
-    res.status(500).json({ 
-      message: "Lỗi khi tạo sản phẩm", 
-      error: error.message,
-      success: false
-    });
+    console.error("Error creating product:", error);
+    res.status(500).json({ message: "Lỗi khi tạo sản phẩm", error: error.message });
   }
 };
 
-// Cập nhật sản phẩm (Admin)
+// Tìm hàm updateProduct và cập nhật để hỗ trợ tốt hơn các trường Deal Hot
 exports.updateProduct = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { name, price, description, category, countInStock, stock, image } = req.body;
+    const productId = req.params.id;
     
-    // Log dữ liệu nhận được
-    console.log(`Cập nhật sản phẩm ID ${id}:`, req.body);
-    
-    // Kiểm tra xem sản phẩm có tồn tại không
-    const product = await Product.findById(id);
+    // Validate if product exists
+    const product = await Product.findById(productId);
     if (!product) {
-      return res.status(404).json({ 
-        message: "Không tìm thấy sản phẩm", 
-        success: false 
-      });
+      return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
     }
     
-    // Sử dụng stock hoặc countInStock, ưu tiên stock nếu có
-    const stockValue = stock !== undefined ? stock : (countInStock !== undefined ? countInStock : product.stock);
+    // Log thông tin cho debug
+    console.log("Updating product:", productId);
+    console.log("Product data:", JSON.stringify(req.body, null, 2));
     
-    // Cập nhật thông tin sản phẩm
-    product.name = name || product.name;
-    product.price = price !== undefined ? price : product.price;
-    product.description = description || product.description;
-    product.category = category || product.category;
-    product.stock = stockValue;
-    product.image = image || product.image;
+    // Handle deal hot specific fields
+    const updateData = { ...req.body };
     
-    // Lưu sản phẩm đã cập nhật
-    const updatedProduct = await product.save();
+    // Convert salePrice to Number if it exists
+    if (updateData.salePrice !== undefined) {
+      updateData.salePrice = Number(updateData.salePrice);
+      console.log(`Converting salePrice to number: ${updateData.salePrice}`);
+    }
     
-    console.log("Sản phẩm đã được cập nhật:", updatedProduct);
+    // Handle dates
+    if (updateData.dealStartDate) {
+      try {
+        updateData.dealStartDate = new Date(updateData.dealStartDate);
+        console.log(`Setting dealStartDate: ${updateData.dealStartDate}`);
+      } catch (e) {
+        console.error("Invalid dealStartDate format:", updateData.dealStartDate);
+      }
+    }
     
-    res.json({
-      message: "Sản phẩm đã được cập nhật thành công",
-      product: updatedProduct,
-      success: true
+    if (updateData.dealEndDate) {
+      try {
+        updateData.dealEndDate = new Date(updateData.dealEndDate);
+        console.log(`Setting dealEndDate: ${updateData.dealEndDate}`);
+      } catch (e) {
+        console.error("Invalid dealEndDate format:", updateData.dealEndDate);
+      }
+    }
+    
+    // Handle dealStartDate and dealEndDate correctly
+    if (updateData.dealStartDate === null) {
+      updateData.dealStartDate = undefined; // MongoDB sẽ xóa trường này
+      console.log("Removing dealStartDate field");
+    }
+    
+    if (updateData.dealEndDate === null) {
+      updateData.dealEndDate = undefined; // MongoDB sẽ xóa trường này
+      console.log("Removing dealEndDate field");
+    }
+    
+    // Cập nhật sản phẩm với dữ liệu mới
+    const updatedProduct = await Product.findByIdAndUpdate(
+      productId,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    );
+    
+    if (!updatedProduct) {
+      return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
+    }
+    
+    console.log("Product updated successfully:");
+    console.log("Updated fields:", JSON.stringify(updateData, null, 2));
+    console.log("Result:", JSON.stringify(updatedProduct, null, 2));
+    
+    res.status(200).json({ 
+      message: "Cập nhật sản phẩm thành công",
+      product: updatedProduct 
     });
   } catch (error) {
     console.error("Lỗi khi cập nhật sản phẩm:", error);
-    res.status(500).json({ 
-      message: "Lỗi khi cập nhật sản phẩm", 
-      error: error.message,
-      success: false
-    });
+    res.status(500).json({ message: "Lỗi khi cập nhật sản phẩm", error: error.toString() });
   }
 };
 
@@ -478,5 +490,54 @@ exports.getProductCountsByCategory = async (req, res) => {
       error: error.message,
       success: false
     });
+  }
+};
+
+// Thêm endpoint mới để lấy danh sách Deal Hot
+exports.getDealHot = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    const now = new Date();
+    
+    // Cập nhật query để kiểm tra ngày hợp lệ
+    const query = {
+      $or: [
+        { category: 'Deal hot' },
+        { tags: 'deal-hot' }
+      ],
+      salePrice: { $exists: true, $gt: 0 },
+      $and: [
+        // Deal chưa kết thúc hoặc không có ngày kết thúc
+        { $or: [
+          { dealEndDate: { $exists: false } },
+          { dealEndDate: null },
+          { dealEndDate: { $gt: now } }
+        ]},
+        // Deal đã bắt đầu hoặc không có ngày bắt đầu
+        { $or: [
+          { dealStartDate: { $exists: false } },
+          { dealStartDate: null },
+          { dealStartDate: { $lte: now } }
+        ]}
+      ]
+    };
+    
+    // Log query để debug
+    console.log('Deal Hot query:', JSON.stringify(query, null, 2));
+    
+    const products = await Product.find(query)
+      .sort({ createdAt: -1 })
+      .limit(limit);
+    
+    if (!products || products.length === 0) {
+      console.log('Không tìm thấy sản phẩm Deal Hot');
+      return res.status(200).json({ products: [] });
+    }
+    
+    console.log(`Tìm thấy ${products.length} sản phẩm Deal Hot`);
+    res.status(200).json({ products });
+  } catch (error) {
+    console.error('Lỗi khi lấy sản phẩm Deal Hot:', error);
+    res.status(500).json({ message: 'Lỗi khi lấy sản phẩm Deal Hot' });
   }
 };

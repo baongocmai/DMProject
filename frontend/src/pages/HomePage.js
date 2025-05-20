@@ -1,17 +1,18 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Button, Carousel } from 'react-bootstrap';
-import { useGetProductsQuery, useGetRecommendedProductsQuery } from '../services/api';
+import { useGetProductsQuery, useGetRecommendedProductsQuery, useGetDealHotQuery } from '../services/api';
 import Layout from '../components/Layout';
 import CategoryList from '../components/CategoryList';
 import ProductCard from '../components/ProductCard';
-import DealOfTheDay from '../components/DealOfTheDay';
 import CartDrawer from '../components/CartDrawer';
 import AccountDrawer from '../components/AccountDrawer';
 import Loader from '../components/Loader';
 import Message from '../components/Message';
 import ApiErrorBoundary from '../components/ApiErrorBoundary';
-import { FaArrowRight } from 'react-icons/fa';
+import DealHot from '../components/DealHot';
+import { FaArrowRight, FaRegClock } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 
 const HomePage = () => {
   const location = useLocation();
@@ -83,27 +84,18 @@ const HomePage = () => {
     skip: !!filters.keyword || !!filters.category,
   });
   
-  // Create a stable deal object that doesn't change on every render
-  const dealOfDay = useMemo(() => {
-    const dayProduct = productsData?.products?.find(p => p.dealOfTheWeek) || null;
-    if (dayProduct) {
-      return {
-        ...dayProduct,
-        expiresAt: dayProduct.expiresAt || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-      };
-    }
-    return null; // DealOfTheDay component will use its default deal
-  }, [productsData?.products]);
-
+  // Fetch deal hot products
+  const { data: dealHotData } = useGetDealHotQuery(undefined, {
+    // Skip deal hot API call if we're using search or category filters
+    skip: !!filters.keyword || !!filters.category,
+  });
+  
   // Debug info
   useEffect(() => {
     console.log('Products data from API:', productsData);
     console.log('Recommendations data from API:', recommendationsData);
-  }, [productsData, recommendationsData]);
-  const scrollToBottom = () => {
-  window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-};
-
+    console.log('Deal hot data from API:', dealHotData);
+  }, [productsData, recommendationsData, dealHotData]);
   
   // Extract products array from API response or use empty array as fallback
   const products = productsData?.products || [];
@@ -207,16 +199,26 @@ const HomePage = () => {
         </div>
       )}
       
-      <Container className="py-5">
+      <Container>
         {/* Categories Section */}
         {!filters.keyword && !filters.category && (
-  <>
-    <CategoryList />
-    <DealOfTheDay deal={dealOfDay} />
-  </>
-)}
-
-      
+          <>
+            <CategoryList />
+          </>
+        )}
+        
+        {/* Deal Hot Section */}
+        {!filters.keyword && !filters.category && (
+          <div className="deal-hot-section py-4 mt-4">
+            <DealHot 
+              products={dealHotData?.products || []} 
+              loading={!dealHotData && !productsLoading} 
+              maxItems={4} 
+              showCountdown={true}
+            />
+          </div>
+        )}
+        
         {/* Search Results Header */}
         {(filters.keyword || filters.category) && (
           <div className="search-results-header">

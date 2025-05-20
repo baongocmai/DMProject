@@ -64,7 +64,12 @@ const CartPage = () => {
               
               <div className="cart-item-details">
                 <h3 className="cart-item-title">{item.name}</h3>
-                <div className="cart-item-price">{formatPrice(item.price)}</div>
+                <div className="cart-item-price">
+                  {formatPrice(item.price)}
+                  {item.originalPrice && item.price < item.originalPrice && (
+                    <span className="original-price ms-2">{formatPrice(item.originalPrice)}</span>
+                  )}
+                </div>
                 
                 <div className="cart-item-actions">
                   <div className="quantity-control">

@@ -6,15 +6,14 @@ import './ProductForm.css';
 const ProductForm = ({ product, onSuccess, mode = 'create' }) => {
   const [formData, setFormData] = useState({
     name: '',
-    price: '',
     description: '',
+    price: '',
     category: '',
-    countInStock: '',
-    brand: '',
+    stock: '',
+    featured: false,
+    discount: '',
     image: '',
-    isNew: false,
-    isFeatured: false,
-    salePrice: '',
+    status: 'active'
   });
   
   const [imagePreview, setImagePreview] = useState(null);
@@ -45,8 +44,8 @@ const ProductForm = ({ product, onSuccess, mode = 'create' }) => {
       const productData = { ...product };
       // Convert numeric values to string for form inputs
       productData.price = productData.price?.toString() || '';
-      productData.salePrice = productData.salePrice?.toString() || '';
-      productData.countInStock = productData.countInStock?.toString() || '';
+      productData.stock = productData.stock?.toString() || '';
+      productData.discount = productData.discount?.toString() || '';
       
       setFormData(productData);
       setImagePreview(product.image);
@@ -55,6 +54,19 @@ const ProductForm = ({ product, onSuccess, mode = 'create' }) => {
       if (product.image && product.image.startsWith('http')) {
         setImageInputType('url');
       }
+    } else {
+      // Reset form khi ở chế độ tạo mới
+      setFormData({
+        name: '',
+        description: '',
+        price: '',
+        category: '',
+        stock: '',
+        featured: false,
+        discount: '',
+        image: '',
+        status: 'active'
+      });
     }
   }, [product, mode]);
   
@@ -70,15 +82,14 @@ const ProductForm = ({ product, onSuccess, mode = 'create' }) => {
     if (mode === 'create') {
       setFormData({
         name: '',
-        price: '',
         description: '',
+        price: '',
         category: '',
-        countInStock: '',
-        brand: '',
+        stock: '',
+        featured: false,
+        discount: '',
         image: '',
-        isNew: false,
-        isFeatured: false,
-        salePrice: '',
+        status: 'active'
       });
       setImagePreview(null);
       setImageFile(null);
@@ -91,19 +102,20 @@ const ProductForm = ({ product, onSuccess, mode = 'create' }) => {
     const newErrors = {};
     
     if (!formData.name) newErrors.name = 'Product name is required';
-    if (!formData.price) newErrors.price = 'Price is required';
+    if (!formData.price) newErrors.price = 'Product price is required';
     else if (isNaN(formData.price) || Number(formData.price) <= 0) {
       newErrors.price = 'Price must be a positive number';
     }
     
-    if (formData.salePrice && (isNaN(formData.salePrice) || Number(formData.salePrice) <= 0)) {
-      newErrors.salePrice = 'Sale price must be a positive number';
+    if (!formData.stock) newErrors.stock = 'Stock quantity is required';
+    else if (isNaN(formData.stock) || Number(formData.stock) < 0) {
+      newErrors.stock = 'Stock must be a non-negative number';
     }
     
-    if (!formData.category) newErrors.category = 'Category is required';
-    if (!formData.countInStock) newErrors.countInStock = 'Count in stock is required';
-    else if (isNaN(formData.countInStock) || Number(formData.countInStock) < 0) {
-      newErrors.countInStock = 'Count must be a non-negative number';
+    if (formData.discount) {
+      if (isNaN(formData.discount) || Number(formData.discount) < 0 || Number(formData.discount) > 100) {
+        newErrors.discount = 'Discount must be between 0 and 100';
+      }
     }
     
     if (mode === 'create' && !imageFile && !formData.image) {
@@ -203,20 +215,15 @@ const ProductForm = ({ product, onSuccess, mode = 'create' }) => {
       // Chuẩn bị dữ liệu sản phẩm
       const productData = {
         name: formData.name,
+        description: formData.description,
         price: Number(formData.price),
-        description: formData.description || "",
         category: formData.category,
-        countInStock: Number(formData.countInStock),
-        brand: formData.brand || "",
-        isNew: formData.isNew || false,
-        isFeatured: formData.isFeatured || false,
-        image: imageUrl
+        stock: Number(formData.stock),
+        featured: formData.featured,
+        discount: formData.discount ? Number(formData.discount) : 0,
+        image: imageUrl,
+        status: formData.status
       };
-      
-      // Thêm salePrice nếu có
-      if (formData.salePrice) {
-        productData.salePrice = Number(formData.salePrice);
-      }
       
       console.log("Sending product data:", productData);
       
@@ -290,18 +297,18 @@ const ProductForm = ({ product, onSuccess, mode = 'create' }) => {
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Sale Price</Form.Label>
+                  <Form.Label>Discount</Form.Label>
                   <Form.Control
                     type="number"
-                    name="salePrice"
-                    value={formData.salePrice}
+                    name="discount"
+                    value={formData.discount}
                     onChange={handleChange}
-                    min="0.01"
-                    step="0.01"
-                    isInvalid={!!errors.salePrice}
+                    min="0"
+                    max="100"
+                    isInvalid={!!errors.discount}
                   />
                   <Form.Control.Feedback type="invalid">
-                    {errors.salePrice}
+                    {errors.discount}
                   </Form.Control.Feedback>
                 </Form.Group>
               </Col>
@@ -330,17 +337,6 @@ const ProductForm = ({ product, onSuccess, mode = 'create' }) => {
                   </Form.Control.Feedback>
                 </Form.Group>
               </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Brand</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="brand"
-                    value={formData.brand}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
-              </Col>
             </Row>
             
             <Form.Group className="mb-3">
@@ -357,19 +353,19 @@ const ProductForm = ({ product, onSuccess, mode = 'create' }) => {
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Count in Stock*</Form.Label>
+                  <Form.Label>Stock*</Form.Label>
                   <Form.Control
                     type="number"
-                    name="countInStock"
-                    value={formData.countInStock}
+                    name="stock"
+                    value={formData.stock}
                     onChange={handleChange}
                     min="0"
                     step="1"
-                    isInvalid={!!errors.countInStock}
+                    isInvalid={!!errors.stock}
                     required
                   />
                   <Form.Control.Feedback type="invalid">
-                    {errors.countInStock}
+                    {errors.stock}
                   </Form.Control.Feedback>
                 </Form.Group>
               </Col>
@@ -380,19 +376,9 @@ const ProductForm = ({ product, onSuccess, mode = 'create' }) => {
                 <Col xs={6}>
                   <Form.Check
                     type="checkbox"
-                    id="isNewCheck"
-                    name="isNew"
-                    checked={formData.isNew}
-                    onChange={handleChange}
-                    label="Mark as New"
-                  />
-                </Col>
-                <Col xs={6}>
-                  <Form.Check
-                    type="checkbox"
-                    id="isFeaturedCheck"
-                    name="isFeatured"
-                    checked={formData.isFeatured}
+                    id="featuredCheck"
+                    name="featured"
+                    checked={formData.featured}
                     onChange={handleChange}
                     label="Featured Product"
                   />

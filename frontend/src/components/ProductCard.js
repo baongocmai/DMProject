@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Card, Button, Row, Col, Badge } from 'react-bootstrap';
+import { Card, Button, Row, Col, Badge, Toast } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { useAddToCartMutation, useAddToWishlistMutation, useRemoveFromWishlistMutation, useGetWishlistQuery } from '../services/api';
-import { FaHeart, FaRegHeart, FaShoppingCart, FaStar, FaStarHalfAlt, FaRegStar } from 'react-icons/fa';
+import { FaHeart, FaRegHeart, FaShoppingCart, FaStar, FaStarHalfAlt, FaRegStar, FaCheck } from 'react-icons/fa';
+import { formatPrice } from '../utils/productHelpers';
+import { addToCart } from '../redux/slices/cartSlice';
 import './ProductCard.css';
 
 const ProductCard = ({ product, inWishlist = false }) => {
@@ -11,30 +13,67 @@ const ProductCard = ({ product, inWishlist = false }) => {
   const { data: wishlistItems = [] } = useGetWishlistQuery(undefined, {
     skip: !isAuthenticated
   });
+  const dispatch = useDispatch();
   
   // Check if product is in wishlist
   const isInWishlist = inWishlist || wishlistItems.some(item => item._id === product._id);
   
-  const [addToCart, { isLoading: isAddingToCart }] = useAddToCartMutation();
+  const [addToCartApi, { isLoading: isAddingToCart }] = useAddToCartMutation();
   const [addToWishlist, { isLoading: isAddingToWishlist }] = useAddToWishlistMutation();
   const [removeFromWishlist, { isLoading: isRemovingFromWishlist }] = useRemoveFromWishlistMutation();
   
   const isWishlistLoading = isAddingToWishlist || isRemovingFromWishlist;
-
-  // Format the price with commas
-  const formatPrice = (price) => {
-    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  };
   
-  // Handle add to cart
-  const handleAddToCart = async () => {
+  // Add state for showing success toast
+  const [showToast, setShowToast] = useState(false);
+  const [addedSuccess, setAddedSuccess] = useState(false);
+
+  // Enhanced handle add to cart
+  const handleAddToCart = async (e) => {
+    // Prevent navigation to product page if clicked through Link
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     try {
-      await addToCart({ 
+      setAddedSuccess(false);
+      
+      // Create cart item
+      const cartItem = {
+        _id: product._id,
+        name: product.name,
+        image: product.image,
+        price: product.salePrice || product.price,
+        originalPrice: product.price,
+        countInStock: product.stock || product.countInStock,
+        quantity: 1
+      };
+      
+      // Add to Redux store first (this works immediately)
+      dispatch(addToCart(cartItem));
+      
+      // Then try to sync with backend
+      await addToCartApi({ 
         productId: product._id,
+        name: product.name,
+        price: product.salePrice || product.price,
+        originalPrice: product.price,
         quantity: 1
       });
+      
+      // Show success indicator
+      setAddedSuccess(true);
+      setShowToast(true);
+      // Hide toast after 2 seconds
+      setTimeout(() => setShowToast(false), 2000);
     } catch (error) {
       console.error('Failed to add to cart:', error);
+      // Even if API fails, we've already updated the Redux store
+      // so the user will still see their item in the cart
+      setAddedSuccess(true);
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
     }
   };
   
@@ -93,6 +132,23 @@ const ProductCard = ({ product, inWishlist = false }) => {
         </Button>
       )}
       
+      {/* Quick add to cart toast notification */}
+      <Toast 
+        show={showToast} 
+        onClose={() => setShowToast(false)}
+        className="position-absolute add-success-toast"
+        style={{ 
+          zIndex: 5, 
+          top: '50%', 
+          left: '50%', 
+          transform: 'translate(-50%, -50%)'
+        }}
+      >
+        <Toast.Body className="d-flex align-items-center bg-success text-white">
+          <FaCheck className="me-2" /> Đã thêm vào giỏ hàng!
+        </Toast.Body>
+      </Toast>
+      
       <Link to={`/product/${product._id}`} className="product-link">
         <div className="product-image-container">
           <Card.Img 
@@ -106,6 +162,16 @@ const ProductCard = ({ product, inWishlist = false }) => {
             }}
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
+          
+          {/* Add Quick Add To Cart overlay button */}
+          <Button 
+            variant="primary" 
+            className="quick-add-overlay-btn"
+            onClick={handleAddToCart}
+            disabled={isAddingToCart || !(product.stock || product.countInStock)}
+          >
+            <FaShoppingCart className="me-2" /> Thêm vào giỏ
+          </Button>
         </div>
       </Link>
       
@@ -131,13 +197,13 @@ const ProductCard = ({ product, inWishlist = false }) => {
             </span>
           </div>
           <Button 
-            variant="primary" 
+            variant={addedSuccess ? "success" : "primary"}
             className="cart-button"
             onClick={handleAddToCart}
-            disabled={isAddingToCart || !product.countInStock}
-            title="Add to Cart"
+            disabled={isAddingToCart || !(product.stock || product.countInStock)}
+            title="Thêm vào giỏ hàng"
           >
-            {isAddingToCart ? '...' : <FaShoppingCart />}
+            {isAddingToCart ? '...' : addedSuccess ? <FaCheck /> : <FaShoppingCart />}
           </Button>
         </div>
       </Card.Body>
