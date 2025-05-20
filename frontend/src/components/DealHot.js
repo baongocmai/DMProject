@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Badge, Button, Spinner, Alert, Container, Row, Col, Carousel } from 'react-bootstrap';
-import { FaRegClock, FaShoppingCart, FaEye, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { Card, Badge, Button, Spinner, Alert, Container, Row, Col, Carousel, Toast } from 'react-bootstrap';
+import { FaRegClock, FaShoppingCart, FaEye, FaChevronLeft, FaChevronRight, FaCheckCircle } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { formatPrice } from '../utils/productHelpers';
 import '../styles/DealHot.css';
 import { useAddToCartMutation } from '../services/api';
+import { useDispatch } from 'react-redux';
+import { addToCart } from '../redux/slices/cartSlice';
 
 /**
  * DealHot component displays hot deals with countdown timer
@@ -12,8 +14,11 @@ import { useAddToCartMutation } from '../services/api';
  */
 const DealHot = ({ products = [], loading = false, title = "Deal hot hôm nay", showCountdown = true, maxItems = 4 }) => {
   const [countdown, setCountdown] = useState({ hours: 23, minutes: 59, seconds: 59 });
-  const [addToCart, { isLoading: isAddingToCart }] = useAddToCartMutation();
+  const [addToCartApi, { isLoading: isAddingToCart }] = useAddToCartMutation();
   const [index, setIndex] = useState(0);
+  const dispatch = useDispatch();
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   const handleSelect = (selectedIndex) => {
     setIndex(selectedIndex);
@@ -95,13 +100,33 @@ const DealHot = ({ products = [], loading = false, title = "Deal hot hôm nay", 
     }
     
     try {
-      await addToCart({ 
+      // Create cart item
+      const cartItem = {
+        _id: product._id,
+        name: product.name,
+        image: product.image,
+        price: product.salePrice || product.price,
+        originalPrice: product.price,
+        countInStock: product.stock || product.countInStock,
+        quantity: 1
+      };
+      
+      // Add to Redux store first (this works immediately)
+      dispatch(addToCart(cartItem));
+      
+      // Then try to sync with backend
+      await addToCartApi({ 
         productId: product._id,
         name: product.name,
-        price: product.salePrice || product.price, // Ưu tiên dùng giá khuyến mãi
-        originalPrice: product.price, // Lưu giá gốc
+        price: product.salePrice || product.price,
+        originalPrice: product.price,
         quantity: 1
       });
+      
+      // Show success indicator
+      setToastMessage(`Đã thêm ${product.name} vào giỏ hàng!`);
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
     } catch (error) {
       console.error('Error adding to cart:', error);
     }
@@ -213,6 +238,29 @@ const DealHot = ({ products = [], loading = false, title = "Deal hot hôm nay", 
         )}
       </div>
       
+      {/* Success toast */}
+      <Toast 
+        show={showToast} 
+        onClose={() => setShowToast(false)}
+        delay={2000} 
+        autohide
+        style={{ 
+          position: 'fixed', 
+          bottom: '20px', 
+          right: '20px',
+          zIndex: 9999
+        }}
+        bg="success"
+      >
+        <Toast.Header closeButton>
+          <strong className="me-auto">Thông báo</strong>
+        </Toast.Header>
+        <Toast.Body className="text-white">
+          <FaCheckCircle className="me-2" />
+          {toastMessage}
+        </Toast.Body>
+      </Toast>
+      
       <div className="deal-hot-carousel">
         <Carousel
           activeIndex={index}
@@ -229,7 +277,7 @@ const DealHot = ({ products = [], loading = false, title = "Deal hot hôm nay", 
           ))}
         </Carousel>
       </div>
-        </div>
+    </div>
   );
 };
 

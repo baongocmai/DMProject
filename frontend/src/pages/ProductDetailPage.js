@@ -3,9 +3,9 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Container, Row, Col, Button, Badge, Form, Tab, Tabs, Alert } from 'react-bootstrap';
 import { FaStar, FaRegStar, FaMinus, FaPlus, FaArrowLeft, FaIceCream, FaFire, FaShoppingCart, FaHeart, FaShare, FaTruck, FaUndo, FaShieldAlt, FaSpinner } from 'react-icons/fa';
-import { useGetProductByIdQuery, useAddProductReviewMutation } from '../services/api';
+import { useGetProductByIdQuery, useAddProductReviewMutation, useGetRelatedProductsQuery } from '../services/api';
 import { addToCart } from '../redux/slices/cartSlice';
-import { formatPrice } from '../utils/productHelpers';
+import { formatPrice, formatImageUrl } from '../utils/productHelpers';
 import { formatError } from '../utils/errorHandler';
 import Layout from '../components/Layout';
 import LoadingPage from '../components/LoadingPage';
@@ -18,7 +18,7 @@ const ProductDetailPage = () => {
   
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
-  const [activeTab, setActiveTab] = useState('description');
+  const [activeTab, setActiveTab] = useState('reviews');
   const [selectedOption, setSelectedOption] = useState('CHAI');
   const [userRating, setUserRating] = useState(4);
   const [reviewComment, setReviewComment] = useState('');
@@ -33,7 +33,28 @@ const ProductDetailPage = () => {
     pollingInterval: 30000,
   });
   
+  // Fetch related products
+  const { data: relatedProductsData, isLoading: isLoadingRelated } = useGetRelatedProductsQuery(id);
+  
   const [addProductReview, { isLoading: isSubmittingReview }] = useAddProductReviewMutation();
+
+  // Debugging product data
+  useEffect(() => {
+    if (product) {
+      console.log("Product data received:", product);
+      console.log("Product image URL:", product.image);
+    }
+  }, [product]);
+
+  // Debugging related products
+  useEffect(() => {
+    if (relatedProductsData) {
+      console.log("Related products data:", relatedProductsData);
+      if (relatedProductsData.relatedProducts && relatedProductsData.relatedProducts.length > 0) {
+        console.log("First related product image:", relatedProductsData.relatedProducts[0].image);
+      }
+    }
+  }, [relatedProductsData]);
 
   // Move useEffect hooks to the top level, before any conditional returns
   // Refresh product data on mount and every minute
@@ -60,6 +81,17 @@ const ProductDetailPage = () => {
     }
     return () => clearTimeout(timer);
   }, [reviewSuccess]);
+
+  // Get related products from the API response
+  const relatedProducts = relatedProductsData?.relatedProducts || [];
+
+  // Log để kiểm tra dữ liệu sản phẩm liên quan
+  useEffect(() => {
+    if (relatedProductsData) {
+      console.log('Dữ liệu sản phẩm liên quan:', relatedProductsData);
+      console.log('Sản phẩm liên quan:', relatedProducts);
+    }
+  }, [relatedProductsData, relatedProducts]);
 
   // Handle conditional rendering after all hook calls
   if (isLoading) {
@@ -200,9 +232,14 @@ const ProductDetailPage = () => {
           <div className="product-card-modern">
             <div className="product-image-section">
               <img 
-                src={productData.image} 
+                src={productData.image || "/logo192.png"} 
                 alt={productData.name} 
                 className="product-img" 
+                onError={(e) => {
+                  console.log("Error loading main product image:", productData.image);
+                  e.target.onerror = null;
+                  e.target.src = "/logo192.png";
+                }}
               />
             </div>
             
@@ -211,7 +248,7 @@ const ProductDetailPage = () => {
                 
               <div className="price-tag">
                 <span className="price-amount">{formatPrice(productData.price)}</span>
-              </div>
+                  </div>
                   
               <div className="product-description">
                 <p>{productData.description || "Sản phẩm chất lượng cao, đảm bảo an toàn vệ sinh thực phẩm."}</p>
@@ -270,51 +307,6 @@ const ProductDetailPage = () => {
             onSelect={(k) => setActiveTab(k)}
             className="mb-4"
           >
-            <Tab eventKey="description" title="Mô tả sản phẩm">
-              <div className="tab-content-wrapper">
-                <p>{productData.description}</p>
-                
-                <div className="product-highlights">
-                  <h4>Điểm nổi bật</h4>
-                  <ul>
-                    <li>Sản phẩm sữa tươi tiệt trùng chất lượng cao</li>
-                    <li>Cung cấp nhiều dưỡng chất và vitamin thiết yếu</li>
-                    <li>Lốc 4 hộp tiện lợi, dễ bảo quản và sử dụng</li>
-                    <li>Thích hợp cho mọi đối tượng, đặc biệt là trẻ em đang phát triển</li>
-                  </ul>
-                </div>
-              </div>
-            </Tab>
-            
-            <Tab eventKey="specifications" title="Thông số kỹ thuật">
-              <div className="tab-content-wrapper">
-                <table className="specs-table">
-                  <tbody>
-                    <tr>
-                      <td className="spec-name">Thương hiệu</td>
-                      <td className="spec-value">Nutimilk</td>
-                    </tr>
-                    <tr>
-                      <td className="spec-name">Dung tích</td>
-                      <td className="spec-value">4 hộp x 180ml</td>
-                    </tr>
-                    <tr>
-                      <td className="spec-name">Loại sữa</td>
-                      <td className="spec-value">Sữa tươi tiệt trùng</td>
-                    </tr>
-                    <tr>
-                      <td className="spec-name">Thành phần</td>
-                      <td className="spec-value">Sữa tươi, đường, vitamin A, D3, B1, B2</td>
-                    </tr>
-                    <tr>
-                      <td className="spec-name">Xuất xứ</td>
-                      <td className="spec-value">Việt Nam</td>
-                      </tr>
-                  </tbody>
-                </table>
-              </div>
-            </Tab>
-            
             <Tab eventKey="reviews" title={`Đánh giá (${productData.numReviews || 0})`}>
               <div className="tab-content-wrapper">
                 <div className="reviews-summary">
@@ -441,8 +433,20 @@ const ProductDetailPage = () => {
                       )}
                       </Button>
                     </Form>
-          </div>
-        </div>
+                  </div>
+                </div>
+            </Tab>
+            
+            <Tab eventKey="description" title="Mô tả sản phẩm">
+              <div className="tab-content-wrapper">
+                <p>{productData.description}</p>
+              </div>
+            </Tab>
+            
+            <Tab eventKey="specifications" title="Thông số kỹ thuật">
+              <div className="tab-content-wrapper">
+                <p>Sản phẩm được phân phối và chịu trách nhiệm bởi 2NADH</p>
+              </div>
             </Tab>
           </Tabs>
         </Container>
@@ -450,22 +454,43 @@ const ProductDetailPage = () => {
         {/* Related Products */}
         <Container className="related-products mb-5">
           <h3 className="section-title">Sản phẩm liên quan</h3>
-          <Row>
-            {productData.relatedProducts && productData.relatedProducts.map((item) => (
-              <Col md={4} key={item._id}>
-                <div className="related-product-card">
-                  <Link to={`/product/${item._id}`} className="product-link">
-                    <div className="related-product-image">
-                      <img src={item.image} alt={item.name} />
-                    </div>
-                    <div className="related-product-info">
-                      <h4 className="related-product-title">{item.name}</h4>
-                      <div className="related-product-price">{formatPrice(item.price)}</div>
-                    </div>
-                  </Link>
+          <Row className="row-cols-1 row-cols-sm-2 row-cols-md-4">
+            {isLoadingRelated ? (
+              <div className="text-center py-4 w-100">
+                <FaSpinner className="fa-spin" size={30} />
+                <p className="mt-3">Đang tải sản phẩm liên quan...</p>
+              </div>
+            ) : relatedProducts && relatedProducts.length > 0 ? (
+              relatedProducts.slice(0, 4).map((item) => (
+                <Col className="mb-4" key={item._id}>
+                 <div className="related-product-card">
+  <Link to={`/product/${item._id}`} className="product-link">
+    <div className="related-product-image">
+      <img
+        src={item.image || "/logo192.png"}
+        alt={item.name}
+        onError={(e) => {
+          e.target.onerror = null;
+          e.target.src = "/logo192.png";
+        }}
+      />
+    </div>
+    <div className="related-product-info">
+      <h4 className="related-product-title">{item.name}</h4>
+      <div className="related-product-price">{formatPrice(item.price)}</div>
+    </div>
+  </Link>
+</div>
+
+                </Col>
+              ))
+            ) : (
+              <Col className="w-100">
+                <div className="text-center py-4">
+                  <p>Không có sản phẩm liên quan.</p>
                 </div>
               </Col>
-            ))}
+            )}
           </Row>
         </Container>
       </div>

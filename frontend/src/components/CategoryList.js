@@ -34,30 +34,31 @@ const CategoryList = () => {
     <div className="category-section py-4">
       <h2 className="section-title mb-4">Danh mục sản phẩm</h2>
       <Row className="g-2">
-        {categories.map((category) => (
-          <div key={category.id} className="col-5-products">
-            <Link 
-              to={`/?category=${category.name.toLowerCase()}`} 
-              className="category-card"
-            >
-              <div className="category-image-container">
-                <img 
-                  src={category.image} 
-                  alt={category.name} 
-                  className="category-image" 
-                />
-                <div className="category-overlay"></div>
-                <div 
-                  className="category-icon-wrapper" 
-                  style={{ backgroundColor: `${category.color}`, color: '#ffffff' }}
-                >
-                  {category.icon}
-                </div>
-              </div>
-              <p className="category-name">{category.name}</p>
-            </Link>
-          </div>
-        ))}
+      {categories.map((category) => (
+  <div key={category.id} className="col-5-products">
+    <Link 
+      to={category.id === 10 ? '/combo' : `/?category=${category.name.toLowerCase()}`} 
+      className="category-card"
+    >
+      <div className="category-image-container">
+        <img 
+          src={category.image} 
+          alt={category.name} 
+          className="category-image" 
+        />
+        <div className="category-overlay"></div>
+        <div 
+          className="category-icon-wrapper" 
+          style={{ backgroundColor: `${category.color}`, color: '#ffffff' }}
+        >
+          {category.icon}
+        </div>
+      </div>
+      <p className="category-name">{category.name}</p>
+    </Link>
+  </div>
+))}
+
       </Row>
     </div>
   );

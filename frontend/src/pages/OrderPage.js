@@ -13,13 +13,19 @@ import {
   FaInfoCircle,
   FaSave,
   FaArrowLeft,
-  FaSpinner
+  FaSpinner,
+  FaBox,
+  FaTruck,
+  FaCheck
 } from 'react-icons/fa';
 import { useCreateOrderMutation } from '../services/api';
 import { clearCart } from '../redux/slices/cartSlice';
 import Layout from '../components/Layout';
 import { formatPrice } from '../utils/productHelpers';
 import './OrderPage.css';
+
+// Import cho thông báo mới
+import { v4 as uuidv4 } from 'uuid';
 
 // Danh sách các tỉnh/thành phố của Việt Nam
 const vietnamProvinces = [
@@ -87,6 +93,26 @@ const districtsByProvince = {
   "HGG": [
     "Hà Giang", "Đồng Văn", "Mèo Vạc", "Yên Minh", "Quản Bạ", "Vị Xuyên", "Bắc Mê", "Hoàng Su Phì", "Xín Mần", "Bắc Quang", "Quang Bình"
   ]
+};
+
+// Mock data function để tạo thông báo
+const createOrderNotification = (orderId) => {
+  const mockNotification = {
+    _id: uuidv4(),
+    title: 'Đơn hàng mới',
+    message: `Đơn hàng #${orderId} của bạn đã được tạo thành công và đang chờ xác nhận.`,
+    type: 'order_placed',
+    read: false,
+    orderId: orderId,
+    createdAt: new Date().toISOString(),
+  };
+  
+  // Thêm vào mảng thông báo mock
+  const existingNotifications = JSON.parse(localStorage.getItem('mockNotifications') || '[]');
+  existingNotifications.unshift(mockNotification);  // Thêm vào đầu mảng
+  localStorage.setItem('mockNotifications', JSON.stringify(existingNotifications));
+  
+  return mockNotification;
 };
 
 const OrderPage = () => {
@@ -202,6 +228,9 @@ const OrderPage = () => {
       setTimeout(() => {
         navigate(`/order-status/${response.order._id}`);
       }, 2000);
+
+      // Tạo thông báo mới
+      const notification = createOrderNotification(response.order._id);
     } catch (err) {
       console.error('Order error:', err);
       setOrderError(

@@ -12,8 +12,259 @@ const baseQuery = fetchBaseQuery({
   timeout: 15000, // Timeout sau 15 giây
 });
 
+// Mock data for notifications (for development)
+const initializeMockNotifications = () => {
+  // Check if mock notifications already exist in localStorage
+  const existingNotifications = localStorage.getItem('mockNotifications');
+  
+  if (!existingNotifications) {
+    // Initialize with default mock notifications
+    const defaultNotifications = [
+      {
+        _id: '1',
+        title: 'Đơn hàng đã được xác nhận',
+        message: 'Đơn hàng #ORD12345 của bạn đã được xác nhận và đang được xử lý.',
+        type: 'order_confirmed',
+        read: false,
+        orderId: 'ORD12345',
+        createdAt: new Date(Date.now() - 30 * 60000).toISOString(),
+      },
+      {
+        _id: '2',
+        title: 'Đơn hàng đang vận chuyển',
+        message: 'Đơn hàng #ORD12345 của bạn đang được vận chuyển đến bạn.',
+        type: 'order_shipped',
+        read: false,
+        orderId: 'ORD12345',
+        createdAt: new Date(Date.now() - 120 * 60000).toISOString(),
+      },
+      {
+        _id: '3',
+        title: 'Đơn hàng thành công',
+        message: 'Đơn hàng #ORD54321 của bạn đã được giao thành công!',
+        type: 'order_delivered',
+        read: true,
+        orderId: 'ORD54321',
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60000).toISOString(),
+      },
+      {
+        _id: '4',
+        title: 'Đơn hàng mới',
+        message: 'Bạn vừa đặt đơn hàng #ORD67890. Chúng tôi đang xử lý đơn hàng của bạn.',
+        type: 'order_placed',
+        read: true,
+        orderId: 'ORD67890',
+        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60000).toISOString(),
+      },
+      {
+        _id: '5',
+        title: 'Thanh toán không thành công',
+        message: 'Thanh toán cho đơn hàng #ORD13579 không thành công. Vui lòng kiểm tra lại thông tin thanh toán.',
+        type: 'payment_failed',
+        read: false,
+        orderId: 'ORD13579',
+        createdAt: new Date(Date.now() - 60 * 60000).toISOString(),
+      }
+    ];
+    
+    localStorage.setItem('mockNotifications', JSON.stringify(defaultNotifications));
+  }
+};
+
+// Initialize mock notifications when the app loads
+initializeMockNotifications();
+
+// Initialize mock combos if they don't exist
+const initializeMockCombos = () => {
+  if (!localStorage.getItem('mockCombos')) {
+    const initialCombos = [
+      {
+        id: 'combo-1',
+        name: 'Combo Mì Cay Đặc Biệt',
+        description: 'Combo mì cay đầy đủ dinh dưỡng, tiết kiệm 15% so với mua lẻ các sản phẩm',
+        discount: 15,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        products: [
+          {
+            _id: 'p1',
+            name: 'Mì Cay Samyang Hàn Quốc',
+            image: 'https://sieuthibeeyeu.com/wp-content/uploads/2020/12/mi-cay-samyang-han-quoc-goi-140g-600x600.jpg',
+            price: 25000,
+            quantity: 2
+          },
+          {
+            _id: 'p2',
+            name: 'Trứng Gà (6 quả)',
+            image: 'https://cdn.tgdd.vn/Products/Images/8783/238436/bhx/trung-ga-que-v-food-khay-10-qua-202301261435592049.jpg',
+            price: 30000,
+            quantity: 1
+          },
+          {
+            _id: 'p3',
+            name: 'Xúc Xích Đức',
+            image: 'https://product.hstatic.net/1000282430/product/xuc-xich-duc_grande.jpg',
+            price: 45000,
+            quantity: 1
+          }
+        ]
+      },
+      {
+        id: 'combo-2',
+        name: 'Combo Ăn Vặt Cuối Tuần',
+        description: 'Combo đồ ăn vặt hoàn hảo cho buổi xem phim cuối tuần, tiết kiệm 20%',
+        discount: 20,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        products: [
+          {
+            _id: 'p4',
+            name: 'Snack Oishi Tôm Cay',
+            image: 'https://cdn.tgdd.vn/Products/Images/3364/76659/bhx/snack-phong-tom-cay-oishi-goi-40g-202211300914464166.jpg',
+            price: 10000,
+            quantity: 3
+          },
+          {
+            _id: 'p5',
+            name: 'Pepsi Lon 330ml',
+            image: 'https://cdn.tgdd.vn/Products/Images/2443/84831/bhx/nuoc-ngot-pepsi-cola-330ml-202303301533394980.jpg',
+            price: 12000,
+            quantity: 2
+          },
+          {
+            _id: 'p6',
+            name: 'Khoai Tây Lay\'s Vị Tự Nhiên',
+            image: 'https://cdn.tgdd.vn/Products/Images/3364/79622/bhx/snack-khoai-tay-vien-vi-tu-nhien-lays-stax-lon-110g-202301131348025512.jpg',
+            price: 35000,
+            quantity: 1
+          }
+        ]
+      },
+      {
+        id: 'combo-3',
+        name: 'Combo Bữa Sáng Nhanh Gọn',
+        description: 'Combo bữa sáng đầy đủ dinh dưỡng, tiết kiệm thời gian chuẩn bị và 15% giá trị',
+        discount: 15,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        products: [
+          {
+            _id: 'p7',
+            name: 'Bánh Mì Tươi (4 ổ)',
+            image: 'https://cdn.tgdd.vn/Products/Images/3665/250162/bhx/banh-mi-bo-sua-dau-8-202205191534444487.jpg',
+            price: 20000,
+            quantity: 1
+          },
+          {
+            _id: 'p8',
+            name: 'Sữa Tươi Vinamilk 1L',
+            image: 'https://cdn.tgdd.vn/Products/Images/2386/156137/bhx/sua-tuoi-tiet-trung-co-duong-vinamilk-100-sua-tuoi-hop-1-lit-202306271517494185.jpg',
+            price: 30000,
+            quantity: 1
+          },
+          {
+            _id: 'p9',
+            name: 'Mứt Dâu Tự Nhiên 200g',
+            image: 'https://bizweb.dktcdn.net/thumb/1024x1024/100/011/344/products/dau-tay-1.jpg?v=1531749389003',
+            price: 55000,
+            quantity: 1
+          }
+        ]
+      }
+    ];
+    
+    localStorage.setItem('mockCombos', JSON.stringify(initialCombos));
+  }
+};
+
+// Initialize the mock combos
+initializeMockCombos();
+
 // Optimized baseQuery with minimal logging
 const baseQueryWithLogging = async (args, api, extraOptions) => {
+  // Special mock handlers for development
+  // Check for notifications endpoint
+  if (typeof args === 'string' && args === '/notifications') {
+    // Return mock notifications
+    return { data: JSON.parse(localStorage.getItem('mockNotifications')) };
+  }
+  
+  // Handle combo endpoints
+  if (typeof args === 'string' && args === '/combos') {
+    // Return mock combos
+    return { data: { combos: JSON.parse(localStorage.getItem('mockCombos') || '[]') } };
+  }
+  
+  if (typeof args === 'object' && args.url && args.url === '/combos' && args.method === 'POST') {
+    // Handle createCombo
+    try {
+      const combos = JSON.parse(localStorage.getItem('mockCombos') || '[]');
+      const newCombo = {
+        ...args.body,
+        id: `combo-${Date.now()}`,
+        createdAt: new Date().toISOString()
+      };
+      combos.push(newCombo);
+      localStorage.setItem('mockCombos', JSON.stringify(combos));
+      return { data: newCombo };
+    } catch (error) {
+      return { error: { status: 500, data: { message: 'Failed to create combo' } } };
+    }
+  }
+  
+  if (typeof args === 'object' && args.url && args.url.includes('/combos/') && args.method === 'PUT') {
+    // Handle updateCombo
+    try {
+      const comboId = args.url.split('/').pop();
+      const combos = JSON.parse(localStorage.getItem('mockCombos') || '[]');
+      const comboIndex = combos.findIndex(combo => combo.id === comboId);
+      if (comboIndex !== -1) {
+        combos[comboIndex] = {
+          ...combos[comboIndex],
+          ...args.body,
+          id: comboId,
+          updatedAt: new Date().toISOString()
+        };
+        localStorage.setItem('mockCombos', JSON.stringify(combos));
+        return { data: combos[comboIndex] };
+      }
+      return { error: { status: 404, data: { message: 'Combo not found' } } };
+    } catch (error) {
+      return { error: { status: 500, data: { message: 'Failed to update combo' } } };
+    }
+  }
+  
+  if (typeof args === 'object' && args.url && args.url.includes('/combos/') && args.method === 'DELETE') {
+    // Handle deleteCombo
+    try {
+      const comboId = args.url.split('/').pop();
+      const combos = JSON.parse(localStorage.getItem('mockCombos') || '[]');
+      const updatedCombos = combos.filter(combo => combo.id !== comboId);
+      localStorage.setItem('mockCombos', JSON.stringify(updatedCombos));
+      return { data: { success: true } };
+    } catch (error) {
+      return { error: { status: 500, data: { message: 'Failed to delete combo' } } };
+    }
+  }
+  
+  // Handle mark notification as read
+  if (typeof args === 'object' && args.url && args.url.includes('/notifications/') && args.url.includes('/read') && args.method === 'PUT') {
+    const notificationId = args.url.split('/')[2];
+    
+    // Update the mock notification to mark it as read
+    const updatedNotifications = JSON.parse(localStorage.getItem('mockNotifications')).map(notification => 
+      notification._id === notificationId 
+        ? { ...notification, read: true } 
+        : notification
+    );
+    
+    // Update the mock data
+    localStorage.setItem('mockNotifications', JSON.stringify(updatedNotifications));
+    
+    // Return success
+    return { data: { success: true } };
+  }
+  
   if (extraOptions?.skipIfUnauthenticated) {
     const state = api.getState();
     const isAuthenticated = state.auth?.isAuthenticated;
@@ -71,7 +322,7 @@ const baseQueryWithLogging = async (args, api, extraOptions) => {
 export const api = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithLogging,
-  tagTypes: ['User', 'Product', 'Order', 'Cart', 'Wishlist', 'Category', 'Attribute', 'Customer', 'CustomerGroup', 'Discount', 'Coupon', 'Banner', 'Settings', 'DealHot'],
+  tagTypes: ['User', 'Product', 'Order', 'Cart', 'Wishlist', 'Category', 'Attribute', 'Customer', 'CustomerGroup', 'Discount', 'Coupon', 'Banner', 'Settings', 'DealHot', 'Notification', 'Combo'],
   endpoints: (builder) => ({
     // Auth endpoints
     login: builder.mutation({
@@ -187,6 +438,10 @@ export const api = createApi({
     getRelatedProducts: builder.query({
       query: (id) => `/products/${id}/related`,
       providesTags: ['Product'],
+      transformResponse: (response) => {
+        console.log('API response for related products:', response);
+        return response;
+      },
     }),
     addProductReview: builder.mutation({
       query: ({ id, review }) => ({
@@ -919,6 +1174,322 @@ export const api = createApi({
         return response;
       }
     }),
+    
+    // Notifications endpoints
+    getNotifications: builder.query({
+      query: () => '/notifications',
+      providesTags: ['Notification'],
+    }),
+    markNotificationAsRead: builder.mutation({
+      query: (id) => ({
+        url: `/notifications/${id}/read`,
+        method: 'PUT',
+      }),
+      invalidatesTags: ['Notification'],
+    }),
+    
+    // Combo endpoints
+    // Initialize mock combos if not exists
+    initializeMockCombos: builder.mutation({
+      queryFn: () => {
+        // Check if mock combos already exist in localStorage
+        if (!localStorage.getItem('mockCombos')) {
+          // Initial mock combos data
+          const initialCombos = [
+            {
+              id: 'combo-1',
+              name: 'Combo Mì Cay Đặc Biệt',
+              description: 'Combo mì cay đầy đủ dinh dưỡng, tiết kiệm 15% so với mua lẻ các sản phẩm',
+              discount: 15,
+              isActive: true,
+              createdAt: new Date().toISOString(),
+              products: [
+                {
+                  _id: 'p1',
+                  name: 'Mì Cay Samyang Hàn Quốc',
+                  image: 'https://sieuthibeeyeu.com/wp-content/uploads/2020/12/mi-cay-samyang-han-quoc-goi-140g-600x600.jpg',
+                  price: 25000,
+                  quantity: 2
+                },
+                {
+                  _id: 'p2',
+                  name: 'Trứng Gà (6 quả)',
+                  image: 'https://cdn.tgdd.vn/Products/Images/8783/238436/bhx/trung-ga-que-v-food-khay-10-qua-202301261435592049.jpg',
+                  price: 30000,
+                  quantity: 1
+                },
+                {
+                  _id: 'p3',
+                  name: 'Xúc Xích Đức',
+                  image: 'https://product.hstatic.net/1000282430/product/xuc-xich-duc_grande.jpg',
+                  price: 45000,
+                  quantity: 1
+                }
+              ]
+            },
+            {
+              id: 'combo-2',
+              name: 'Combo Ăn Vặt Cuối Tuần',
+              description: 'Combo đồ ăn vặt hoàn hảo cho buổi xem phim cuối tuần, tiết kiệm 20%',
+              discount: 20,
+              isActive: true,
+              createdAt: new Date().toISOString(),
+              products: [
+                {
+                  _id: 'p4',
+                  name: 'Snack Oishi Tôm Cay',
+                  image: 'https://cdn.tgdd.vn/Products/Images/3364/76659/bhx/snack-phong-tom-cay-oishi-goi-40g-202211300914464166.jpg',
+                  price: 10000,
+                  quantity: 3
+                },
+                {
+                  _id: 'p5',
+                  name: 'Pepsi Lon 330ml',
+                  image: 'https://cdn.tgdd.vn/Products/Images/2443/84831/bhx/nuoc-ngot-pepsi-cola-330ml-202303301533394980.jpg',
+                  price: 12000,
+                  quantity: 2
+                },
+                {
+                  _id: 'p6',
+                  name: 'Khoai Tây Lay\'s Vị Tự Nhiên',
+                  image: 'https://cdn.tgdd.vn/Products/Images/3364/79622/bhx/snack-khoai-tay-vien-vi-tu-nhien-lays-stax-lon-110g-202301131348025512.jpg',
+                  price: 35000,
+                  quantity: 1
+                }
+              ]
+            },
+            {
+              id: 'combo-3',
+              name: 'Combo Bữa Sáng Nhanh Gọn',
+              description: 'Combo bữa sáng đầy đủ dinh dưỡng, tiết kiệm thời gian chuẩn bị và 15% giá trị',
+              discount: 15,
+              isActive: true,
+              createdAt: new Date().toISOString(),
+              products: [
+                {
+                  _id: 'p7',
+                  name: 'Bánh Mì Tươi (4 ổ)',
+                  image: 'https://cdn.tgdd.vn/Products/Images/3665/250162/bhx/banh-mi-bo-sua-dau-8-202205191534444487.jpg',
+                  price: 20000,
+                  quantity: 1
+                },
+                {
+                  _id: 'p8',
+                  name: 'Sữa Tươi Vinamilk 1L',
+                  image: 'https://cdn.tgdd.vn/Products/Images/2386/156137/bhx/sua-tuoi-tiet-trung-co-duong-vinamilk-100-sua-tuoi-hop-1-lit-202306271517494185.jpg',
+                  price: 30000,
+                  quantity: 1
+                },
+                {
+                  _id: 'p9',
+                  name: 'Mứt Dâu Tự Nhiên 200g',
+                  image: 'https://bizweb.dktcdn.net/thumb/1024x1024/100/011/344/products/dau-tay-1.jpg?v=1531749389003',
+                  price: 55000,
+                  quantity: 1
+                }
+              ]
+            }
+          ];
+          
+          localStorage.setItem('mockCombos', JSON.stringify(initialCombos));
+        }
+        
+        return { data: { success: true } };
+      }
+    }),
+    
+    getCombos: builder.query({
+      queryFn: () => {
+        // Initialize combos if they don't exist (only needed on first load)
+        if (!localStorage.getItem('mockCombos')) {
+          const initialCombos = [
+            {
+              id: 'combo-1',
+              name: 'Combo Mì Cay Đặc Biệt',
+              description: 'Combo mì cay đầy đủ dinh dưỡng, tiết kiệm 15% so với mua lẻ các sản phẩm',
+              discount: 15,
+              isActive: true,
+              createdAt: new Date().toISOString(),
+              products: [
+                {
+                  _id: 'p1',
+                  name: 'Mì Cay Samyang Hàn Quốc',
+                  image: 'https://sieuthibeeyeu.com/wp-content/uploads/2020/12/mi-cay-samyang-han-quoc-goi-140g-600x600.jpg',
+                  price: 25000,
+                  quantity: 2
+                },
+                {
+                  _id: 'p2',
+                  name: 'Trứng Gà (6 quả)',
+                  image: 'https://cdn.tgdd.vn/Products/Images/8783/238436/bhx/trung-ga-que-v-food-khay-10-qua-202301261435592049.jpg',
+                  price: 30000,
+                  quantity: 1
+                },
+                {
+                  _id: 'p3',
+                  name: 'Xúc Xích Đức',
+                  image: 'https://product.hstatic.net/1000282430/product/xuc-xich-duc_grande.jpg',
+                  price: 45000,
+                  quantity: 1
+                }
+              ]
+            },
+            {
+              id: 'combo-2',
+              name: 'Combo Ăn Vặt Cuối Tuần',
+              description: 'Combo đồ ăn vặt hoàn hảo cho buổi xem phim cuối tuần, tiết kiệm 20%',
+              discount: 20,
+              isActive: true,
+              createdAt: new Date().toISOString(),
+              products: [
+                {
+                  _id: 'p4',
+                  name: 'Snack Oishi Tôm Cay',
+                  image: 'https://cdn.tgdd.vn/Products/Images/3364/76659/bhx/snack-phong-tom-cay-oishi-goi-40g-202211300914464166.jpg',
+                  price: 10000,
+                  quantity: 3
+                },
+                {
+                  _id: 'p5',
+                  name: 'Pepsi Lon 330ml',
+                  image: 'https://cdn.tgdd.vn/Products/Images/2443/84831/bhx/nuoc-ngot-pepsi-cola-330ml-202303301533394980.jpg',
+                  price: 12000,
+                  quantity: 2
+                },
+                {
+                  _id: 'p6',
+                  name: 'Khoai Tây Lay\'s Vị Tự Nhiên',
+                  image: 'https://cdn.tgdd.vn/Products/Images/3364/79622/bhx/snack-khoai-tay-vien-vi-tu-nhien-lays-stax-lon-110g-202301131348025512.jpg',
+                  price: 35000,
+                  quantity: 1
+                }
+              ]
+            },
+            {
+              id: 'combo-3',
+              name: 'Combo Bữa Sáng Nhanh Gọn',
+              description: 'Combo bữa sáng đầy đủ dinh dưỡng, tiết kiệm thời gian chuẩn bị và 15% giá trị',
+              discount: 15,
+              isActive: true,
+              createdAt: new Date().toISOString(),
+              products: [
+                {
+                  _id: 'p7',
+                  name: 'Bánh Mì Tươi (4 ổ)',
+                  image: 'https://cdn.tgdd.vn/Products/Images/3665/250162/bhx/banh-mi-bo-sua-dau-8-202205191534444487.jpg',
+                  price: 20000,
+                  quantity: 1
+                },
+                {
+                  _id: 'p8',
+                  name: 'Sữa Tươi Vinamilk 1L',
+                  image: 'https://cdn.tgdd.vn/Products/Images/2386/156137/bhx/sua-tuoi-tiet-trung-co-duong-vinamilk-100-sua-tuoi-hop-1-lit-202306271517494185.jpg',
+                  price: 30000,
+                  quantity: 1
+                },
+                {
+                  _id: 'p9',
+                  name: 'Mứt Dâu Tự Nhiên 200g',
+                  image: 'https://bizweb.dktcdn.net/thumb/1024x1024/100/011/344/products/dau-tay-1.jpg?v=1531749389003',
+                  price: 55000,
+                  quantity: 1
+                }
+              ]
+            }
+          ];
+          
+          localStorage.setItem('mockCombos', JSON.stringify(initialCombos));
+        }
+        
+        // Return combos from localStorage
+        const combos = JSON.parse(localStorage.getItem('mockCombos') || '[]');
+        return { data: combos };
+      },
+      providesTags: ['Combo']
+    }),
+    
+    createCombo: builder.mutation({
+      queryFn: (comboData) => {
+        try {
+          // Get existing combos
+          const combos = JSON.parse(localStorage.getItem('mockCombos') || '[]');
+          
+          // Create new combo with a unique ID
+          const newCombo = {
+            ...comboData,
+            id: `combo-${Date.now()}`,
+            createdAt: new Date().toISOString()
+          };
+          
+          // Add to combos list
+          combos.push(newCombo);
+          
+          // Save updated list
+          localStorage.setItem('mockCombos', JSON.stringify(combos));
+          
+          return { data: newCombo };
+        } catch (error) {
+          return { error: { status: 'MOCK_ERROR', data: { message: 'Failed to create combo' } } };
+        }
+      },
+      invalidatesTags: ['Combo']
+    }),
+    
+    updateCombo: builder.mutation({
+      queryFn: ({ id, comboData }) => {
+        try {
+          // Get existing combos
+          const combos = JSON.parse(localStorage.getItem('mockCombos') || '[]');
+          
+          // Find the index of the combo to update
+          const comboIndex = combos.findIndex(combo => combo.id === id);
+          
+          if (comboIndex === -1) {
+            return { error: { status: 'MOCK_ERROR', data: { message: 'Combo not found' } } };
+          }
+          
+          // Update the combo
+          combos[comboIndex] = {
+            ...combos[comboIndex],
+            ...comboData,
+            id, // Preserve the original ID
+            updatedAt: new Date().toISOString()
+          };
+          
+          // Save updated list
+          localStorage.setItem('mockCombos', JSON.stringify(combos));
+          
+          return { data: combos[comboIndex] };
+        } catch (error) {
+          return { error: { status: 'MOCK_ERROR', data: { message: 'Failed to update combo' } } };
+        }
+      },
+      invalidatesTags: ['Combo']
+    }),
+    
+    deleteCombo: builder.mutation({
+      queryFn: (id) => {
+        try {
+          // Get existing combos
+          const combos = JSON.parse(localStorage.getItem('mockCombos') || '[]');
+          
+          // Filter out the combo to delete
+          const updatedCombos = combos.filter(combo => combo.id !== id);
+          
+          if (combos.length === updatedCombos.length) {
+            return { error: { status: 'MOCK_ERROR', data: { message: 'Combo not found' } } };
+          }
+          
+          // Save updated list
+          localStorage.setItem('mockCombos', JSON.stringify(updatedCombos));
+          
+          return { data: { success: true } };
+        } catch (error) {
+          return { error: { status: 'MOCK_ERROR', data: { message: 'Failed to delete combo' } } };
+        }
+      },
+      invalidatesTags: ['Combo']
+    }),
   }),
 });
 
@@ -1008,4 +1579,10 @@ export const {
   useGetShippingSettingsQuery,
   useUpdateShippingSettingsMutation,
   useGetDealHotQuery,
+  useGetNotificationsQuery,
+  useMarkNotificationAsReadMutation,
+  useGetCombosQuery,
+  useCreateComboMutation,
+  useUpdateComboMutation,
+  useDeleteComboMutation,
 } = api; 

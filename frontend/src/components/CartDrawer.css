@@ -37,9 +37,9 @@
 }
 
 .cart-drawer-item-price {
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   color: #666;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
 }
 
 .cart-drawer-item-actions {
@@ -49,10 +49,11 @@
 }
 
 .cart-drawer-item-total {
-  font-weight: 600;
+  font-weight: 500;
   color: #D25B70;
   margin-left: 1rem;
   align-self: center;
+  font-size: 0.75rem;
 }
 
 /* Quantity control styles */
@@ -117,14 +118,14 @@
   display: flex;
   justify-content: space-between;
   margin-bottom: 0.5rem;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   color: #666;
 }
 
 .summary-total {
   font-weight: 600;
   color: #333;
-  font-size: 1.1rem;
+  font-size: 0.9rem;
   margin-top: 0.5rem;
   margin-bottom: 1rem;
 }

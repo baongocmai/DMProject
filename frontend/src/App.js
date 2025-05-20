@@ -25,12 +25,13 @@ import LoadingDemoPage from './pages/LoadingDemoPage';
 import EmptyOrderPage from './pages/EmptyOrderPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import DealHotPage from './pages/DealHotPage';
+import ComboPage from './pages/ComboPage';
 
 // Import missing page components
 import OrdersPage from './pages/OrdersPage';
 // import AddressPage from './pages/AddressPage';
 // import OffersPage from './pages/OffersPage';
-// import NotificationsPage from './pages/NotificationsPage';
+import NotificationsPage from './pages/NotificationsPage';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -58,6 +59,7 @@ import PaymentSettings from './pages/admin/PaymentSettings';
 import ShippingSettings from './pages/admin/ShippingSettings';
 import ProductAnalytics from './pages/admin/ProductAnalytics';
 import DealHotManagement from './pages/admin/DealHotManagement';
+import ComboManagement from './pages/admin/ComboManagement';
 
 function App() {
   return (
@@ -76,6 +78,7 @@ function App() {
         <Route path="/product/:id" element={<ProductDetailPage />} />
         <Route path="/category/:categoryName" element={<CategoryPage />} />
         <Route path="/deal-hot" element={<DealHotPage />} />
+        <Route path="/combo" element={<ComboPage />} />
         
         {/* Redirect cart to home with cart drawer param */}
         <Route path="/cart" element={<Navigate to="/?drawer=cart" replace />} />
@@ -131,8 +134,7 @@ function App() {
         
         <Route path="/notifications" element={
           <ProtectedRoute>
-            {/* Temporary placeholder until NotificationsPage is created */}
-            <ProfilePage />
+            <NotificationsPage />
           </ProtectedRoute>
         } />
         
@@ -255,6 +257,11 @@ function App() {
         <Route path="/admin/marketing/deal-hot" element={
           <AdminRoute>
             <DealHotManagement />
+          </AdminRoute>
+        } />
+        <Route path="/admin/marketing/combo" element={
+          <AdminRoute>
+            <ComboManagement />
           </AdminRoute>
         } />
       </Routes>

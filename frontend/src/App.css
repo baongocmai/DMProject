@@ -2216,3 +2216,32 @@ button {
   height: 40px;
   font-size: 18px;
 }
+
+/* Điều chỉnh container cho responsive */
+@media (min-width: 1200px) {
+  .container {
+    max-width: 1200px;
+    padding: 0 15px;
+  }
+}
+
+/* Điều chỉnh spacing giữa các sản phẩm */
+.products-section .row {
+  margin-left: -10px;
+  margin-right: -10px;
+}
+
+.products-section .col-lg-3, 
+.products-section .col-md-4,
+.products-section .col-sm-6,
+.products-section .col-6 {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+/* Đảm bảo hình ảnh sản phẩm vừa với container */
+.product-image {
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain !important;
+}

@@ -160,18 +160,18 @@ const ProductCard = ({ product, inWishlist = false }) => {
               e.target.onerror = null; 
               e.target.src = '/images/placeholder.png';
             }}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
           />
           
           {/* Add Quick Add To Cart overlay button */}
-          <Button 
+          {/* <Button 
             variant="primary" 
             className="quick-add-overlay-btn"
             onClick={handleAddToCart}
             disabled={isAddingToCart || !(product.stock || product.countInStock)}
           >
             <FaShoppingCart className="me-2" /> Thêm vào giỏ
-          </Button>
+          </Button> */}
         </div>
       </Link>
       

@@ -5,7 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { FaShoppingCart, FaUser, FaSearch, FaHeart, FaBars, FaBell, FaRegHeart } from 'react-icons/fa';
 import { logout } from '../redux/slices/authSlice';
 import { clearCart } from '../redux/slices/cartSlice';
-import { useGetCartQuery } from '../services/api';
+import { useGetCartQuery, useGetNotificationsQuery } from '../services/api';
 import CartDrawer from './CartDrawer';
 import AccountDrawer from './AccountDrawer';
 import './Header.css';
@@ -26,6 +26,15 @@ const Header = () => {
   const { data: cart } = useGetCartQuery(undefined, {
     skip: !isAuthenticated
   });
+  
+  // Get notifications
+  const { data: notifications } = useGetNotificationsQuery(undefined, {
+    skip: !isAuthenticated,
+    pollingInterval: 60000, // Poll every minute
+  });
+  
+  // Count unread notifications
+  const unreadNotificationsCount = notifications?.filter(notif => !notif.read).length || 0;
   
   // Số lượng sản phẩm trong giỏ hàng từ Redux store
   const cartItemCount = cartItems.length;
@@ -190,9 +199,21 @@ const Header = () => {
           
           <div className="header-icons-mobile d-lg-none">
             {isAuthenticated && (
-              <Link to="/wishlist" className="icon-link">
-                <FaRegHeart />
-              </Link>
+              <>
+                <Link to="/wishlist" className="icon-link">
+                  <FaRegHeart />
+                </Link>
+                <Link to="/notifications" className="icon-link">
+                  <div className="icon-badge-wrapper">
+                    <FaBell />
+                    {unreadNotificationsCount > 0 && (
+                      <Badge pill bg="danger" className="notification-badge-mobile">
+                        {unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount}
+                      </Badge>
+                    )}
+                  </div>
+                </Link>
+              </>
             )}
             <a href="#" className="icon-link cart-icon" onClick={openCartDrawer}>
               <FaShoppingCart />
@@ -220,7 +241,7 @@ const Header = () => {
               <InputGroup>
               <Form.Control
                 type="search"
-                  placeholder="Tìm kiếm ở đây ..."
+                  placeholder="Tìm kiếm ..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                   className="search-input"
@@ -234,34 +255,34 @@ const Header = () => {
             <Nav className="categories-nav me-auto">
               <Nav.Link 
                 as={Link} 
-                to="/category/sua" 
-                className={isActive('/category/sua') ? 'active' : ''}
+                to="/" 
+                className={isActive('/') ? 'active' : ''}
               >
-                Sữa các loại
+                Trang chủ
               </Nav.Link>
+    
               <Nav.Link 
                 as={Link} 
-                to="/category/electronics" 
-                className={isActive('/category/electronics') ? 'active' : ''}
+                to="/deal-hot" 
+                className={isActive('/deal-hot') ? 'active' : ''}
               >
-                Điện tử
+                Deal Hot
               </Nav.Link>
               <Nav.Link 
-                as={Link} 
-                to="/category/banhkeo" 
-                className={isActive('/category/banhkeo') ? 'active' : ''}
-              >
-                Bánh Kẹo
-              </Nav.Link>
-              <Nav.Link 
-                as={Link} 
-                to="/category/hoapham" 
-                className={isActive('/category/hoapham') ? 'active' : ''}
-              >
-                Hóa phẩm
-              </Nav.Link>
+  as={Link}
+  to="/combo"
+  onClick={() => navigate('/combo')}
+>
+  Combo Tiết Kiệm
+</Nav.Link>
+
+             
             
                   <NavDropdown title="Xem thêm" id="more-dropdown">
+                  <NavDropdown.Item as={Link} to="/category/sua">Sữa các loại</NavDropdown.Item>
+                  <NavDropdown.Item as={Link} to="/category/banhkeo">Bánh Kẹo</NavDropdown.Item>
+                  <NavDropdown.Item as={Link} to="/category/hoapham">Hóa phẩm</NavDropdown.Item>
+
                     <NavDropdown.Item as={Link} to="/category/vanphongphamdochoi">Văn phòng phẩm - Đồ chơi</NavDropdown.Item>
                     <NavDropdown.Item as={Link} to="/category/raucutraicay">Rau - Củ - Quả</NavDropdown.Item>
                     <NavDropdown.Item as={Link} to="/category/douonggiaikhat">Đồ uống - Giải khát</NavDropdown.Item>
@@ -280,7 +301,14 @@ const Header = () => {
                   </Nav.Link>
                   
                   <Nav.Link as={Link} to="/notifications" className="icon-link">
-                    <FaBell />
+                    <div className="icon-badge-wrapper">
+                      <FaBell />
+                      {unreadNotificationsCount > 0 && (
+                        <Badge pill bg="danger" className="notification-badge">
+                          {unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount}
+                        </Badge>
+                      )}
+                    </div>
                     <span className="icon-text">Thông báo</span>
                   </Nav.Link>
                   
@@ -321,10 +349,9 @@ const Header = () => {
           <Nav className="scrollable-nav">
             <Nav.Link as={Link} to="/category/sua" className={isActive('/category/sua') ? 'active' : ''}>Sữa</Nav.Link>
             <Nav.Link as={Link} to="/category/raucutraicay" className={isActive('/category/raucutraicay') ? 'active' : ''}>Rau - củ - quả</Nav.Link>
+            <Nav.Link as={Link} to="/deal-hot" className={isActive('/deal-hot') ? 'active' : ''}>Deal Hot</Nav.Link>
+            <Nav.Link as={Link} to="/combo" className={isActive('/combo') ? 'active' : ''}>Combo</Nav.Link>
             <Nav.Link as={Link} to="/category/hoapham" className={isActive('/category/hoapham') ? 'active' : ''}>Hóa phẩm</Nav.Link>
-            <Nav.Link as={Link} to="/category/electronics" className={isActive('/category/electronics') ? 'active' : ''}>Điện tử</Nav.Link>
-            <Nav.Link as={Link} to="/category/beauty" className={isActive('/category/beauty') ? 'active' : ''}>Beauty</Nav.Link>
-            <Nav.Link as={Link} to="/category/books" className={isActive('/category/books') ? 'active' : ''}>Books</Nav.Link>
           </Nav>
         </Container>
       </div>

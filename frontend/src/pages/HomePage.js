@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Button, Carousel } from 'react-bootstrap';
-import { useGetProductsQuery, useGetRecommendedProductsQuery, useGetDealHotQuery } from '../services/api';
+import { useGetProductsQuery, useGetRecommendedProductsQuery, useGetDealHotQuery, useGetCombosQuery } from '../services/api';
 import Layout from '../components/Layout';
 import CategoryList from '../components/CategoryList';
 import ProductCard from '../components/ProductCard';
@@ -11,6 +11,7 @@ import Loader from '../components/Loader';
 import Message from '../components/Message';
 import ApiErrorBoundary from '../components/ApiErrorBoundary';
 import DealHot from '../components/DealHot';
+import ComboSection from '../components/ComboSection';
 import { FaArrowRight, FaRegClock } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 
@@ -97,12 +98,19 @@ const HomePage = () => {
     skip: !!filters.keyword || !!filters.category,
   });
   
+  // Fetch combos
+  const { data: combosData } = useGetCombosQuery(undefined, {
+    // Skip combo API call if we're using search or category filters
+    skip: !!filters.keyword || !!filters.category,
+  });
+  
   // Debug info
   useEffect(() => {
     console.log('Products data from API:', productsData);
     console.log('Recommendations data from API:', recommendationsData);
     console.log('Deal hot data from API:', dealHotData);
-  }, [productsData, recommendationsData, dealHotData]);
+    console.log('Combos data from API:', combosData);
+  }, [productsData, recommendationsData, dealHotData, combosData]);
   
   // Extract products array from API response or use empty array as fallback
   const products = productsData?.products || [];
@@ -226,6 +234,18 @@ const HomePage = () => {
           </div>
         )}
         
+        {/* Combo Section */}
+        {!filters.keyword && !filters.category && (
+          <div className="combo-section-container py-4 mt-4">
+            <ComboSection 
+              combos={combosData || []} 
+              loading={!combosData && !productsLoading}
+              maxItems={4}
+              showViewAll={true}
+            />
+          </div>
+        )}
+        
         {/* Search Results Header */}
         {(filters.keyword || filters.category) && (
           <div className="search-results-header">
@@ -259,11 +279,11 @@ const HomePage = () => {
   {displayProducts.map((product) => (
     <Col
       key={product._id}
-      xs={12}
-      sm={6}
-      md={4}
-      lg={2} // Cứ để vậy, nhưng ta sẽ override bằng CSS bên dưới
-      style={{ flex: '0 0 20%', maxWidth: '20%' }} // Chia 5 cột
+      xs={6}     // Hiển thị 2 cột trên màn hình điện thoại
+      sm={6}     // Hiển thị 2 cột trên màn hình máy tính bảng nhỏ 
+      md={4}     // Hiển thị 3 cột trên màn hình máy tính bảng lớn
+      lg={3}     // Hiển thị 4 cột trên màn hình desktop
+      className="mb-4"
     >
       <ProductCard product={product} />
     </Col>

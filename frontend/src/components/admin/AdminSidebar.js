@@ -275,6 +275,13 @@ const AdminSidebar = () => {
                 <span className="dropdown-bullet"></span>
                 Deal Hot
               </Link>
+              <Link 
+                to="/admin/marketing/combo" 
+                className={`admin-dropdown-item ${isActive('/admin/marketing/combo') ? 'active' : ''}`}
+              >
+                <span className="dropdown-bullet"></span>
+                Combo Sản Phẩm
+              </Link>
             </div>
           </Nav.Item>
         
