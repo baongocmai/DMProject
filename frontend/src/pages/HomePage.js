@@ -15,6 +15,13 @@ import { FaArrowRight, FaRegClock } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 
 const HomePage = () => {
+  const scrollToBottom = () => {
+  window.scrollTo({
+    top: document.body.scrollHeight,
+    behavior: 'smooth'
+  });
+};
+
   const location = useLocation();
   const navigate = useNavigate();
   const queryParams = new URLSearchParams(location.search);
