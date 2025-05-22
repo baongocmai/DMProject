@@ -44,16 +44,16 @@ const Footer = () => {
             <h5 className="text-uppercase mb-4">Shop</h5>
             <ul className="list-unstyled">
               <li className="mb-2">
-                <a href="/category/sua" className="footer-link">Sữa</a>
+                <a href="/" className="footer-link">Sữa</a>
               </li>
               <li className="mb-2">
-                <a href="/category/hoapham" className="footer-link">Hóa phẩm</a>
+                <a href="/" className="footer-link">Hóa phẩm</a>
               </li>
               <li className="mb-2">
-                <a href="/category/banhkeo" className="footer-link">Bánh kẹo</a>
+                <a href="/" className="footer-link">Bánh kẹo</a>
               </li>
               <li className="mb-2">
-                <a href="/category/vanphongphamdochoi" className="footer-link">Văn phòng phẩm - Đồ chơi</a>
+                <a href="/" className="footer-link">Văn phòng phẩm - Đồ chơi</a>
               </li>
             </ul>
           </Col>
