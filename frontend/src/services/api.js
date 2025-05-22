@@ -1253,11 +1253,27 @@ export const api = createApi({
     }),
     
     updateCombo: builder.mutation({
-      query: ({ id, comboData }) => ({
-        url: `/combos/${id}`,
-        method: 'PUT',
-        body: comboData,
-      }),
+      query: ({ id, comboData }) => {
+        console.log('Updating combo:', { id, comboData }); // Debug log
+        if (!id) {
+          console.error('Missing combo ID for update'); // Debug log
+          throw new Error('ID không hợp lệ');
+        }
+        return {
+          url: `/combos/${id}`,
+          method: 'PUT',
+          body: comboData,
+        };
+      },
+      // Add error handling
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          console.log('Combo updated successfully:', data); // Debug log
+        } catch (error) {
+          console.error('Failed to update combo:', error); // Debug log
+        }
+      },
       invalidatesTags: ['Combo']
     }),
     

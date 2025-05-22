@@ -4,6 +4,8 @@ const cors = require("cors");
 const setupSwagger = require("./swagger");
 const path = require("path");
 require("dotenv").config();
+const cron = require('node-cron');
+const recommendationService = require('./services/recommendationService');
 
 const app = express();
 
@@ -74,6 +76,17 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/metrics", metricsRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/combos', comboRoutes);
+
+// Thêm cron job để chạy FP-Growth mỗi 3 ngày
+cron.schedule('0 0 */3 * *', async () => {
+  console.log('Running FP-Growth algorithm update...');
+  try {
+    await recommendationService.updateFPGrowthRecommendations();
+    console.log('FP-Growth algorithm update completed successfully');
+  } catch (error) {
+    console.error('Error updating FP-Growth recommendations:', error);
+  }
+});
 
 // Xử lý lỗi 404
 app.use((req, res) => {

@@ -192,10 +192,12 @@ const ComboManagement = () => {
   const handleSaveCombo = async () => {
     if (currentCombo.name && currentCombo.products.length > 0) {
       try {
+        console.log('Saving combo:', currentCombo); // Debug log
         if (editMode) {
-          // Update existing combo
+          // Update existing combo - use _id instead of id
+          console.log('Updating combo with ID:', currentCombo._id); // Debug log
           await updateCombo({
-            id: currentCombo.id,
+            id: currentCombo._id,
             comboData: currentCombo
           }).unwrap();
           showMessage('Combo đã được cập nhật thành công');
@@ -226,6 +228,7 @@ const ComboManagement = () => {
   
   // Edit an existing combo
   const handleEditCombo = (combo) => {
+    console.log('Editing combo:', combo); // Debug log
     setCurrentCombo(combo);
     setEditMode(true);
     setActiveTab('builder');

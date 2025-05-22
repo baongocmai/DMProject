@@ -866,11 +866,37 @@ const getRelatedProductRecommendations = async (productId, limit = 4) => {
   }
 };
 
+const updateFPGrowthRecommendations = async () => {
+  try {
+    // Lấy dữ liệu đơn hàng mới nhất
+    const orders = await Order.find({}).populate('items.product');
+    
+    // Chuẩn bị dữ liệu cho thuật toán FP-Growth
+    const transactions = orders.map(order => 
+      order.items.map(item => item.product._id.toString())
+    );
+
+    // Chạy thuật toán FP-Growth
+    const minSupport = 0.01; // 1% support threshold
+    const fpGrowth = new FPGrowth(minSupport);
+    const frequentItemsets = await fpGrowth.findFrequentPatterns(transactions);
+    
+    // Lưu kết quả vào cơ sở dữ liệu hoặc cache
+    // TODO: Implement caching mechanism here
+    
+    return frequentItemsets;
+  } catch (error) {
+    console.error('Error in updateFPGrowthRecommendations:', error);
+    throw error;
+  }
+};
+
 module.exports = { 
   getAprioriRecommendations, 
   getFPGrowthRecommendations,
   getCartRecommendations,
   getHomepageRecommendations,
   getFrequentlyBoughtTogether,
-  getRelatedProductRecommendations
+  getRelatedProductRecommendations,
+  updateFPGrowthRecommendations
 };

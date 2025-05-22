@@ -88,11 +88,15 @@ exports.createCombo = async (req, res) => {
 // @access  Admin
 exports.updateCombo = async (req, res) => {
   try {
+    console.log('Updating combo with ID:', req.params.id); // Debug log
+    console.log('Update data:', req.body); // Debug log
+    
     const { name, description, products, discount, isActive, startDate, endDate } = req.body;
     
     const combo = await Combo.findById(req.params.id);
     
     if (!combo) {
+      console.log('Combo not found with ID:', req.params.id); // Debug log
       return res.status(404).json({ message: 'Không tìm thấy combo' });
     }
     
@@ -100,9 +104,12 @@ exports.updateCombo = async (req, res) => {
     if (products && Array.isArray(products) && products.length > 0) {
       // Ensure all product IDs exist in the database
       const productIds = products.map(product => product._id);
+      console.log('Validating product IDs:', productIds); // Debug log
+      
       const existingProducts = await Product.find({ _id: { $in: productIds } });
       
       if (existingProducts.length !== productIds.length) {
+        console.log('Some products not found. Found:', existingProducts.length, 'Expected:', productIds.length); // Debug log
         return res.status(400).json({ 
           message: 'Một hoặc nhiều sản phẩm không tồn tại trong hệ thống' 
         });
@@ -120,6 +127,7 @@ exports.updateCombo = async (req, res) => {
     if (endDate) combo.endDate = endDate;
     
     const updatedCombo = await combo.save();
+    console.log('Combo updated successfully:', updatedCombo); // Debug log
     res.status(200).json(updatedCombo);
   } catch (error) {
     console.error('Error updating combo:', error);
