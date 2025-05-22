@@ -1,7 +1,7 @@
 :root {
   --primary-color: #B23F56;
   --secondary-color: #d79ca4;
-  --background-color: #ffffff;
+  --background-color: #d47fa0;
   --text-color: #333333;
   --light-gray: #f5f5f5;
   --border-color: #e0e0e0;
@@ -64,7 +64,7 @@ button {
 }
 
 .auth-sidebar {
-  background-color: var(--secondary-color);
+  background-color:#d97299;
   width: 40%;
   display: flex;
   flex-direction: column;
@@ -547,7 +547,7 @@ button {
   border-radius: 20px;
   overflow: hidden;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  background-color: #ffffff;
+  background-color: var(--primary-color);
   margin-bottom: 2rem;
 }
 

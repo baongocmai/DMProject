@@ -49,9 +49,9 @@
 }
 
 /* Combo product card */
-.combo-product-card {
+.var(--primary-color) {
   position: relative;
-  background: linear-gradient(135deg, #f8f9fa, #ffffff);
+  background: linear-gradient(135deg, #f8f9fa, var(--primary-color));
   border-radius: 12px;
   padding: 1.5rem;
   margin: 0 0.5rem;
@@ -62,7 +62,7 @@
   flex-direction: column;
 }
 
-.combo-product-card:hover {
+.var(--primary-color):hover {
   transform: translateY(-5px);
   box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1);
 }
@@ -321,7 +321,7 @@
     font-size: 1.25rem;
   }
   
-  .combo-product-card {
+  .var(--primary-color) {
     padding: 1rem;
   }
   

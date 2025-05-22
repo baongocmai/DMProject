@@ -49,7 +49,7 @@ const CategoryList = () => {
         <div className="category-overlay"></div>
         <div 
           className="category-icon-wrapper" 
-          style={{ backgroundColor: `${category.color}`, color: '#ffffff' }}
+          style={{ backgroundColor: `${category.color}`, color: 'var(--primary-color)' }}
         >
           {category.icon}
         </div>

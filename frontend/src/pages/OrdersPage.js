@@ -29,10 +29,14 @@ const OrdersPage = () => {
   const ordersPerPage = 5;
   
   // Fetch orders data
-  const { data: orders, error: fetchError, isLoading, refetch } = useGetOrdersQuery();
+  const { data, error: fetchError, isLoading, refetch } = useGetOrdersQuery();
+  
+  // Make sure we properly extract orders from the API response
+  // It could be either data directly as array, or data.orders as array
+  const ordersArray = Array.isArray(data) ? data : data?.orders || [];
   
   // Filter orders based on status and search term
-  const filteredOrders = orders?.filter(order => {
+  const filteredOrders = ordersArray.filter(order => {
     // Status filter
     const statusMatch = 
       filterStatus === 'all' ? true : (order?.status?.toLowerCase() === filterStatus);
@@ -43,7 +47,7 @@ const OrdersPage = () => {
        (order?.orderItems || []).some(item => item?.name?.toLowerCase().includes(searchTerm.toLowerCase())));
     
     return statusMatch && searchMatch;
-  }) || [];
+  });
   
   // Sort orders based on user selection
   const sortedOrders = [...filteredOrders].sort((a, b) => {
@@ -66,10 +70,10 @@ const OrdersPage = () => {
   
   // Calculate order stats
   const orderStats = {
-    total: orders?.length || 0,
-    pending: orders?.filter(order => order?.status === 'pending')?.length || 0,
-    delivered: orders?.filter(order => order?.status === 'delivered')?.length || 0,
-    processing: orders?.filter(order => 
+    total: ordersArray.length || 0,
+    pending: ordersArray.filter(order => order?.status === 'pending')?.length || 0,
+    delivered: ordersArray.filter(order => order?.status === 'delivered')?.length || 0,
+    processing: ordersArray.filter(order => 
       order?.status === 'processing' || order?.status === 'shipped'
     )?.length || 0
   };
@@ -154,7 +158,7 @@ const OrdersPage = () => {
     );
   }
   
-  if (!orders || orders.length === 0) {
+  if (!ordersArray || ordersArray.length === 0) {
     return <EmptyOrderPage />;
   }
   

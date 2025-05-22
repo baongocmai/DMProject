@@ -19,7 +19,7 @@
 
 .footer h5 {
   font-weight: 600;
-  color: #ffffff;
+  color: var(--primary-color);
   margin-bottom: 1.5rem;
   position: relative;
   display: inline-block;
@@ -45,7 +45,7 @@
 }
 
 .footer-link:hover {
-  color: #ffffff;
+  color: var(--primary-color);
   transform: translateX(5px);
 }
 
@@ -56,7 +56,7 @@
   bottom: 0;
   width: 0;
   height: 1px;
-  background-color: #ffffff;
+  background-color: var(--primary-color);
   transition: width 0.3s ease;
 }
 
@@ -83,7 +83,7 @@
 }
 
 .social-icons a:hover {
-  color: #ffffff;
+  color: var(--primary-color);
   background-color: var(--secondary-color);
   transform: translateY(-3px);
 }
@@ -141,7 +141,7 @@
 }
 
 .footer .list-inline-item .footer-link:hover {
-  color: #ffffff;
+  color: var(--primary-color);
   transform: none;
 }
 

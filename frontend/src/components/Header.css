@@ -15,7 +15,7 @@
 /* Top Bar */
 .header-topbar {
   background-color: #303030;
-  color: #ffffff;
+  color: var(--primary-color);
   font-size: 13px;
   padding: 8px 0;
 }
@@ -41,7 +41,7 @@
 }
 
 .topbar-links a:hover {
-  color: #ffffff;
+  color: var(--primary-color);
 }
 
 .welcome-message {
@@ -62,7 +62,7 @@
 .brand-name {
   font-size: 40px;
   font-weight: 700;
-  color: var(--primary-color);
+  color: #a8334a;
 }
 
 .brand-tagline {
@@ -96,7 +96,7 @@
 
 .search-button {
   border-radius: 0 4px 4px 0;
-  background-color: var(--primary-color);
+  background-color: #e34b80;
   border-color: var(--primary-color);
   padding: 0 15px;
 }

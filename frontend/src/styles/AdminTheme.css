@@ -14,7 +14,7 @@
   
   /* Background Colors */
   --admin-bg-body: #f9fafc;
-  --admin-bg-card: #ffffff;
+  --admin-bg-card: var(--primary-color);
   --admin-bg-sidebar: linear-gradient(180deg, #1a237e, #303f9f);
   --admin-bg-sidebar-active: rgba(67, 97, 238, 0.3);
   

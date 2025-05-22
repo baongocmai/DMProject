@@ -219,6 +219,11 @@ function App() {
             <BannerList />
           </AdminRoute>
         } />
+        <Route path="/admin/marketing/combo" element={
+          <AdminRoute>
+            <ComboManagement />
+          </AdminRoute>
+        } />
         <Route path="/admin/settings/general" element={
           <AdminRoute>
             <GeneralSettings />

@@ -8,6 +8,14 @@ import Message from '../components/Message';
 import Loader from '../components/Loader';
 import { removeToken, removeUserData } from '../utils/tokenHelper';
 
+// Add styling for forgot password link
+const forgotPasswordStyle = {
+  textAlign: 'right',
+  marginBottom: '15px',
+  marginTop: '5px',
+  fontSize: '14px'
+};
+
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -135,6 +143,10 @@ const LoginPage = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+              </div>
+              
+              <div className="forgot-password-link" style={forgotPasswordStyle}>
+                <Link to="/forgot-password">Quên mật khẩu?</Link>
               </div>
               
               <button 

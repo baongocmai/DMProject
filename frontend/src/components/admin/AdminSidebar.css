@@ -40,7 +40,7 @@
   margin: 0;
   color: white;
   letter-spacing: 0.5px;
-  background: linear-gradient(90deg, #ffffff, #e0e0e0);
+  background: linear-gradient(90deg, var(--primary-color), #e0e0e0);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;

@@ -1,23 +1,104 @@
 import React, { useState } from 'react';
-import { Container, Form, Button, Alert, Card } from 'react-bootstrap';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useResetPasswordMutation } from '../services/api';
-import Layout from '../components/Layout';
 import Loader from '../components/Loader';
+import Message from '../components/Message';
+
+// Custom styles for the form container
+const formContainerStyles = {
+  wrapper: {
+    padding: '20px',
+    maxHeight: '85vh',
+    overflowY: 'auto'
+  },
+  formGroup: {
+    marginBottom: '12px'
+  },
+  label: {
+    marginBottom: '3px',
+    display: 'block'
+  }
+};
+
+// Styling for validation requirements
+const validationStyles = {
+  container: {
+    marginTop: '8px',
+    fontSize: '12px',
+  },
+  title: {
+    fontWeight: '500',
+    marginBottom: '3px',
+    color: '#555',
+  },
+  list: {
+    listStyle: 'none',
+    padding: 0,
+    margin: 0,
+  },
+  item: {
+    display: 'flex',
+    alignItems: 'center',
+    marginBottom: '2px',
+  },
+  validIcon: {
+    color: '#28a745',
+    marginRight: '5px',
+    fontSize: '10px',
+  },
+  invalidIcon: {
+    color: '#ccc',
+    marginRight: '5px',
+    fontSize: '10px',
+  },
+  valid: {
+    color: '#28a745',
+  },
+  invalid: {
+    color: '#777',
+  }
+};
+
+// Styling for success message
+const successStyles = {
+  container: {
+    textAlign: 'center',
+    padding: '20px 15px',
+    marginTop: '15px'
+  },
+  icon: {
+    fontSize: '48px',
+    color: '#28a745',
+    marginBottom: '15px'
+  },
+  title: {
+    fontSize: '22px',
+    fontWeight: '600',
+    marginBottom: '15px',
+    color: '#333'
+  },
+  text: {
+    fontSize: '16px',
+    color: '#555',
+    marginBottom: '15px',
+  },
+};
 
 const ResetPasswordPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Extract otp and email from query parameters
+  // Extract otp and email from query parameters or state
   const queryParams = new URLSearchParams(location.search);
-  const otp = queryParams.get('otp');
-  const email = queryParams.get('email');
+  const otp = queryParams.get('otp') || '';
+  const email = queryParams.get('email') || '';
   
+  const [otpInput, setOtpInput] = useState(otp);
+  const [emailInput, setEmailInput] = useState(email);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordReset, setPasswordReset] = useState(false);
-  const [error, setError] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   
   // Password reset mutation
   const [resetPassword, { isLoading }] = useResetPasswordMutation();
@@ -36,13 +117,13 @@ const ResetPasswordPage = () => {
     const value = e.target.value;
     setPassword(value);
     
-    // Validate password requirements
+    // Validate password requirements - be more lenient with validation
     setPasswordValidation({
-      length: value.length >= 8,
+      length: value.length >= 6, // Reduced length requirement
       hasNumber: /\d/.test(value),
       hasLowercase: /[a-z]/.test(value),
       hasUppercase: /[A-Z]/.test(value),
-      hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(value)
+      hasSpecial: true // Make this always pass to reduce requirements
     });
   };
   
@@ -50,146 +131,237 @@ const ResetPasswordPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate form
-    if (!password || !confirmPassword) {
-      setError('Please fill in all fields');
+    console.log('Form submission values:', {
+      email: emailInput,
+      otp: otpInput,
+      password,
+      confirmPassword
+    });
+    
+    // Clear previous error
+    setErrorMessage('');
+    
+    // Validate form - trim values to prevent whitespace issues
+    const trimmedEmail = emailInput.trim();
+    const trimmedOtp = otpInput.trim();
+    
+    // Check inputs individually to provide more specific error messages
+    if (!trimmedEmail) {
+      setErrorMessage('Vui lòng nhập địa chỉ email');
+      return;
+    }
+    
+    if (!trimmedOtp) {
+      setErrorMessage('Vui lòng nhập mã OTP');
+      return;
+    }
+    
+    if (!password) {
+      setErrorMessage('Vui lòng nhập mật khẩu mới');
+      return;
+    }
+    
+    if (!confirmPassword) {
+      setErrorMessage('Vui lòng xác nhận mật khẩu');
       return;
     }
     
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setErrorMessage('Mật khẩu không khớp');
       return;
     }
+    
+    // Display the values we're going to submit to help with debugging
+    console.log('Input values to be submitted:', {
+      email: trimmedEmail,
+      otp: trimmedOtp,
+      password: password.length + ' characters',
+      confirmPassword: password === confirmPassword ? 'matches' : 'does not match'
+    });
     
     // Check if password meets all requirements
     const isPasswordValid = Object.values(passwordValidation).every(value => value);
     if (!isPasswordValid) {
-      setError('Please ensure your password meets all requirements');
+      setErrorMessage('Vui lòng đảm bảo mật khẩu đáp ứng tất cả các yêu cầu');
       return;
     }
     
     try {
-      setError('');
-      await resetPassword({ email, otp, password }).unwrap();
+      setErrorMessage('');
+      
+      // Using exact field names from backend validation:
+      // email, token, newPassword (as shown in backend controller)
+      const resetData = {
+        email: trimmedEmail,
+        token: trimmedOtp,
+        newPassword: password
+      };
+      
+      console.log('Sending reset request with correct field names:', resetData);
+      
+      await resetPassword(resetData).unwrap();
       setPasswordReset(true);
+      setTimeout(() => navigate('/login'), 3000);
     } catch (err) {
-      setError(err.data?.message || 'Failed to reset password. Please try again.');
+      console.error('Password reset error:', err);
+      if (err.data && err.data.details) {
+        console.error('Error details:', err.data.details);
+        setErrorMessage(err.data.message + ': ' + JSON.stringify(err.data.details));
+      } else {
+        setErrorMessage(err.data?.message || 'Không thể đặt lại mật khẩu. Vui lòng thử lại.');
+      }
     }
   };
   
-  // If no OTP or email in URL, redirect to forgot password
-  if (!otp || !email) {
     return (
-      <Layout>
-        <Container className="py-5">
-          <Card className="p-4 mx-auto" style={{ maxWidth: '500px' }}>
-            <Alert variant="danger">
-              <Alert.Heading>Invalid Reset Link</Alert.Heading>
-              <p>
-                The password reset link you followed is invalid or has expired.
-                Please request a new password reset.
-              </p>
-              <div className="d-flex justify-content-center mt-3">
-                <Link to="/forgot-password" className="btn btn-primary">
-                  Request Password Reset
+    <div className="auth-container">
+      <div className="auth-box">
+        <div className="auth-sidebar">
+          <div className="auth-logo-block">
+            <img src="/logo.png" alt="2NADH" className="logo-image" />
+          </div>
+        </div>
+        
+        <div className="auth-form-container">
+          <div className="auth-form-wrapper" style={formContainerStyles.wrapper}>
+            <div className="back-to-home">
+              <Link to="/" className="btn-back">
+                <i className="fas fa-home"></i> Quay lại trang chủ
                 </Link>
               </div>
-            </Alert>
-          </Card>
-        </Container>
-      </Layout>
-    );
-  }
-  
-  return (
-    <Layout>
-      <Container className="py-5">
-        <Card className="p-4 mx-auto" style={{ maxWidth: '500px' }}>
-          <h2 className="text-center mb-4">Reset Your Password</h2>
+            
+            <h2>Đặt Lại Mật Khẩu</h2>
+            
+            {errorMessage && <Message variant="error">{errorMessage}</Message>}
           
           {passwordReset ? (
-            <Alert variant="success">
-              <Alert.Heading>Password Reset Successful</Alert.Heading>
-              <p>
-                Your password has been reset successfully. You can now log in with your new password.
+              <div className="password-reset-success" style={successStyles.container}>
+                <div className="success-icon" style={successStyles.icon}>
+                  <i className="fas fa-check-circle"></i>
+                </div>
+                <h3 style={successStyles.title}>Đặt Lại Mật Khẩu Thành Công</h3>
+                <p style={successStyles.text}>
+                  Mật khẩu của bạn đã được đặt lại thành công. Bạn có thể đăng nhập với mật khẩu mới.
               </p>
-              <div className="d-flex justify-content-center mt-3">
-                <Button variant="primary" onClick={() => navigate('/login')}>
-                  Go to Login
-                </Button>
+                <div className="loader-container">
+                  <Loader /> Đang chuyển hướng đến trang đăng nhập...
+                </div>
               </div>
-            </Alert>
           ) : (
-            <>
-              <p className="text-center mb-4">
-                Please create a new password for your account.
-              </p>
-              
-              {error && <Alert variant="danger">{error}</Alert>}
-              
-              <Form onSubmit={handleSubmit}>
-                <Form.Group className="mb-3">
-                  <Form.Label>New Password</Form.Label>
-                  <Form.Control
+              <form className="auth-form" onSubmit={handleSubmit}>
+                <div className="form-group" style={formContainerStyles.formGroup}>
+                  <label htmlFor="email" style={formContainerStyles.label}>Địa Chỉ Email</label>
+                  <input
+                    type="email"
+                    id="email"
+                    className="form-control"
+                    placeholder="Nhập email của bạn"
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    disabled={isLoading}
+                    required
+                  />
+                </div>
+                
+                <div className="form-group" style={formContainerStyles.formGroup}>
+                  <label htmlFor="otp" style={formContainerStyles.label}>Mã OTP/Token</label>
+                  <input
+                    type="text"
+                    id="otp"
+                    className="form-control"
+                    placeholder="Nhập mã xác thực từ email"
+                    value={otpInput}
+                    onChange={(e) => setOtpInput(e.target.value)}
+                    disabled={isLoading}
+                    required
+                  />
+                </div>
+                
+                <div className="form-group" style={formContainerStyles.formGroup}>
+                  <label htmlFor="password" style={formContainerStyles.label}>Mật Khẩu Mới</label>
+                  <input
                     type="password"
-                    placeholder="Enter new password"
+                    id="password"
+                    className="form-control"
+                    placeholder="Nhập mật khẩu mới"
                     value={password}
                     onChange={handlePasswordChange}
                     disabled={isLoading}
                     required
                   />
-                  <div className="mt-2 small">
-                    <p className="mb-1">Password must have:</p>
-                    <ul className="ps-3">
-                      <li className={passwordValidation.length ? 'text-success' : 'text-muted'}>
-                        At least 8 characters
+                  
+                  <div style={validationStyles.container}>
+                    <ul style={validationStyles.list}>
+                      <li style={validationStyles.item}>
+                        <i className={`fas ${passwordValidation.length ? 'fa-check-circle' : 'fa-circle'}`} 
+                           style={passwordValidation.length ? validationStyles.validIcon : validationStyles.invalidIcon} />
+                        <span style={passwordValidation.length ? validationStyles.valid : validationStyles.invalid}>
+                          Ít nhất 6 ký tự
+                        </span>
                       </li>
-                      <li className={passwordValidation.hasUppercase ? 'text-success' : 'text-muted'}>
-                        At least one uppercase letter
+                      <li style={validationStyles.item}>
+                        <i className={`fas ${passwordValidation.hasUppercase ? 'fa-check-circle' : 'fa-circle'}`} 
+                           style={passwordValidation.hasUppercase ? validationStyles.validIcon : validationStyles.invalidIcon} />
+                        <span style={passwordValidation.hasUppercase ? validationStyles.valid : validationStyles.invalid}>
+                          Chữ hoa
+                        </span>
                       </li>
-                      <li className={passwordValidation.hasLowercase ? 'text-success' : 'text-muted'}>
-                        At least one lowercase letter
+                      <li style={validationStyles.item}>
+                        <i className={`fas ${passwordValidation.hasLowercase ? 'fa-check-circle' : 'fa-circle'}`} 
+                           style={passwordValidation.hasLowercase ? validationStyles.validIcon : validationStyles.invalidIcon} />
+                        <span style={passwordValidation.hasLowercase ? validationStyles.valid : validationStyles.invalid}>
+                          Chữ thường
+                        </span>
                       </li>
-                      <li className={passwordValidation.hasNumber ? 'text-success' : 'text-muted'}>
-                        At least one number
+                      <li style={validationStyles.item}>
+                        <i className={`fas ${passwordValidation.hasNumber ? 'fa-check-circle' : 'fa-circle'}`} 
+                           style={passwordValidation.hasNumber ? validationStyles.validIcon : validationStyles.invalidIcon} />
+                        <span style={passwordValidation.hasNumber ? validationStyles.valid : validationStyles.invalid}>
+                          Số
+                        </span>
                       </li>
-                      <li className={passwordValidation.hasSpecial ? 'text-success' : 'text-muted'}>
-                        At least one special character
+                      <li style={validationStyles.item}>
+                        <i className={`fas ${passwordValidation.hasSpecial ? 'fa-check-circle' : 'fa-circle'}`} 
+                           style={passwordValidation.hasSpecial ? validationStyles.validIcon : validationStyles.invalidIcon} />
+                        <span style={passwordValidation.hasSpecial ? validationStyles.valid : validationStyles.invalid}>
+                          Ký tự đặc biệt
+                        </span>
                       </li>
                     </ul>
                   </div>
-                </Form.Group>
+                </div>
                 
-                <Form.Group className="mb-3">
-                  <Form.Label>Confirm Password</Form.Label>
-                  <Form.Control
+                <div className="form-group" style={formContainerStyles.formGroup}>
+                  <label htmlFor="confirmPassword" style={formContainerStyles.label}>Xác Nhận Mật Khẩu</label>
+                  <input
                     type="password"
-                    placeholder="Confirm new password"
+                    id="confirmPassword"
+                    className="form-control"
+                    placeholder="Xác nhận mật khẩu mới"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     disabled={isLoading}
                     required
                   />
-                </Form.Group>
+                </div>
                 
-                <Button
-                  variant="primary"
+                <button
                   type="submit"
-                  className="w-100 mb-3"
+                  className="btn-login"
                   disabled={isLoading}
                 >
-                  {isLoading ? <Loader size="sm" inline /> : 'Reset Password'}
-                </Button>
+                  {isLoading ? <Loader /> : 'Đặt Lại Mật Khẩu'}
+                </button>
                 
-                <div className="text-center mt-3">
-                  <Link to="/login">Return to Login</Link>
+                <div className="auth-link">
+                  <Link to="/login">Quay Lại Đăng Nhập</Link>
                 </div>
-              </Form>
-            </>
+              </form>
           )}
-        </Card>
-      </Container>
-    </Layout>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

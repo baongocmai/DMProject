@@ -58,6 +58,7 @@ const newsletterRoutes = require("./routes/newsletterRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const metricsRoutes = require("./routes/metricsRoutes");
 const uploadRoutes = require('./routes/uploadRoutes');
+const comboRoutes = require('./routes/comboRoutes');
 
 // Áp dụng routes
 app.use("/api/products", productRoutes);
@@ -72,6 +73,7 @@ app.use("/api/newsletter", newsletterRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/metrics", metricsRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/combos', comboRoutes);
 
 // Xử lý lỗi 404
 app.use((req, res) => {

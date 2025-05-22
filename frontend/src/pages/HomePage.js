@@ -129,7 +129,7 @@ const HomePage = () => {
     description: "Mua combo sản phẩm được đề xuất giúp bạn tiết kiệm lên đến 25% so với mua lẻ từng món.",
     buttonText: "Xem combo ngay",
     image: "/banner.png",
-    link: "/?category=deal%20hot"
+    link: "/?category=combo"
   },
   {
     id: 2,
@@ -238,10 +238,11 @@ const HomePage = () => {
         {!filters.keyword && !filters.category && (
           <div className="combo-section-container py-4 mt-4">
             <ComboSection 
-              combos={combosData || []} 
+              combos={Array.isArray(combosData) ? combosData : []} 
               loading={!combosData && !productsLoading}
               maxItems={4}
               showViewAll={true}
+              title="Combo tiết kiệm"
             />
           </div>
         )}
@@ -324,7 +325,7 @@ const HomePage = () => {
                   <div className="featured-content">
                     <h3>Sản phẩm mới</h3>
                     <p>Khám phá những sản phẩm mới nhất của chúng tôi</p>
-                    <Button variant="light" href="/new-arrivals">Mua sắm ngay</Button>
+                    
                   </div>
                 </div>
               </Col>
@@ -333,7 +334,7 @@ const HomePage = () => {
                   <div className="featured-content">
                     <h3>Ưu đãi đặc biệt</h3>
                     <p>Giảm giá lên đến 50% cho các mặt hàng được chọn</p>
-                    <Button variant="light" href="/special-offers">Xem ưu đãi</Button>
+                    
                   </div>
                 </div>
               </Col>

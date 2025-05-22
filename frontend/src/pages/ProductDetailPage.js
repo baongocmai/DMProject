@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Container, Row, Col, Button, Badge, Form, Tab, Tabs, Alert } from 'react-bootstrap';
-import { FaStar, FaRegStar, FaMinus, FaPlus, FaArrowLeft, FaIceCream, FaFire, FaShoppingCart, FaHeart, FaShare, FaTruck, FaUndo, FaShieldAlt, FaSpinner } from 'react-icons/fa';
-import { useGetProductByIdQuery, useAddProductReviewMutation, useGetRelatedProductsQuery } from '../services/api';
+import { FaStar, FaRegStar, FaMinus, FaPlus, FaArrowLeft, FaIceCream, FaFire, FaShoppingCart, FaHeart, FaShare, FaTruck, FaUndo, FaShieldAlt, FaSpinner, FaCheck } from 'react-icons/fa';
+import { useGetProductByIdQuery, useAddProductReviewMutation, useGetRelatedProductsQuery, useGetFeaturedProductsQuery } from '../services/api';
 import { addToCart } from '../redux/slices/cartSlice';
 import { formatPrice, formatImageUrl } from '../utils/productHelpers';
 import { formatError } from '../utils/errorHandler';
 import Layout from '../components/Layout';
 import LoadingPage from '../components/LoadingPage';
+import Rating from '../components/Rating';
 import './ProductDetailPage.css'; // We will create this CSS file
 
 const ProductDetailPage = () => {
@@ -36,6 +37,9 @@ const ProductDetailPage = () => {
   // Fetch related products
   const { data: relatedProductsData, isLoading: isLoadingRelated } = useGetRelatedProductsQuery(id);
   
+  // Fetch featured products
+  const { data: featuredProductsData, isLoading: isLoadingFeatured } = useGetFeaturedProductsQuery();
+  
   const [addProductReview, { isLoading: isSubmittingReview }] = useAddProductReviewMutation();
 
   // Debugging product data
@@ -52,9 +56,27 @@ const ProductDetailPage = () => {
       console.log("Related products data:", relatedProductsData);
       if (relatedProductsData.relatedProducts && relatedProductsData.relatedProducts.length > 0) {
         console.log("First related product image:", relatedProductsData.relatedProducts[0].image);
+      } else {
+        console.log("No related products found in the data.");
       }
+    } else {
+      console.log("No relatedProductsData received.");
     }
   }, [relatedProductsData]);
+
+  // Debugging featured products
+  useEffect(() => {
+    if (featuredProductsData) {
+      console.log("Featured products data:", featuredProductsData);
+      if (featuredProductsData.featuredProducts && featuredProductsData.featuredProducts.length > 0) {
+        console.log("First featured product image:", featuredProductsData.featuredProducts[0].image);
+      } else {
+        console.log("No featured products found in the data.");
+      }
+    } else {
+      console.log("No featuredProductsData received.");
+    }
+  }, [featuredProductsData]);
 
   // Move useEffect hooks to the top level, before any conditional returns
   // Refresh product data on mount and every minute
@@ -84,6 +106,44 @@ const ProductDetailPage = () => {
 
   // Get related products from the API response
   const relatedProducts = relatedProductsData?.relatedProducts || [];
+
+  // Sort related products by confidence in descending order
+  const sortedRelatedProducts = [...relatedProducts].sort((a, b) => {
+    // If both have confidence, sort by confidence
+    if (a.confidence && b.confidence) {
+      return b.confidence - a.confidence;
+    }
+    // If only one has confidence, put it first
+    if (a.confidence) return -1;
+    if (b.confidence) return 1;
+    // If neither has confidence, maintain original order
+    return 0;
+  });
+
+  // Prepare fallback products (featured products) excluding current product
+  const featuredProducts = featuredProductsData?.products || [];
+  const filteredFeaturedProducts = featuredProducts
+    .filter(item => item._id !== id)
+    .slice(0, 4);
+
+  // Use related products if available, otherwise use featured products as fallback
+  const productsToShow = relatedProducts.length > 0 
+    ? relatedProducts.slice(0, 4)
+    : filteredFeaturedProducts;
+
+  // Set section title based on which products we're showing
+  const relatedProductsSectionTitle = relatedProducts.length > 0 
+    ? "Sản phẩm liên quan"
+    : "Sản phẩm có thể bạn sẽ thích";
+
+  // Styles for featured tag
+  const featuredTagStyle = {
+    fontSize: '14px',
+    color: '#ff6b6b',
+    fontWeight: 'normal',
+    marginLeft: '8px',
+    display: 'inline-block'
+  };
 
   // Log để kiểm tra dữ liệu sản phẩm liên quan
   useEffect(() => {
@@ -453,43 +513,42 @@ const ProductDetailPage = () => {
         
         {/* Related Products */}
         <Container className="related-products mb-5">
-          <h3 className="section-title">Sản phẩm liên quan</h3>
-          <Row className="row-cols-1 row-cols-sm-2 row-cols-md-4">
-            {isLoadingRelated ? (
-              <div className="text-center py-4 w-100">
-                <FaSpinner className="fa-spin" size={30} />
-                <p className="mt-3">Đang tải sản phẩm liên quan...</p>
+          <h3 className="section-title mb-4">
+            Sản phẩm liên quan
+          </h3>
+          <Row>
+            {sortedRelatedProducts.length === 0 ? (
+              <div className="text-center text-muted py-4 w-100">
+                Không có sản phẩm liên quan.
               </div>
-            ) : relatedProducts && relatedProducts.length > 0 ? (
-              relatedProducts.slice(0, 4).map((item) => (
-                <Col className="mb-4" key={item._id}>
-                 <div className="related-product-card">
-  <Link to={`/product/${item._id}`} className="product-link">
-    <div className="related-product-image">
-      <img
-        src={item.image || "/logo192.png"}
-        alt={item.name}
-        onError={(e) => {
-          e.target.onerror = null;
-          e.target.src = "/logo192.png";
-        }}
-      />
-    </div>
-    <div className="related-product-info">
-      <h4 className="related-product-title">{item.name}</h4>
-      <div className="related-product-price">{formatPrice(item.price)}</div>
-    </div>
-  </Link>
-</div>
-
+            ) : (
+              sortedRelatedProducts.map((product) => (
+                <Col key={product._id} xs={12} sm={6} md={3} className="mb-4">
+                  <div className="related-product-card">
+                    <Link to={`/product/${product._id}`}>
+                      <div className="product-image">
+                        <img
+                          src={product.image || "/logo192.png"}
+                          alt={product.name}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "/logo192.png";
+                          }}
+                        />
+                      </div>
+                      <div className="product-details">
+                        <h4 className="product-name">{product.name}</h4>
+                        <div className="product-price">{formatPrice(product.price)}</div>
+                        {product.confidence > 0 && (
+                          <div className="confidence-score">
+                            Độ liên quan: {(product.confidence * 100).toFixed(1)}%
+                          </div>
+                        )}
+                      </div>
+                    </Link>
+                  </div>
                 </Col>
               ))
-            ) : (
-              <Col className="w-100">
-                <div className="text-center py-4">
-                  <p>Không có sản phẩm liên quan.</p>
-                </div>
-              </Col>
             )}
           </Row>
         </Container>
@@ -499,3 +558,95 @@ const ProductDetailPage = () => {
 };
 
 export default ProductDetailPage; 
+
+<style jsx>{`
+  .related-products {
+    padding: 20px 0;
+  }
+
+  .section-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 2px solid #e94560;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+  }
+
+  .related-product-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    height: 100%;
+  }
+
+  .related-product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+
+  .product-image {
+    position: relative;
+    padding-top: 100%;
+    overflow: hidden;
+    border-radius: 8px 8px 0 0;
+  }
+
+  .product-image img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .product-details {
+    padding: 15px;
+  }
+
+  .product-name {
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 10px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    height: 48px;
+  }
+
+  .product-price {
+    font-size: 18px;
+    font-weight: 600;
+    color: #e94560;
+    margin-bottom: 10px;
+  }
+
+  .confidence-score {
+    display: inline-block;
+    padding: 5px 10px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #666;
+    border: 1px solid #e9ecef;
+  }
+
+  @media (max-width: 768px) {
+    .product-name {
+      font-size: 14px;
+      height: 40px;
+    }
+
+    .product-price {
+      font-size: 16px;
+    }
+
+    .confidence-score {
+      font-size: 12px;
+    }
+  }
+`}</style> 

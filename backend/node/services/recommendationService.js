@@ -32,32 +32,49 @@ const getTransactions = async (limit = 0) => {
       console.log(`Đơn hàng có orderItems? ${orders[0].orderItems ? 'Có' : 'Không'}`);
       if (orders[0].orderItems) {
         console.log(`Số lượng items: ${orders[0].orderItems.length}`);
+        console.log("Chi tiết orderItems:");
+        orders[0].orderItems.forEach((item, index) => {
+          console.log(`Item ${index + 1}:`, {
+            product: item.product,
+            name: item.name,
+            qty: item.qty,
+            price: item.price
+          });
+        });
       }
     }
     
-    // Chuyển đổi thành giao dịch - QUAN TRỌNG: đảm bảo cấu trúc đúng
-    const transactions = [];
+    // Chuyển đổi thành giao dịch
+    let transactions = [];
     
     for (const order of orders) {
-      // Kiểm tra order.orderItems (không phải items)
+      // Kiểm tra order.orderItems
       if (order.orderItems && Array.isArray(order.orderItems) && order.orderItems.length > 0) {
         // Log để debug
         console.log(`Đơn hàng ${order._id} có ${order.orderItems.length} sản phẩm`);
         
-        // Xử lý cẩn thận productId
-        const productIds = order.orderItems
-          .filter(item => item && item.product)
-          .map(item => {
-            // Kiểm tra nếu product là ObjectId hoặc String
+        // Xử lý cẩn thận productId và thêm sản phẩm theo số lượng
+        const productIds = [];
+        order.orderItems.forEach(item => {
+          if (item && item.product) {
             const productId = typeof item.product === 'object' && item.product._id 
               ? item.product._id.toString() 
               : item.product.toString();
-            return productId;
-          });
+            
+            // Thêm sản phẩm vào mảng theo số lượng (qty)
+            const qty = item.qty || 1;
+            for (let i = 0; i < qty; i++) {
+              productIds.push(productId);
+            }
+            
+            console.log(`Product ID: ${productId}, Name: ${item.name}, Qty: ${qty}`);
+          }
+        });
         
         // Thêm vào danh sách nếu có ít nhất 1 sản phẩm
         if (productIds.length >= 1) {
           transactions.push(productIds);
+          console.log(`Đã thêm giao dịch với ${productIds.length} sản phẩm:`, productIds);
         }
       } else {
         console.log(`Đơn hàng ${order._id} không có orderItems hoặc rỗng`);
@@ -71,12 +88,14 @@ const getTransactions = async (limit = 0) => {
       console.log("QUAN TRỌNG: Không tìm thấy giao dịch nào từ đơn hàng, tạo dữ liệu mẫu từ sản phẩm thực");
       
       // Lấy tất cả sản phẩm từ cơ sở dữ liệu
-      const allProducts = await Product.find({}).select('_id').lean();
+      const allProducts = await Product.find({}).select('_id name category').lean();
       
       if (allProducts.length === 0) {
         console.log("Không có sản phẩm nào trong database để tạo dữ liệu mẫu");
         return [];
       }
+      
+      console.log(`Tìm thấy ${allProducts.length} sản phẩm trong database`);
       
       // Lấy ID của tất cả sản phẩm
       const productIds = allProducts.map(product => product._id.toString());
@@ -95,6 +114,7 @@ const getTransactions = async (limit = 0) => {
         const selectedProducts = shuffled.slice(0, numProducts);
         
         sampleTransactions.push(selectedProducts);
+        console.log(`Tạo giao dịch mẫu ${i + 1} với ${selectedProducts.length} sản phẩm:`, selectedProducts);
       }
       
       console.log(`Đã tạo ${sampleTransactions.length} giao dịch mẫu với sản phẩm thực`);
@@ -116,39 +136,99 @@ const getDynamicMinSupport = (numTransactions) => {
   return 0.2; // Dữ liệu nhiều -> tăng minSupport để giảm noise
 };
 
-// Thuật toán Apriori với minSupport động
+// Thuật toán Apriori đơn giản hóa để tìm cặp sản phẩm thường mua cùng nhau
 const getAprioriRecommendations = async () => {
   const cachedData = cache.get("apriori");
-  if (cachedData) return cachedData; // Lấy từ cache nếu có
+  if (cachedData) return cachedData;
 
-  const transactions = await getTransactions();
-  const minSupport = getDynamicMinSupport(transactions.length);
-  const minConfidence = 0.3;
-  
-  // Fix lỗi constructor
   try {
-    // apriori package version 1.0.7 dùng khác với hướng dẫn
-    const Apriori = apriori.Apriori;
-    const AprioriMiner = new Apriori(minSupport, minConfidence);
+    const transactions = await getTransactions();
     
-    console.log("Bắt đầu phân tích tập dữ liệu với Apriori...");
+    if (!transactions || transactions.length < 2) {
+      console.log("Không đủ dữ liệu giao dịch cho Apriori");
+      return [];
+    }
+
+    // Tính toán minSupport - giảm xuống để có nhiều cặp sản phẩm hơn
+    const minSupport = Math.max(1 / transactions.length, 0.01); // Tối thiểu 1 giao dịch hoặc 1%
+    const minConfidence = 0.1; // Giảm xuống 10% để có nhiều rules hơn
+
+    console.log(`Chạy Apriori với minSupport=${minSupport}, minConfidence=${minConfidence}`);
+    console.log(`Số lượng giao dịch: ${transactions.length}`);
+
+    // Tạo các cặp sản phẩm từ giao dịch
+    const pairs = new Map(); // Lưu trữ các cặp sản phẩm và số lần xuất hiện
+    const productCount = new Map(); // Lưu trữ số lần xuất hiện của từng sản phẩm
+
+    // Đếm số lần xuất hiện của từng sản phẩm và các cặp sản phẩm
+    transactions.forEach(transaction => {
+      // Đếm số lần xuất hiện của từng sản phẩm
+      transaction.forEach(productId => {
+        productCount.set(productId, (productCount.get(productId) || 0) + 1);
+      });
+
+      // Tạo các cặp sản phẩm
+      for (let i = 0; i < transaction.length; i++) {
+        for (let j = i + 1; j < transaction.length; j++) {
+          const pair = [transaction[i], transaction[j]].sort().join('_');
+          pairs.set(pair, (pairs.get(pair) || 0) + 1);
+        }
+      }
+    });
+
+    // Tạo rules từ các cặp sản phẩm
+    const rules = [];
+    pairs.forEach((count, pair) => {
+      const [product1, product2] = pair.split('_');
+      const support = count / transactions.length;
+
+      if (support >= minSupport) {
+        // Tính confidence cho cả hai chiều
+        const confidence1 = count / productCount.get(product1);
+        const confidence2 = count / productCount.get(product2);
+
+        if (confidence1 >= minConfidence) {
+          rules.push({
+            antecedent: product1,
+            consequent: product2,
+            support: support,
+            confidence: confidence1
+          });
+        }
+
+        if (confidence2 >= minConfidence) {
+          rules.push({
+            antecedent: product2,
+            consequent: product1,
+            support: support,
+            confidence: confidence2
+          });
+        }
+      }
+    });
+
+    // Sắp xếp rules theo confidence và support
+    rules.sort((a, b) => {
+      if (b.confidence !== a.confidence) {
+        return b.confidence - a.confidence;
+      }
+      return b.support - a.support;
+    });
+
+    console.log(`Tìm thấy ${rules.length} luật kết hợp`);
     
-    // Execute the apriori algorithm
-    const itemsets = AprioriMiner.exec(transactions);
-    console.log(`Đã tìm thấy ${itemsets.length} itemsets thỏa mãn.`);
+    // Log một số rules đầu tiên để kiểm tra
+    if (rules.length > 0) {
+      console.log("Ví dụ các luật kết hợp:");
+      rules.slice(0, 3).forEach((rule, i) => {
+        console.log(`Rule ${i + 1}: ${rule.antecedent} -> ${rule.consequent} (conf: ${rule.confidence.toFixed(2)}, sup: ${rule.support.toFixed(2)})`);
+      });
+    }
     
-    const rules = itemsets
-      .filter(itemset => itemset.items && itemset.items.length > 1)
-      .map(itemset => ({
-        items: itemset.items,
-        support: itemset.support
-      }));
-    
-    cache.set("apriori", rules); // Lưu cache
+    cache.set("apriori", rules);
     return rules;
   } catch (error) {
     console.error("Lỗi khi chạy thuật toán Apriori:", error);
-    // Trả về mảng rỗng nếu có lỗi
     return [];
   }
 };
@@ -492,52 +572,113 @@ const getRelatedProductRecommendations = async (productId, limit = 4) => {
     // Lấy thông tin sản phẩm hiện tại
     const product = await Product.findById(productId);
     if (!product) return [];
-    
-    // Lấy luật kết hợp từ thuật toán Apriori
+
+    // 1. Lấy sản phẩm từ luật kết hợp Apriori
     const rules = await getAprioriRecommendations();
-    
-    // Tìm các luật có chứa sản phẩm hiện tại
-    const relevantRules = rules.filter(rule => 
-      rule.items.includes(productId)
-    );
-    
-    // Lấy các sản phẩm được đề xuất (loại bỏ sản phẩm hiện tại)
-    let recommendedProductIds = new Set();
-    
-    relevantRules.forEach(rule => {
-      rule.items.forEach(item => {
-        if (item !== productId) {
-          recommendedProductIds.add(item);
-        }
-      });
-    });
-    
-    // Chuyển Set thành Array và giới hạn số lượng
-    recommendedProductIds = [...recommendedProductIds].slice(0, limit);
-    
-    // Nếu không đủ sản phẩm từ luật kết hợp, tìm thêm sản phẩm cùng danh mục
-    if (recommendedProductIds.length < limit) {
-      const additionalCount = limit - recommendedProductIds.length;
+    let recommendedProducts = [];
+
+    if (rules.length > 0) {
+      // Tìm các rules có sản phẩm hiện tại là antecedent
+      const relevantRules = rules
+        .filter(rule => rule.antecedent === productId)
+        .sort((a, b) => b.confidence - a.confidence); // Sắp xếp theo confidence giảm dần
+
+      console.log(`Tìm thấy ${relevantRules.length} luật kết hợp cho sản phẩm ${productId}`);
       
-      const similarProducts = await Product.find({ 
-        _id: { $ne: productId },
-        category: product.category,
-        _id: { $nin: recommendedProductIds }
-      })
-      .limit(additionalCount)
-      .select('_id name price images rating numReviews');
-      
-      const fromRules = await Product.find({ 
-        _id: { $in: recommendedProductIds } 
-      }).select('_id name price images rating numReviews');
-      
-      return [...fromRules, ...similarProducts];
+      if (relevantRules.length > 0) {
+        // Lấy thông tin chi tiết của các sản phẩm được đề xuất
+        const recommendedIds = [...new Set(
+          relevantRules.map(rule => rule.consequent)
+        )];
+
+        // Lấy thông tin sản phẩm và kết hợp với confidence
+        const productsWithConfidence = await Promise.all(
+          recommendedIds.map(async (id) => {
+            const product = await Product.findOne({ _id: id })
+              .select('_id name price images rating numReviews');
+            
+            // Tìm confidence cao nhất cho sản phẩm này
+            const rule = relevantRules.find(r => r.consequent === id);
+            return {
+              ...product.toObject(),
+              confidence: rule ? rule.confidence : 0
+            };
+          })
+        );
+
+        // Sắp xếp theo confidence giảm dần
+        recommendedProducts = productsWithConfidence
+          .sort((a, b) => b.confidence - a.confidence)
+          .slice(0, limit);
+
+        console.log('Sản phẩm liên quan theo confidence:');
+        recommendedProducts.forEach((p, i) => {
+          console.log(`${i + 1}. ${p.name} (confidence: ${p.confidence.toFixed(2)})`);
+        });
+      }
     }
-    
-    // Lấy thông tin chi tiết sản phẩm
-    return await Product.find({ 
-      _id: { $in: recommendedProductIds } 
-    }).select('_id name price images rating numReviews');
+
+    // 2. Nếu không đủ sản phẩm từ Apriori, bổ sung từ cùng danh mục
+    if (recommendedProducts.length < limit && product.category) {
+      const categoryProducts = await Product.find({
+        _id: { 
+          $ne: productId,
+          $nin: recommendedProducts.map(p => p._id)
+        },
+        category: product.category
+      })
+      .limit(limit - recommendedProducts.length)
+      .select('_id name price images rating numReviews');
+
+      // Thêm confidence = 0 cho các sản phẩm từ cùng danh mục
+      const categoryProductsWithConfidence = categoryProducts.map(p => ({
+        ...p.toObject(),
+        confidence: 0
+      }));
+
+      recommendedProducts = [...recommendedProducts, ...categoryProductsWithConfidence];
+    }
+
+    // 3. Nếu vẫn không đủ, bổ sung sản phẩm có giá tương tự
+    if (recommendedProducts.length < limit) {
+      const priceRange = {
+        min: product.price * 0.7,
+        max: product.price * 1.3
+      };
+
+      const similarPriceProducts = await Product.find({
+        _id: { 
+          $ne: productId,
+          $nin: recommendedProducts.map(p => p._id)
+        },
+        price: { 
+          $gte: priceRange.min,
+          $lte: priceRange.max
+        }
+      })
+      .limit(limit - recommendedProducts.length)
+      .select('_id name price images rating numReviews');
+
+      // Thêm confidence = 0 cho các sản phẩm có giá tương tự
+      const similarPriceProductsWithConfidence = similarPriceProducts.map(p => ({
+        ...p.toObject(),
+        confidence: 0
+      }));
+
+      recommendedProducts = [...recommendedProducts, ...similarPriceProductsWithConfidence];
+    }
+
+    // Log kết quả cuối cùng
+    console.log(`Tổng số sản phẩm liên quan: ${recommendedProducts.length}`);
+    console.log('Danh sách sản phẩm liên quan cuối cùng:');
+    recommendedProducts.forEach((p, i) => {
+      console.log(`${i + 1}. ${p.name} (confidence: ${p.confidence.toFixed(2)})`);
+    });
+
+    console.log('relatedProductsData:', relatedProductsData);
+    console.log('relatedProducts:', recommendedProducts);
+
+    return recommendedProducts.slice(0, limit);
   } catch (error) {
     console.error("Lỗi khi tạo đề xuất sản phẩm liên quan:", error);
     return [];

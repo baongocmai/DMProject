@@ -48,7 +48,7 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  background: linear-gradient(135deg, #ffffff, #f8f9fa);
+  background: linear-gradient(135deg, #fffffff, #f8f9fa);
 }
 
 /* Product title */
@@ -1353,7 +1353,7 @@
 :root {
   --primary-color: #e34b80;
   --secondary-color: #f38fb6;
-  --bg-gradient: linear-gradient(135deg, #ffffff, #f8f9fa);
+  --bg-gradient: linear-gradient(135deg, var(--primary-color), #f8f9fa);
 }
 
 /* Product Details Card */
