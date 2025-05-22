@@ -117,13 +117,13 @@ const ResetPasswordPage = () => {
     const value = e.target.value;
     setPassword(value);
     
-    // Validate password requirements - be more lenient with validation
+    // Đặt tất cả các điều kiện thành true
     setPasswordValidation({
-      length: value.length >= 6, // Reduced length requirement
-      hasNumber: /\d/.test(value),
-      hasLowercase: /[a-z]/.test(value),
-      hasUppercase: /[A-Z]/.test(value),
-      hasSpecial: true // Make this always pass to reduce requirements
+      length: true,
+      hasNumber: true,
+      hasLowercase: true,
+      hasUppercase: true,
+      hasSpecial: true
     });
   };
   
@@ -178,13 +178,6 @@ const ResetPasswordPage = () => {
       password: password.length + ' characters',
       confirmPassword: password === confirmPassword ? 'matches' : 'does not match'
     });
-    
-    // Check if password meets all requirements
-    const isPasswordValid = Object.values(passwordValidation).every(value => value);
-    if (!isPasswordValid) {
-      setErrorMessage('Vui lòng đảm bảo mật khẩu đáp ứng tất cả các yêu cầu');
-      return;
-    }
     
     try {
       setErrorMessage('');
@@ -289,47 +282,9 @@ const ResetPasswordPage = () => {
                     disabled={isLoading}
                     required
                   />
-                  
-                  <div style={validationStyles.container}>
-                    <ul style={validationStyles.list}>
-                      <li style={validationStyles.item}>
-                        <i className={`fas ${passwordValidation.length ? 'fa-check-circle' : 'fa-circle'}`} 
-                           style={passwordValidation.length ? validationStyles.validIcon : validationStyles.invalidIcon} />
-                        <span style={passwordValidation.length ? validationStyles.valid : validationStyles.invalid}>
-                          Ít nhất 6 ký tự
-                        </span>
-                      </li>
-                      <li style={validationStyles.item}>
-                        <i className={`fas ${passwordValidation.hasUppercase ? 'fa-check-circle' : 'fa-circle'}`} 
-                           style={passwordValidation.hasUppercase ? validationStyles.validIcon : validationStyles.invalidIcon} />
-                        <span style={passwordValidation.hasUppercase ? validationStyles.valid : validationStyles.invalid}>
-                          Chữ hoa
-                        </span>
-                      </li>
-                      <li style={validationStyles.item}>
-                        <i className={`fas ${passwordValidation.hasLowercase ? 'fa-check-circle' : 'fa-circle'}`} 
-                           style={passwordValidation.hasLowercase ? validationStyles.validIcon : validationStyles.invalidIcon} />
-                        <span style={passwordValidation.hasLowercase ? validationStyles.valid : validationStyles.invalid}>
-                          Chữ thường
-                        </span>
-                      </li>
-                      <li style={validationStyles.item}>
-                        <i className={`fas ${passwordValidation.hasNumber ? 'fa-check-circle' : 'fa-circle'}`} 
-                           style={passwordValidation.hasNumber ? validationStyles.validIcon : validationStyles.invalidIcon} />
-                        <span style={passwordValidation.hasNumber ? validationStyles.valid : validationStyles.invalid}>
-                          Số
-                        </span>
-                      </li>
-                      <li style={validationStyles.item}>
-                        <i className={`fas ${passwordValidation.hasSpecial ? 'fa-check-circle' : 'fa-circle'}`} 
-                           style={passwordValidation.hasSpecial ? validationStyles.validIcon : validationStyles.invalidIcon} />
-                        <span style={passwordValidation.hasSpecial ? validationStyles.valid : validationStyles.invalid}>
-                          Ký tự đặc biệt
-                        </span>
-                      </li>
-                    </ul>
                   </div>
-                </div>
+                  
+                  
                 
                 <div className="form-group" style={formContainerStyles.formGroup}>
                   <label htmlFor="confirmPassword" style={formContainerStyles.label}>Xác Nhận Mật Khẩu</label>
