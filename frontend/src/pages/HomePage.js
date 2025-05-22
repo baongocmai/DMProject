@@ -129,7 +129,7 @@ const HomePage = () => {
     description: "Mua combo sản phẩm được đề xuất giúp bạn tiết kiệm lên đến 25% so với mua lẻ từng món.",
     buttonText: "Xem combo ngay",
     image: "/banner.png",
-    link: "/?category=combo"
+    link: "/combo"
   },
   {
     id: 2,
@@ -162,7 +162,7 @@ const HomePage = () => {
         <div className="hero-section">
           <Carousel 
   fade 
-  interval={2000} 
+  interval={1000} 
   pause="hover" 
   ride="carousel" 
   wrap={true} 

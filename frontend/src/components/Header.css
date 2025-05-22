@@ -15,7 +15,7 @@
 /* Top Bar */
 .header-topbar {
   background-color: #303030;
-  color: var(--primary-color);
+  color: white;
   font-size: 13px;
   padding: 8px 0;
 }
@@ -62,7 +62,7 @@
 .brand-name {
   font-size: 40px;
   font-weight: 700;
-  color: #a8334a;
+  color: #be3b55;
 }
 
 .brand-tagline {
@@ -96,7 +96,7 @@
 
 .search-button {
   border-radius: 0 4px 4px 0;
-  background-color: #e34b80;
+  background-color: #be3b55;
   border-color: var(--primary-color);
   padding: 0 15px;
 }
