@@ -48,7 +48,7 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  background: linear-gradient(135deg, #fffffff, #f8f9fa);
+  background: linear-gradient(135deg, #ffffff, #f8f9fa);
 }
 
 /* Product title */
@@ -1040,14 +1040,8 @@
 
 /* Related Products */
 .related-products {
-  background-color: #fff;
-  border-radius: 16px;
-  padding: 2.5rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  margin-top: 3rem;
+  padding: 20px 0;
+  background-color: white;
 }
 
 .related-products:hover {
@@ -1198,7 +1192,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  background: var(--bg-gradient);
+  background: white;
   position: relative;
   z-index: 1;
   height: 130px;

@@ -47,7 +47,7 @@ const fetchRelatedProductsFallback = (id) => async (dispatch, getState) => {
         // Update the cache directly with these products
         dispatch(
           api.util.updateQueryData('getRelatedProducts', id, (draft) => {
-            draft.products = filteredProducts;
+            draft.relatedProducts = filteredProducts;
           })
         );
         
@@ -59,9 +59,9 @@ const fetchRelatedProductsFallback = (id) => async (dispatch, getState) => {
     console.log("Fetching featured products as final fallback");
     const featuredResult = await dispatch(
       api.endpoints.getFeaturedProducts.initiate()
-    ).unwrap().catch(e => ({ products: [] }));
+    ).unwrap().catch(e => ({ featuredProducts: [] }));
     
-    const featuredProducts = featuredResult?.products || [];
+    const featuredProducts = featuredResult?.featuredProducts || [];
     const filteredFeatured = featuredProducts
       .filter(p => p._id !== id)
       .slice(0, 4);
@@ -69,7 +69,7 @@ const fetchRelatedProductsFallback = (id) => async (dispatch, getState) => {
     // Update the cache with featured products
     dispatch(
       api.util.updateQueryData('getRelatedProducts', id, (draft) => {
-        draft.products = filteredFeatured;
+        draft.relatedProducts = filteredFeatured;
       })
     );
     
@@ -360,20 +360,20 @@ export const api = createApi({
         if (response && response.relatedProducts && response.relatedProducts.length > 0) {
           console.log('relatedProductsData:', response);
           console.log('relatedProducts:', response.relatedProducts);
-          return { products: response.relatedProducts };
+          return { relatedProducts: response.relatedProducts };
         }
         if (response && response.products && response.products.length > 0) {
           console.log('relatedProductsData:', response);
           console.log('relatedProducts:', response.products);
-          return { products: response.products };
+          return { relatedProducts: response.products };
         }
-        return { products: [] };
+        return { relatedProducts: [] };
       },
       // Robust error handling with multiple fallbacks
       async onQueryStarted(id, { dispatch, queryFulfilled }) {
         try {
           const result = await queryFulfilled;
-          const relatedProducts = result?.data?.products || [];
+          const relatedProducts = result?.data?.relatedProducts || [];
           
           // If no products were returned, fetch fallbacks
           if (relatedProducts.length === 0) {

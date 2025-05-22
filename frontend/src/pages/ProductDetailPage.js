@@ -121,18 +121,18 @@ const ProductDetailPage = () => {
   });
 
   // Prepare fallback products (featured products) excluding current product
-  const featuredProducts = featuredProductsData?.products || [];
+  const featuredProducts = featuredProductsData?.featuredProducts || [];
   const filteredFeaturedProducts = featuredProducts
     .filter(item => item._id !== id)
     .slice(0, 4);
 
   // Use related products if available, otherwise use featured products as fallback
-  const productsToShow = relatedProducts.length > 0 
-    ? relatedProducts.slice(0, 4)
+  const productsToShow = sortedRelatedProducts.length > 0 
+    ? sortedRelatedProducts.slice(0, 4)
     : filteredFeaturedProducts;
 
   // Set section title based on which products we're showing
-  const relatedProductsSectionTitle = relatedProducts.length > 0 
+  const relatedProductsSectionTitle = sortedRelatedProducts.length > 0 
     ? "Sản phẩm liên quan"
     : "Sản phẩm có thể bạn sẽ thích";
 
@@ -512,21 +512,21 @@ const ProductDetailPage = () => {
         </Container>
         
         {/* Related Products */}
-        <Container className="related-products mb-5">
+        <Container className="related-products mb-5" style={{ backgroundColor: 'white' }}>
           <h3 className="section-title mb-4">
-            Sản phẩm liên quan
+            {relatedProductsSectionTitle}
           </h3>
           <Row>
-            {sortedRelatedProducts.length === 0 ? (
+            {productsToShow.length === 0 ? (
               <div className="text-center text-muted py-4 w-100">
                 Không có sản phẩm liên quan.
               </div>
             ) : (
-              sortedRelatedProducts.map((product) => (
+              productsToShow.map((product) => (
                 <Col key={product._id} xs={12} sm={6} md={3} className="mb-4">
                   <div className="related-product-card">
                     <Link to={`/product/${product._id}`}>
-                      <div className="product-image">
+                      <div className="related-product-image">
                         <img
                           src={product.image || "/logo192.png"}
                           alt={product.name}
@@ -536,9 +536,9 @@ const ProductDetailPage = () => {
                           }}
                         />
                       </div>
-                      <div className="product-details">
-                        <h4 className="product-name">{product.name}</h4>
-                        <div className="product-price">{formatPrice(product.price)}</div>
+                      <div className="related-product-info">
+                        <h4 className="related-product-title">{product.name}</h4>
+                        <div className="related-product-price">{formatPrice(product.price)}</div>
                         {product.confidence > 0 && (
                           <div className="confidence-score">
                             Độ liên quan: {(product.confidence * 100).toFixed(1)}%
@@ -562,6 +562,7 @@ export default ProductDetailPage;
 <style jsx>{`
   .related-products {
     padding: 20px 0;
+    background-color: white;
   }
 
   .section-title {
@@ -579,6 +580,7 @@ export default ProductDetailPage;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     transition: all 0.3s ease;
     height: 100%;
+    overflow: hidden;
   }
 
   .related-product-card:hover {
@@ -586,14 +588,14 @@ export default ProductDetailPage;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   }
 
-  .product-image {
+  .related-product-image {
     position: relative;
     padding-top: 100%;
     overflow: hidden;
     border-radius: 8px 8px 0 0;
   }
 
-  .product-image img {
+  .related-product-image img {
     position: absolute;
     top: 0;
     left: 0;
@@ -602,11 +604,12 @@ export default ProductDetailPage;
     object-fit: cover;
   }
 
-  .product-details {
+  .related-product-info {
     padding: 15px;
+    background-color: white;
   }
 
-  .product-name {
+  .related-product-title {
     font-size: 16px;
     font-weight: 500;
     color: #333;
@@ -618,7 +621,7 @@ export default ProductDetailPage;
     height: 48px;
   }
 
-  .product-price {
+  .related-product-price {
     font-size: 18px;
     font-weight: 600;
     color: #e94560;
@@ -636,12 +639,12 @@ export default ProductDetailPage;
   }
 
   @media (max-width: 768px) {
-    .product-name {
+    .related-product-title {
       font-size: 14px;
       height: 40px;
     }
 
-    .product-price {
+    .related-product-price {
       font-size: 16px;
     }
 
