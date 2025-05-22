@@ -3,12 +3,14 @@
 .admin-table-responsive {
   overflow-x: auto;
   margin-bottom: 1.5rem;
+  background-color: #fff;
 }
 
 .admin-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
+  background-color: #fff;
 }
 
 .admin-table th {
@@ -26,6 +28,7 @@
   padding: 1rem;
   vertical-align: middle;
   border-bottom: 1px solid #e9ecef;
+  background-color: #fff;
 }
 
 .admin-table tbody tr:hover {
@@ -98,7 +101,7 @@
 
 .admin-filter-row {
   padding: 1rem;
-  background-color: #f8f9fa;
+  background-color: #fff;
   border-radius: 4px;
   margin-bottom: 1rem;
   border: 1px solid #e9ecef;
@@ -129,6 +132,15 @@
 /* Modal styles */
 .admin-mb-3 {
   margin-bottom: 1rem;
+}
+
+/* Card styles - change pink background to white */
+.admin-card {
+  border-radius: 8px;
+  background-color: #fff !important;
+  border: 1px solid #e9ecef;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  margin-bottom: 1.5rem;
 }
 
 /* Responsive adjustments */

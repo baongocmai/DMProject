@@ -1,6 +1,7 @@
 import React from 'react';
 import { Table, ProgressBar, Badge, Spinner, Alert } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
+import { FaExclamationTriangle, FaBoxOpen } from 'react-icons/fa';
 import './TopProductsTable.css';
 
 const TopProductsTable = ({ products = [], loading = false, error = null }) => {
@@ -38,8 +39,11 @@ const TopProductsTable = ({ products = [], loading = false, error = null }) => {
   if (error) {
     return (
       <Alert variant="danger" className="m-3">
-        <Alert.Heading>Error loading product data</Alert.Heading>
-        <p>{error.message || 'An unknown error occurred'}</p>
+        <div className="d-flex align-items-center">
+          <FaExclamationTriangle className="me-2" size={18} />
+          <strong>Error loading product data</strong>
+        </div>
+        <p className="mb-0 mt-2">{error.message || 'An unknown error occurred'}</p>
       </Alert>
     );
   }
@@ -48,7 +52,8 @@ const TopProductsTable = ({ products = [], loading = false, error = null }) => {
   if (!products || products.length === 0) {
     return (
       <div className="text-center p-4">
-        <p>No product data available.</p>
+        <FaBoxOpen size={32} className="text-muted mb-3" />
+        <p className="mb-0">No product data available.</p>
       </div>
     );
   }

@@ -12,119 +12,113 @@ const getTransactions = async (limit = 0) => {
   try {
     console.log(`Bắt đầu lấy dữ liệu đơn hàng từ database (limit=${limit})...`);
     
-    // Lấy đơn hàng từ database
+    // OPTIMIZATION: Sử dụng projection để chỉ lấy các trường cần thiết, giảm dữ liệu truyền qua mạng
+    // Chỉ cần orderItems và _id, không cần những trường khác của đơn hàng
+    const projection = { 'orderItems.product': 1, 'orderItems.qty': 1, '_id': 1 };
+    
+    // Lấy đơn hàng từ database với projection tối ưu
     let orders;
     if (limit > 0) {
       orders = await Order.find({})
         .sort({ createdAt: -1 })
         .limit(limit)
+        .select(projection)
         .lean();
     } else {
-      orders = await Order.find({}).lean();
+      orders = await Order.find({})
+        .select(projection)
+        .lean();
     }
     
     console.log(`Đã lấy ${orders.length} đơn hàng từ database`);
     
-    // Debug: Log chi tiết về đơn hàng đầu tiên
+    // Debug log ngắn gọn hơn
     if (orders.length > 0) {
-      console.log("=== DEBUG: Đơn hàng đầu tiên ===");
-      console.log(JSON.stringify(orders[0], null, 2));
-      console.log(`Đơn hàng có orderItems? ${orders[0].orderItems ? 'Có' : 'Không'}`);
-      if (orders[0].orderItems) {
-        console.log(`Số lượng items: ${orders[0].orderItems.length}`);
-        console.log("Chi tiết orderItems:");
-        orders[0].orderItems.forEach((item, index) => {
-          console.log(`Item ${index + 1}:`, {
-            product: item.product,
-            name: item.name,
-            qty: item.qty,
-            price: item.price
-          });
-        });
-      }
+      console.log(`Đơn hàng đầu tiên có ${orders[0].orderItems?.length || 0} sản phẩm`);
     }
     
-    // Chuyển đổi thành giao dịch
+    // OPTIMIZATION: Xử lý transactions trong một lần duyệt, giảm thời gian xử lý
     let transactions = [];
+    let invalidOrderCount = 0;
     
+    // Tối ưu việc chuyển đổi đơn hàng thành giao dịch
     for (const order of orders) {
-      // Kiểm tra order.orderItems
+      // Kiểm tra và xử lý orderItems hiệu quả hơn
       if (order.orderItems && Array.isArray(order.orderItems) && order.orderItems.length > 0) {
-        // Log để debug
-        console.log(`Đơn hàng ${order._id} có ${order.orderItems.length} sản phẩm`);
+        // Xử lý productId trực tiếp, chỉ thêm mỗi sản phẩm một lần (không quan tâm số lượng)
+        // Điều này giúp giảm kích thước giao dịch và tăng tốc độ thuật toán
+        const productIds = new Set();
         
-        // Xử lý cẩn thận productId và thêm sản phẩm theo số lượng
-        const productIds = [];
-        order.orderItems.forEach(item => {
+        for (const item of order.orderItems) {
           if (item && item.product) {
             const productId = typeof item.product === 'object' && item.product._id 
               ? item.product._id.toString() 
               : item.product.toString();
             
-            // Thêm sản phẩm vào mảng theo số lượng (qty)
-            const qty = item.qty || 1;
-            for (let i = 0; i < qty; i++) {
-              productIds.push(productId);
-            }
-            
-            console.log(`Product ID: ${productId}, Name: ${item.name}, Qty: ${qty}`);
+            // Thêm mỗi ID sản phẩm duy nhất một lần
+            productIds.add(productId);
           }
-        });
+        }
         
-        // Thêm vào danh sách nếu có ít nhất 1 sản phẩm
-        if (productIds.length >= 1) {
-          transactions.push(productIds);
-          console.log(`Đã thêm giao dịch với ${productIds.length} sản phẩm:`, productIds);
+        // Chuyển Set thành Array
+        const uniqueProductIds = [...productIds];
+        
+        // Chỉ thêm vào transactions nếu có ít nhất 2 sản phẩm khác nhau
+        // Điều này giúp giảm số lượng giao dịch không có ý nghĩa
+        if (uniqueProductIds.length >= 2) {
+          transactions.push(uniqueProductIds);
         }
       } else {
-        console.log(`Đơn hàng ${order._id} không có orderItems hoặc rỗng`);
+        invalidOrderCount++;
       }
     }
     
-    console.log(`Đã tạo ${transactions.length} giao dịch từ ${orders.length} đơn hàng`);
+    console.log(`Đã tạo ${transactions.length} giao dịch hợp lệ từ ${orders.length} đơn hàng (${invalidOrderCount} đơn hàng không hợp lệ)`);
     
-    // Nếu không có giao dịch, thử tạo tập hợp sản phẩm ngẫu nhiên từ database
-    if (transactions.length === 0) {
-      console.log("QUAN TRỌNG: Không tìm thấy giao dịch nào từ đơn hàng, tạo dữ liệu mẫu từ sản phẩm thực");
+    // OPTIMIZATION: Kiểm tra số lượng giao dịch sớm để tránh xử lý không cần thiết
+    if (transactions.length < 10) {
+      console.log("CẢNH BÁO: Số lượng giao dịch thấp (<10), kết quả có thể không đáng tin cậy");
       
-      // Lấy tất cả sản phẩm từ cơ sở dữ liệu
-      const allProducts = await Product.find({}).select('_id name category').lean();
-      
-      if (allProducts.length === 0) {
-        console.log("Không có sản phẩm nào trong database để tạo dữ liệu mẫu");
-        return [];
-      }
-      
-      console.log(`Tìm thấy ${allProducts.length} sản phẩm trong database`);
-      
-      // Lấy ID của tất cả sản phẩm
-      const productIds = allProducts.map(product => product._id.toString());
-      
-      // Tạo 20-50 giao dịch giả lập từ sản phẩm thực
-      const sampleTransactions = [];
-      const numTransactions = Math.floor(Math.random() * 30) + 20; // 20-50 transactions
-      
-      for (let i = 0; i < numTransactions; i++) {
-        // Mỗi giao dịch chứa 1-5 sản phẩm ngẫu nhiên
-        const numProducts = Math.floor(Math.random() * 5) + 1;
-        const transaction = [];
+      // Nếu giao dịch quá ít (< 5), tạo dữ liệu mẫu từ sản phẩm thực
+      if (transactions.length < 5) {
+        console.log("Số lượng giao dịch quá ít, tạo dữ liệu mẫu từ sản phẩm thực");
         
-        // Chọn sản phẩm ngẫu nhiên không trùng lặp
-        const shuffled = [...productIds].sort(() => 0.5 - Math.random());
-        const selectedProducts = shuffled.slice(0, numProducts);
+        // Lấy tất cả sản phẩm từ cơ sở dữ liệu, chỉ lấy _id để tối ưu hiệu suất
+        const allProducts = await Product.find({}).select('_id').lean();
         
-        sampleTransactions.push(selectedProducts);
-        console.log(`Tạo giao dịch mẫu ${i + 1} với ${selectedProducts.length} sản phẩm:`, selectedProducts);
+        if (allProducts.length === 0) {
+          console.log("Không có sản phẩm nào trong database để tạo dữ liệu mẫu");
+          return [];
+        }
+        
+        console.log(`Tìm thấy ${allProducts.length} sản phẩm để tạo dữ liệu mẫu`);
+        
+        // Lấy ID của tất cả sản phẩm
+        const productIds = allProducts.map(product => product._id.toString());
+        
+        // Tạo các giao dịch mẫu với số lượng phù hợp
+        const sampleTransactions = [];
+        const numTransactions = Math.min(50, Math.max(20, productIds.length / 2));
+        
+        for (let i = 0; i < numTransactions; i++) {
+          // Mỗi giao dịch chứa 2-5 sản phẩm ngẫu nhiên (ít nhất 2 sản phẩm)
+          const numProducts = Math.floor(Math.random() * 4) + 2; // 2-5 sản phẩm
+          
+          // Chọn sản phẩm ngẫu nhiên không trùng lặp
+          const shuffled = [...productIds].sort(() => 0.5 - Math.random());
+          const selectedProducts = shuffled.slice(0, numProducts);
+          
+          sampleTransactions.push(selectedProducts);
+        }
+        
+        console.log(`Đã tạo ${sampleTransactions.length} giao dịch mẫu từ sản phẩm thực`);
+        return sampleTransactions;
       }
-      
-      console.log(`Đã tạo ${sampleTransactions.length} giao dịch mẫu với sản phẩm thực`);
-      return sampleTransactions;
     }
     
     return transactions;
   } catch (error) {
     console.error("Lỗi khi lấy dữ liệu đơn hàng:", error);
-    // Trả về mảng trống
     return [];
   }
 };
@@ -433,15 +427,18 @@ const getHomepageRecommendations = async (userId = null, limit = 8) => {
   }
 };
 
-// Lấy các sản phẩm thường được mua cùng nhau cho admin (để tạo combo)
-const getFrequentlyBoughtTogether = async (minSupport = 0.05, limit = 20, orderLimit = 10000) => {
+// Lấy đề xuất sản phẩm thường được mua cùng nhau cho admin (để tạo combo)
+const getFrequentlyBoughtTogether = async (minSupport = 0.01, limit = 50, orderLimit = 1000) => {
   try {
     // Tạo key cho cache dựa vào tham số đầu vào
     const cacheKey = `frequently-bought-together-${minSupport}-${limit}-${orderLimit}`;
     
-    // Xóa cache để luôn tính toán lại kết quả trong quá trình debug
-    cache.del(cacheKey);
-    console.log("Đã xóa cache để tính toán lại");
+    // Kiểm tra cache trước khi tính toán
+    const cachedResult = cache.get(cacheKey);
+    if (cachedResult) {
+      console.log("Trả về kết quả từ cache");
+      return cachedResult;
+    }
     
     console.log(`Phân tích dữ liệu với minSupport=${minSupport}, limit=${limit}, orderLimit=${orderLimit}`);
     
@@ -464,97 +461,281 @@ const getFrequentlyBoughtTogether = async (minSupport = 0.05, limit = 20, orderL
       };
     }
     
-    // Sử dụng minSupport từ tham số nếu nó đủ nhỏ, nếu không sử dụng giá trị nhỏ hơn
-    const adjustedMinSupport = Math.min(minSupport, 0.0001);
+    // Sử dụng giá trị cố định cho minSupport để đảm bảo hiệu năng
+    const adjustedMinSupport = 0.01;
     
-    console.log(`Adjusted minSupport: ${adjustedMinSupport}`);
+    console.log(`Using minSupport: ${adjustedMinSupport}`);
+
+    // OPTIMIZATION: Lọc các giao dịch quá lớn có thể gây chậm thuật toán
+    const MAX_TRANSACTION_SIZE = 20; // Giới hạn số lượng sản phẩm tối đa trong 1 giao dịch
     
-    // Sử dụng FP-Growth với minSupport được điều chỉnh
-    const fpgrowth = new FPGrowth.FPGrowth(adjustedMinSupport);
+    // Đảm bảo rằng transactions là một mảng các mảng chuỗi (required by FPGrowth) và có kích thước hợp lý
+    const validTransactions = transactions.filter(trans => {
+      return Array.isArray(trans) && trans.length > 0 && trans.length <= MAX_TRANSACTION_SIZE;
+    }).map(trans => {
+      // Chuyển đổi tất cả ID thành chuỗi và loại bỏ các ID trùng lặp
+      return [...new Set(trans.map(item => String(item)))];
+    });
     
-    const startTime = Date.now();
+    console.log(`Filtered valid transactions: ${validTransactions.length}`);
     
-    console.log("Bắt đầu chạy thuật toán FP-Growth...");
-    const results = await fpgrowth.exec(transactions);
-    const endTime = Date.now();
-    
-    console.log(`Phân tích xong trong ${(endTime-startTime)/1000}s. Tìm thấy ${results.length} mẫu.`);
-    console.log(`DEBUG: Kết quả đầu tiên:`, results.length > 0 ? JSON.stringify(results[0]) : "Không có kết quả");
-    
-    // Lọc các pattern có từ 2 sản phẩm trở lên và sắp xếp theo support giảm dần
-    const frequentPatterns = results
-      .filter(pattern => pattern.items.length >= 2)
-      .sort((a, b) => b.support - a.support)
-      .slice(0, limit);
-    
-    console.log(`Đã lọc ${frequentPatterns.length} mẫu phù hợp.`);
-    
-    // Nếu không có pattern nào, trả về kết quả trống với thông báo rõ ràng
-    if (frequentPatterns.length === 0) {
-      console.log("Không tìm thấy mẫu mua hàng nào thỏa mãn điều kiện");
-      return {
-        frequentItemsets: [],
-        message: "Không tìm thấy mẫu mua hàng nào thỏa mãn điều kiện. Thử giảm minSupport hoặc thêm dữ liệu.",
-        success: false
+    try {
+      // OPTIMIZATION: Kiểm tra số lượng giao dịch trước khi chạy thuật toán
+      if (validTransactions.length < 10) {
+        console.log("Số lượng giao dịch quá ít, không chạy FP-Growth");
+        return {
+          frequentItemsets: [],
+          message: "Số lượng giao dịch quá ít để phân tích (cần ít nhất 10 giao dịch)",
+          success: false
+        };
+      }
+      
+      // Sử dụng FP-Growth với minSupport cố định
+      const fpgrowth = new FPGrowth.FPGrowth(adjustedMinSupport);
+      
+      const startTime = Date.now();
+      
+      console.log("Bắt đầu chạy thuật toán FP-Growth...");
+      
+      // OPTIMIZATION: Thiết lập timeout để tránh chạy quá lâu
+      const TIMEOUT_MS = 30000; // 30 giây
+      
+      let results;
+      try {
+        // Wrap FP-Growth execution in a promise with timeout
+        const fpGrowthPromise = new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error("FP-Growth execution timed out after 30 seconds"));
+          }, TIMEOUT_MS);
+          
+          fpgrowth.exec(validTransactions)
+            .then(results => {
+              clearTimeout(timeout);
+              resolve(results);
+            })
+            .catch(err => {
+              clearTimeout(timeout);
+              reject(err);
+            });
+        });
+        
+        results = await fpGrowthPromise;
+      } catch (fpError) {
+        console.error("Lỗi khi chạy thuật toán FP-Growth:", fpError.message);
+        console.log("Chuyển sang sử dụng thuật toán Apriori làm phương án dự phòng...");
+        
+        // FALLBACK: Sử dụng thuật toán Apriori khi FP-Growth thất bại
+        const minSupport = Math.max(1 / validTransactions.length, adjustedMinSupport);
+        const minConfidence = 0.1;
+        
+        try {
+          // Chạy Apriori với tập dữ liệu
+          const aprioriResults = apriori.exec(validTransactions, minSupport, minConfidence);
+          
+          if (!aprioriResults || !aprioriResults.itemsets) {
+            throw new Error("Apriori không trả về kết quả hợp lệ");
+          }
+          
+          // Biến đổi kết quả từ Apriori sang cùng định dạng với FP-Growth
+          results = aprioriResults.itemsets
+            .filter(itemset => itemset.items.length >= 2)
+            .map(itemset => ({
+              items: itemset.items,
+              support: itemset.support
+            }));
+          
+          console.log(`Apriori thành công, tìm thấy ${results.length} mẫu.`);
+        } catch (aprioriError) {
+          console.error("Cả hai thuật toán FP-Growth và Apriori đều thất bại:", aprioriError);
+          return {
+            frequentItemsets: [],
+            message: "Lỗi phân tích dữ liệu, vui lòng thử lại với tham số khác.",
+            success: false,
+            error: fpError.message + "; " + aprioriError.message
+          };
+        }
+      }
+      
+      const endTime = Date.now();
+      
+      console.log(`Phân tích xong trong ${(endTime-startTime)/1000}s. Tìm thấy ${results.length} mẫu.`);
+      console.log(`DEBUG: Kết quả đầu tiên:`, results.length > 0 ? JSON.stringify(results[0]) : "Không có kết quả");
+      
+      // Lọc các pattern có từ 2 sản phẩm trở lên và sắp xếp theo support giảm dần
+      const frequentPatterns = results
+        .filter(pattern => pattern.items.length >= 2)
+        .map(pattern => {
+          // IMPORTANT FIX: Kiểm tra nếu support là số nguyên (>1) thì đó là frequency chứ không phải support
+          // Support phải nằm trong khoảng 0-1
+          const supportIsCount = typeof pattern.support === 'number' && pattern.support > 1;
+          
+          // Nếu support thực sự là số lần xuất hiện, tính lại support đúng
+          const actualFrequency = supportIsCount ? pattern.support : Math.round(pattern.support * validTransactions.length);
+          
+          return {
+            ...pattern,
+            // Lưu trữ frequency thật
+            actualFrequency: actualFrequency,
+            // Giữ nguyên support gốc để debug
+            rawSupport: pattern.support
+          };
+        })
+        .sort((a, b) => b.actualFrequency - a.actualFrequency)
+        .slice(0, limit);
+      
+      console.log(`Đã lọc ${frequentPatterns.length} mẫu phù hợp.`);
+      
+      // Nếu không có pattern nào, trả về kết quả trống với thông báo rõ ràng
+      if (frequentPatterns.length === 0) {
+        console.log("Không tìm thấy mẫu mua hàng nào thỏa mãn điều kiện");
+        return {
+          frequentItemsets: [],
+          message: "Không tìm thấy mẫu mua hàng nào thỏa mãn điều kiện. Thử giảm minSupport hoặc thêm dữ liệu.",
+          success: false
+        };
+      }
+      
+      // Lấy số lượng đơn hàng thực tế để tính tỷ lệ chính xác
+      const totalOrders = await Order.countDocuments();
+      console.log(`Tổng số đơn hàng trong database: ${totalOrders}`);
+      
+      // Số lượng giao dịch hợp lệ sử dụng trong thuật toán
+      const validTransactionCount = validTransactions.length;
+      console.log(`Số giao dịch hợp lệ đưa vào thuật toán: ${validTransactionCount}`);
+      
+      // OPTIMIZATION: Xử lý bất đồng bộ cho chi tiết sản phẩm để cải thiện hiệu suất
+      const patternDetails = await Promise.all(
+        frequentPatterns.map(async pattern => {
+          try {
+            // Lấy thông tin sản phẩm - chỉ lấy các trường cần thiết
+            const products = await Product.find({ 
+              _id: { $in: pattern.items } 
+            }).select('_id name price image category').lean();
+            
+            // Nếu không tìm được đủ sản phẩm, bỏ qua pattern này
+            if (products.length !== pattern.items.length) {
+              console.log(`Không tìm thấy đủ thông tin sản phẩm cho pattern: ${pattern.items.join(', ')}`);
+              return null;
+            }
+            
+            // Sử dụng frequency đã tính ở trên
+            const frequency = pattern.actualFrequency;
+            
+            // FIX: Tính support chính xác từ frequency
+            // Support phải dưới 1.0 (100%) và đại diện cho tỷ lệ xuất hiện thực tế
+            const actualSupport = frequency / validTransactionCount;
+            
+            // Debug log để kiểm tra giá trị
+            console.log(`Pattern ${pattern.items.join(',')}: frequency=${frequency}/${validTransactionCount} (${(actualSupport*100).toFixed(2)}%), rawSupport=${pattern.rawSupport}`);
+            
+            return {
+              products,
+              support: actualSupport, // Tỷ lệ xuất hiện thực tế (0-1)
+              confidence: pattern.confidence || 0,
+              frequency: frequency, // Số đơn hàng chứa pattern
+              totalTransactions: validTransactionCount, // Thêm tổng số để client có thể tính %
+              // Thêm các giá trị hiển thị để tiện cho frontend
+              supportPercent: `${(actualSupport*100).toFixed(1)}%`,
+              frequencyDisplay: `${frequency}/${validTransactionCount}`
+            };
+          } catch (error) {
+            console.error(`Lỗi khi lấy chi tiết pattern: ${error.message}`);
+            return null;
+          }
+        })
+      );
+      
+      // Lọc bỏ các pattern null
+      const validPatterns = patternDetails.filter(pattern => pattern !== null);
+      
+      console.log(`Đã lấy chi tiết cho ${validPatterns.length} mẫu`);
+      if (validPatterns.length > 0) {
+        console.log(`DEBUG: Mẫu đầu tiên có ${validPatterns[0].products.length} sản phẩm`);
+        console.log(`DEBUG: Tỷ lệ xuất hiện: ${validPatterns[0].support}, Tần suất: ${validPatterns[0].frequency} đơn hàng`);
+      }
+      
+      const result = {
+        frequentItemsets: validPatterns,
+        message: `Danh sách sản phẩm thường được mua cùng nhau (từ ${validTransactions.length} đơn hàng)`,
+        success: true,
+        info: {
+          totalTransactions: validTransactions.length,
+          totalOrders: totalOrders,
+          minSupport: adjustedMinSupport,
+          processTime: (endTime-startTime)/1000
+        }
       };
-    }
-    
-    // Lấy số lượng đơn hàng thực tế để tính tỷ lệ chính xác
-    const totalOrders = await Order.countDocuments();
-    
-    // Lấy thông tin chi tiết của sản phẩm
-    const patternDetails = await Promise.all(
-      frequentPatterns.map(async pattern => {
-        // Lấy thông tin sản phẩm
-        const products = await Product.find({ 
-          _id: { $in: pattern.items } 
-        }).select('_id name price image category');
+      
+      // Lưu kết quả vào cache để sử dụng sau
+      cache.set(cacheKey, result, 3600); // Cache trong 1 giờ
+      
+      console.log("Kết quả đã được tính toán và cache");
+      return result;
+    } catch (fpError) {
+      console.error("Lỗi khi chạy thuật toán FP-Growth:", fpError);
+      
+      // Nếu FP-Growth thất bại, thử dùng Apriori làm dự phòng
+      console.log("Thử dùng Apriori làm phương án dự phòng...");
+      const aprioriRules = await getAprioriRecommendations();
+      
+      if (aprioriRules && aprioriRules.length > 0) {
+        console.log(`Lấy được ${aprioriRules.length} luật từ Apriori`);
         
-        // Tính số lượng đơn hàng thực tế chứa pattern này
-        // Đảm bảo frequency là số nguyên hợp lý và không bị phóng đại
-        const frequency = Math.round(pattern.support * transactions.length);
+        // Chuyển đổi luật thành kết quả tương tự FP-Growth
+        const frequentItemsets = [];
+        const processedPairs = new Set();
         
-        // Tính tỷ lệ xuất hiện thực tế so với tổng số đơn hàng
-        // Đảm bảo luôn là số thập phân hợp lý (0-1)
-        const actualSupport = Math.min(
-          frequency / Math.max(transactions.length, 1),
-          1.0 // Đảm bảo không vượt quá 100%
-        );
+        for (const rule of aprioriRules) {
+          // Tạo cặp sản phẩm
+          const pair = [rule.antecedent, rule.consequent].sort().join('_');
+          
+          // Đảm bảo không trùng lặp cặp
+          if (!processedPairs.has(pair)) {
+            processedPairs.add(pair);
+            
+            try {
+              // Lấy chi tiết sản phẩm
+              const products = await Product.find({ 
+                _id: { $in: [rule.antecedent, rule.consequent] } 
+              }).select('_id name price image category').lean();
+              
+              if (products.length === 2) {
+                frequentItemsets.push({
+                  products,
+                  support: rule.support,
+                  confidence: rule.confidence,
+                  frequency: Math.round(rule.support * validTransactions.length)
+                });
+              }
+            } catch (err) {
+              console.error(`Lỗi khi lấy chi tiết sản phẩm cho cặp ${pair}:`, err);
+            }
+          }
+        }
         
-        console.log(`Pattern có ${products.length} sản phẩm, frequency = ${frequency}, support = ${actualSupport}`);
+        // Giới hạn số lượng kết quả
+        const limitedItemsets = frequentItemsets.slice(0, limit);
         
         return {
-          products,
-          support: actualSupport, // Tỷ lệ xuất hiện thực tế
-          confidence: pattern.confidence || 0,
-          frequency: frequency // Số đơn hàng chứa pattern
+          frequentItemsets: limitedItemsets,
+          message: `Danh sách sản phẩm thường được mua cùng nhau (từ Apriori)`,
+          success: true,
+          info: {
+            totalTransactions: validTransactions.length,
+            algorithm: "Apriori (FP-Growth failed)",
+            minSupport: adjustedMinSupport
+          }
         };
-      })
-    );
-    
-    console.log(`Đã lấy chi tiết cho ${patternDetails.length} mẫu`);
-    if (patternDetails.length > 0) {
-      console.log(`DEBUG: Mẫu đầu tiên có ${patternDetails[0].products.length} sản phẩm`);
-      console.log(`DEBUG: Tỷ lệ xuất hiện: ${patternDetails[0].support}, Tần suất: ${patternDetails[0].frequency} đơn hàng`);
-    }
-    
-    const result = {
-      frequentItemsets: patternDetails,
-      message: `Danh sách sản phẩm thường được mua cùng nhau (từ ${transactions.length} đơn hàng)`,
-      success: true,
-      info: {
-        totalTransactions: transactions.length,
-        totalOrders: totalOrders,
-        minSupport: adjustedMinSupport,
-        processTime: (endTime-startTime)/1000
       }
-    };
-    
-    // Lưu kết quả vào cache để sử dụng sau
-    cache.set(cacheKey, result, 3600); // Cache trong 1 giờ
-    
-    console.log("Kết quả đã được tính toán và cache");
-    return result;
+      
+      // Nếu cả hai thuật toán đều thất bại
+      return {
+        frequentItemsets: [],
+        message: "Lỗi khi chạy thuật toán FP-Growth: " + fpError.message,
+        success: false,
+        error: fpError.message
+      };
+    }
   } catch (error) {
     console.error("Lỗi khi lấy sản phẩm thường mua cùng nhau:", error);
     return {

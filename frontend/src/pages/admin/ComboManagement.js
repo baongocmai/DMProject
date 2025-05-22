@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Container, Row, Col, Card, Button, Form, 
   Table, Badge, Alert, InputGroup, Spinner,
@@ -8,7 +8,7 @@ import {
   FaPlus, FaTrash, FaSave, FaSearch, 
   FaBoxOpen, FaShoppingCart, FaTags, 
   FaPercentage, FaEdit, FaEye, FaLink,
-  FaCheckCircle, FaExclamationCircle
+  FaCheckCircle, FaExclamationCircle, FaInfoCircle
 } from 'react-icons/fa';
 import { 
   useGetProductsQuery, 
@@ -50,7 +50,9 @@ const ComboManagement = () => {
     data: productsData, 
     isLoading: isLoadingProducts, 
     error: productsError 
-  } = useGetProductsQuery();
+  } = useGetProductsQuery({
+    limit: 1000 // Tăng giới hạn số lượng sản phẩm lấy về
+  });
   
   // Get frequently bought together data
   const {
@@ -79,11 +81,56 @@ const ComboManagement = () => {
     setTimeout(() => setShowToast(false), 3000);
   };
   
+  // Hàm chuẩn hóa text tiếng Việt (bỏ dấu) để tìm kiếm dễ dàng hơn
+  const normalizeVietnameseText = (text) => {
+    if (!text) return '';
+    return text.toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd')
+      .replace(/Đ/g, 'D');
+  };
+  
   // Filter products based on search term
-  const filteredProducts = productsData?.products?.filter(product => 
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredProducts = useMemo(() => {
+    // Lấy danh sách sản phẩm từ API
+    const allProducts = productsData?.products || [];
+    
+    // Nếu không có từ khóa tìm kiếm, trả về tất cả sản phẩm
+    if (!searchTerm.trim()) {
+      return allProducts;
+    }
+    
+    // Chuẩn hóa từ khóa tìm kiếm
+    const normalizedSearchTerm = normalizeVietnameseText(searchTerm.trim());
+    
+    console.log(`Tìm kiếm với từ khóa: "${searchTerm}" (đã chuẩn hóa: "${normalizedSearchTerm}")`);
+    
+    // Lọc sản phẩm theo từ khóa
+    return allProducts.filter(product => {
+      // Chuẩn hóa các trường dữ liệu từ sản phẩm
+      const normalizedName = normalizeVietnameseText(product.name);
+      const normalizedCategory = normalizeVietnameseText(product.category || '');
+      const normalizedId = normalizeVietnameseText(product._id || '');
+      
+      // So khớp cả chữ có dấu và không dấu
+      return (
+        normalizedName.includes(normalizedSearchTerm) ||
+        normalizedCategory.includes(normalizedSearchTerm) ||
+        normalizedId.includes(normalizedSearchTerm) ||
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (product.category && product.category.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    });
+  }, [productsData?.products, searchTerm]);
+  
+  // Log thông tin debug
+  useEffect(() => {
+    if (productsData) {
+      console.log(`Tổng số sản phẩm có sẵn: ${productsData?.products?.length || 0}`);
+      console.log(`Số sản phẩm hiển thị sau khi lọc: ${filteredProducts.length}`);
+    }
+  }, [productsData, filteredProducts.length]);
   
   // Calculate combo price and discounted price
   const calculateComboDetails = (products) => {
@@ -187,6 +234,16 @@ const ComboManagement = () => {
   // Delete a combo
   const handleDeleteCombo = async (id) => {
     try {
+      // Kiểm tra xem id có đúng định dạng không
+      const comboId = combo => combo._id || combo.id;
+      
+      if (!id) {
+        console.error('Không thể xóa: ID combo không tồn tại', { combo: id });
+        showMessage('Lỗi khi xóa combo: ID không hợp lệ', 'danger');
+        return;
+      }
+      
+      console.log('Đang xóa combo với ID:', id);
       await deleteCombo(id).unwrap();
       showMessage('Combo đã được xóa thành công');
     } catch (error) {
@@ -277,7 +334,7 @@ const ComboManagement = () => {
                       {combos.map(combo => {
                         const details = calculateComboDetails(combo.products);
                         return (
-                          <tr key={combo.id}>
+                          <tr key={combo._id || combo.id}>
                             <td>
                               <div className="combo-name-cell">
                                 <h6 className="mb-0">{combo.name}</h6>
@@ -312,7 +369,7 @@ const ComboManagement = () => {
                               <Button 
                                 variant="outline-danger" 
                                 size="sm"
-                                onClick={() => handleDeleteCombo(combo.id)}
+                                onClick={() => handleDeleteCombo(combo._id || combo.id)}
                               >
                                 <FaTrash /> Xóa
                               </Button>
@@ -645,21 +702,41 @@ const ComboManagement = () => {
               />
             </InputGroup>
             
-            {isLoadingProducts ? (
-              <div className="text-center py-4">
-                <Spinner animation="border" variant="primary" />
-                <p className="mt-2">Đang tải sản phẩm...</p>
-              </div>
-            ) : (
-              <div className="product-selection-grid">
-                {filteredProducts.length === 0 ? (
-                  <Alert variant="info">
-                    Không tìm thấy sản phẩm phù hợp. Vui lòng thử từ khóa khác.
+            <div className="product-selection-grid">
+              {isLoadingProducts ? (
+                <div className="text-center py-4">
+                  <Spinner animation="border" variant="primary" />
+                  <p className="mt-2">Đang tải sản phẩm...</p>
+                </div>
+              ) : filteredProducts.length === 0 ? (
+                <Alert variant="info">
+                  <FaInfoCircle className="me-2" />
+                  Không tìm thấy sản phẩm phù hợp. Vui lòng thử từ khóa khác.
+                </Alert>
+              ) : (
+                <>
+                  <Alert variant="info" className="mb-3">
+                    <div className="d-flex justify-content-between align-items-center">
+                      <div>
+                        <FaInfoCircle className="me-2" />
+                        Đang hiển thị {filteredProducts.length} sản phẩm
+                        {searchTerm.trim() && ` với từ khóa "${searchTerm}"`}
+                      </div>
+                      {searchTerm.trim() && (
+                        <Button 
+                          variant="outline-primary" 
+                          size="sm"
+                          onClick={() => setSearchTerm('')}
+                        >
+                          Xóa bộ lọc
+                        </Button>
+                      )}
+                    </div>
                   </Alert>
-                ) : (
-                  <Row>
+                  
+                  <Row className="g-3">
                     {filteredProducts.map((product) => (
-                      <Col key={product._id} lg={3} md={4} sm={6} xs={6} className="mb-3">
+                      <Col key={product._id} lg={3} md={4} sm={6} xs={6} className="mb-2">
                         <Card 
                           className={`product-select-card ${
                             currentCombo.products.some(p => p._id === product._id) ? 'selected' : ''
@@ -667,21 +744,39 @@ const ComboManagement = () => {
                           onClick={() => handleAddProductToCombo(product)}
                         >
                           <div className="product-image">
-                            <img src={product.image} alt={product.name} />
+                            {product.image ? (
+                              <img 
+                                src={product.image} 
+                                alt={product.name}
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.src = 'https://via.placeholder.com/100x100?text=Không+có+ảnh';
+                                }} 
+                              />
+                            ) : (
+                              <div className="placeholder-image">
+                                {product.name.substring(0, 2).toUpperCase()}
+                              </div>
+                            )}
                           </div>
-                          <Card.Body>
-                            <h6>{product.name}</h6>
+                          <Card.Body className="p-2">
+                            <h6 className="product-title">{product.name}</h6>
                             <div className="product-price">
                               {formatPrice(product.price)}
                             </div>
+                            {currentCombo.products.some(p => p._id === product._id) && (
+                              <Badge bg="success" pill className="mt-1">
+                                Đã thêm
+                              </Badge>
+                            )}
                           </Card.Body>
                         </Card>
                       </Col>
                     ))}
                   </Row>
-                )}
-              </div>
-            )}
+                </>
+              )}
+            </div>
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={() => setShowAddProductModal(false)}>

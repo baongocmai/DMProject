@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Card, Badge, Spinner, Alert, Form, Row, Col, Button } from 'react-bootstrap';
-import { FaLink, FaShoppingCart, FaInfoCircle } from 'react-icons/fa';
+import { FaLink, FaShoppingCart, FaInfoCircle, FaExclamationTriangle, FaBoxOpen } from 'react-icons/fa';
 import { formatPrice } from '../../utils/productHelpers';
 import './FrequentlyBoughtTogetherTable.css';
 
 const FrequentlyBoughtTogetherTable = ({ data, loading, error }) => {
-  const [minSupport, setMinSupport] = useState(0.001);
+  const [minSupport, setMinSupport] = useState(0.01);
   const [minItems, setMinItems] = useState(2);
   
   // Debug the data coming in from the API
@@ -51,16 +51,38 @@ const FrequentlyBoughtTogetherTable = ({ data, loading, error }) => {
       return [];
     }
     
+    // Log data for debugging
+    console.log("Processing frequentItemsets, total:", data.frequentItemsets.length);
+    if (data.frequentItemsets.length > 0) {
+      console.log("Sample item support:", data.frequentItemsets[0].support);
+      console.log("Sample item frequency:", data.frequentItemsets[0].frequency);
+      console.log("Sample item totalTransactions:", data.frequentItemsets[0].totalTransactions);
+    }
+
     return data.frequentItemsets
       .filter(pattern => pattern.products.length >= minItems)
       .map(pattern => {
-        // Normalize support values for consistent display
+        // Kiểm tra giá trị support
+        const support = typeof pattern.support === 'number' ? pattern.support : 0;
+        const frequency = typeof pattern.frequency === 'number' ? pattern.frequency : 0;
+        const totalTransactions = pattern.totalTransactions || 
+          data.info?.totalTransactions || 0;
+        
+        // Đảm bảo support nằm trong khoảng 0-1
+        const normalizedSupport = Math.min(Math.max(support, 0), 1);
+        
+        // Log đối tượng pattern đã chuẩn hóa
+        console.log(`Pattern ${pattern.products?.map(p => p._id).join(',')}: support=${normalizedSupport.toFixed(4)}, frequency=${frequency}/${totalTransactions}`);
+        
         return {
           ...pattern,
-          // Ensure support is in decimal format (0-1 range)
-          support: pattern.support > 1 ? pattern.support / 100 : pattern.support
+          support: normalizedSupport,
+          // Chỉ sửa lại support, giữ nguyên các giá trị khác
+          frequency: frequency,
+          totalTransactions: totalTransactions
         };
       })
+      .filter(pattern => pattern.support >= minSupport)
       .sort((a, b) => b.support - a.support);
   };
 
@@ -68,8 +90,13 @@ const FrequentlyBoughtTogetherTable = ({ data, loading, error }) => {
   const filteredPatterns = getFilteredPatterns();
 
   // Format frequency number
-  const formatFrequency = (frequency) => {
+  const formatFrequency = (frequency, totalTransactions) => {
     if (!frequency && frequency !== 0) return '0 đơn hàng';
+    
+    // Hiển thị dạng phân số nếu có totalTransactions
+    if (totalTransactions) {
+      return `${frequency}/${totalTransactions} đơn hàng`;
+    }
     
     if (frequency >= 1000) {
       // For thousands, show with 1 decimal place - no space between number and K
@@ -84,8 +111,11 @@ const FrequentlyBoughtTogetherTable = ({ data, loading, error }) => {
     // Check for invalid input
     if (support === undefined || support === null) return '0.0%';
     
-    // Always assume support is in decimal format (0-1)
-    const percentage = (support * 100).toFixed(1).replace(/\.0$/, '');
+    // Đảm bảo support là số trong khoảng 0-1
+    const normalizedSupport = Math.min(Math.max(support, 0), 1);
+    
+    // Format với 1 chữ số thập phân và loại bỏ .0 nếu cần
+    const percentage = (normalizedSupport * 100).toFixed(1).replace(/\.0$/, '');
     
     // Return the support without space after the number
     return `${percentage}%`;
@@ -95,8 +125,17 @@ const FrequentlyBoughtTogetherTable = ({ data, loading, error }) => {
   const calculateSupportWidth = (support) => {
     if (support === undefined || support === null) return '0%';
     
-    // Always assume support is in decimal format (0-1)
-    return `${Math.min(support * 100, 100).toFixed(1).replace(/\.0$/, '')}%`;
+    // Đảm bảo support là số trong khoảng 0-1
+    const normalizedSupport = Math.min(Math.max(support, 0), 1);
+    
+    // Scale width to make small values more visible
+    // Áp dụng logarithm để giá trị nhỏ vẫn hiển thị đủ độ rộng để thấy được
+    if (normalizedSupport < 0.01) {
+      // Scales very small values to be at least 1%
+      return `${Math.max(normalizedSupport * 100, 1)}%`;
+    }
+    
+    return `${(normalizedSupport * 100).toFixed(1).replace(/\.0$/, '')}%`;
   };
 
   // Determine badge color based on support value
@@ -119,8 +158,12 @@ const FrequentlyBoughtTogetherTable = ({ data, loading, error }) => {
 
   if (error) {
     return (
-      <Alert variant="danger">
-        <p className="mb-0">Đã xảy ra lỗi khi tải dữ liệu: {error.message || 'Unknown error'}</p>
+      <Alert variant="danger" className="m-3">
+        <div className="d-flex align-items-center">
+          <FaExclamationTriangle className="me-2" size={18} />
+          <strong>Error loading data</strong>
+        </div>
+        <p className="mb-0 mt-2">{error.message || 'Unknown error'}</p>
       </Alert>
     );
   }
@@ -129,15 +172,20 @@ const FrequentlyBoughtTogetherTable = ({ data, loading, error }) => {
     return (
       <div>
         <Alert variant="info">
-          <FaInfoCircle className="me-2" />
-          <span>Không có đủ dữ liệu để phân tích mẫu mua hàng. Cần có ít nhất 2 đơn hàng có sản phẩm chung.</span>
+          <div className="d-flex align-items-center">
+            <FaInfoCircle className="me-2" />
+            <strong>No data available</strong>
+          </div>
+          <p className="mt-2">
+            There's not enough data to analyze shopping patterns. At least 2 orders with common products are needed.
+          </p>
           
           <div className="mt-3">
-            <p className="mb-2">Nguyên nhân có thể là:</p>
+            <p className="mb-2">Possible causes:</p>
             <ul>
-              <li>Chưa có đủ đơn hàng trong hệ thống</li>
-              <li>Các đơn hàng không có sản phẩm chung</li>
-              <li>Giá trị minSupport quá cao (thử giảm xuống 0.0001 hoặc thấp hơn)</li>
+              <li>Not enough orders in the system</li>
+              <li>Orders don't have common products</li>
+              <li>MinSupport value is too high (try reducing to 0.0001 or lower)</li>
             </ul>
           </div>
         </Alert>
@@ -151,9 +199,9 @@ const FrequentlyBoughtTogetherTable = ({ data, loading, error }) => {
       <Card className="frequently-bought-together-card">
         <Card.Header className="d-flex justify-content-between align-items-center">
           <div>
-            <h5 className="mb-0">Các sản phẩm thường được mua cùng nhau</h5>
+            <h5 className="mb-0">Frequently Bought Together Products</h5>
             <small className="text-muted">
-              Dựa trên phân tích {data.info ? `${data.info.totalTransactions} đơn hàng` : 'dữ liệu đơn hàng'}
+              Based on analysis of {data.info ? `${data.info.totalTransactions} orders` : 'order data'}
             </small>
           </div>
           <Row className="g-2 align-items-center filter-controls">
@@ -264,11 +312,11 @@ const FrequentlyBoughtTogetherTable = ({ data, loading, error }) => {
                     </td>
                     <td>
                       <Badge bg={getSupportBadgeVariant(pattern.support)} className="frequency-badge">
-                        {formatFrequency(pattern.frequency)}
+                        {pattern.frequencyDisplay || formatFrequency(pattern.frequency, pattern.totalTransactions)}
                       </Badge>
                     </td>
                     <td className="support-column">
-                      <div className="support-value">{formatSupport(pattern.support)}</div>
+                      <div className="support-value">{pattern.supportPercent || formatSupport(pattern.support)}</div>
                       <div className="support-bar">
                         <div 
                           className="support-fill" 

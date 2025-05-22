@@ -11,6 +11,8 @@ import { formatPrice } from '../utils/productHelpers';
 import { useAddToCartMutation, useGetCombosQuery } from '../services/api';
 import Layout from '../components/Layout';
 import './ComboPage.css';
+import { useDispatch } from 'react-redux';
+import { addToCart as addToCartAction } from '../redux/slices/cartSlice';
 
 const ComboPage = () => {
   // Toast state
@@ -33,6 +35,7 @@ const ComboPage = () => {
   } = useGetCombosQuery();
   
   const [addToCart, { isLoading: isAddingToCart }] = useAddToCartMutation();
+  const dispatch = useDispatch();
   
   // Calculate combo price and savings
   const calculateComboDetails = (combo) => {
@@ -48,12 +51,32 @@ const ComboPage = () => {
   // Handle adding the entire combo to cart
   const handleAddComboToCart = async (combo) => {
     try {
+      console.log("Adding combo to cart:", combo);
+      
       // Add each product in the combo to cart with its quantity
       for (const product of combo.products) {
-        await addToCart({
+        // Create cart item for Redux store
+        const cartItem = {
+          _id: product._id,
+          name: product.name,
+          image: product.image || "/logo192.png",
+          price: product.salePrice || product.price,
+          originalPrice: product.price,
+          countInStock: product.countInStock || 10,
+          quantity: product.quantity || 1
+        };
+        
+        // Add to Redux store first (this works immediately for UI)
+        dispatch(addToCartAction(cartItem));
+        
+        // Then sync with backend API
+        const apiCartItem = {
           productId: product._id,
-          quantity: product.quantity
-        }).unwrap();
+          quantity: product.quantity || 1
+        };
+        
+        console.log("Adding product to cart:", apiCartItem);
+        await addToCart(apiCartItem).unwrap();
       }
       
       // Show success toast

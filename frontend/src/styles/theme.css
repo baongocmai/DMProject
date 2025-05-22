@@ -135,7 +135,7 @@ h6 {
 }
 
 .btn-outline-primary:hover, .btn-outline-primary:focus {
-  background-color: var(--primary-color);
+  background-color:#ffff;
   color: var(--text-light);
 }
 

@@ -7,6 +7,7 @@ import Layout from '../components/Layout';
 import Loader from '../components/Loader';
 import Message from '../components/Message';
 import './WishlistPage.css';
+import { formatPrice } from '../utils/productHelpers';
 
 const WishlistPage = () => {
   const navigate = useNavigate();
@@ -41,11 +42,6 @@ const WishlistPage = () => {
     }
   };
 
-  // Format price with comma separators
-  const formatPrice = (price) => {
-    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  };
-
   return (
     <Layout>
       <Container className="py-4">
@@ -72,8 +68,8 @@ const WishlistPage = () => {
           </Alert>
         ) : (
           <Row className={`wishlist-grid ${wishlist.length === 1 ? 'single-item' : ''}`}>
-  {wishlist.map((item) => (
-    <Col key={item._id} sm={6} md={4} lg={3} className="mb-4">
+            {wishlist.map((item) => (
+              <Col key={item._id} sm={6} md={4} lg={3} className="mb-4">
                 <Card className="wishlist-item">
                   <div className="product-image22-container">
                     <Card.Img 
@@ -92,7 +88,7 @@ const WishlistPage = () => {
                       {item.name}
                     </Card.Title>
                     <Card.Text className="product-price">
-                      ${formatPrice(item.price)}
+                      {formatPrice(item.price)}
                     </Card.Text>
                     <div className="button-row">
                       <Button

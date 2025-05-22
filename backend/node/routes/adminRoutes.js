@@ -245,9 +245,21 @@ router.get("/orders-shipping", protect, isAdmin, async (req, res) => {
 // Reports routes
 router.get("/reports/frequently-bought-together", protect, isAdmin, async (req, res) => {
   try {
-    const minSupport = parseFloat(req.query.minSupport) || 0.05;
-    const limit = parseInt(req.query.limit) || 20;
-    const orderLimit = parseInt(req.query.orderLimit) || 10000;
+    // Lấy tham số từ query string và kiểm tra hợp lệ
+    let minSupport = parseFloat(req.query.minSupport) || 0.01;
+    const limit = parseInt(req.query.limit) || 50;
+    const orderLimit = parseInt(req.query.orderLimit) || 1000;
+    
+    // Đảm bảo minSupport là số hợp lệ và không quá nhỏ để tránh quá tải
+    if (isNaN(minSupport) || minSupport <= 0) {
+      minSupport = 0.01; // Giá trị mặc định an toàn
+    } else if (minSupport < 0.01) {
+      // Giới hạn nhỏ nhất cho minSupport là 0.01 để đảm bảo hiệu năng
+      minSupport = 0.01;
+      console.log("minSupport đã được điều chỉnh lên 0.01 để đảm bảo hiệu năng");
+    } else if (minSupport > 1) {
+      minSupport = 1; // Support không thể lớn hơn 1 (100%)
+    }
     
     console.log(`Processing frequently-bought-together request with: minSupport=${minSupport}, limit=${limit}, orderLimit=${orderLimit}`);
     
@@ -268,23 +280,55 @@ router.get("/reports/frequently-bought-together", protect, isAdmin, async (req, 
       console.log("Result structure:", JSON.stringify(result));
     }
     
-    // If no patterns were found, return an empty array
+    // Nếu no patterns were found, return an empty array with message
     if (frequentItemsets.length === 0) {
       console.log("No frequent itemsets found in the database");
-      frequentItemsets = [];
+      return res.status(200).json({
+        frequentItemsets: [],
+        message: result?.message || "Không tìm thấy mẫu mua hàng nào. Hãy thử giảm minSupport hoặc thêm dữ liệu đơn hàng.",
+        success: false,
+        info: {
+          minSupport,
+          limit,
+          orderLimit,
+          algorithm: result?.info?.algorithm || "FP-Growth"
+        }
+      });
     }
     
+    // Chuẩn hóa kết quả trước khi trả về để đảm bảo hiển thị chính xác
+    const normalizedItemsets = frequentItemsets.map(item => {
+      // Đảm bảo support và frequency là giá trị hợp lệ
+      const totalTransactions = item.totalTransactions || result?.info?.totalTransactions || 0;
+      const frequency = Math.min(item.frequency || 0, totalTransactions);
+      const support = totalTransactions > 0 ? frequency / totalTransactions : 0;
+      
+      return {
+        ...item,
+        frequency: frequency,
+        support: support,
+        supportPercent: `${(support * 100).toFixed(2)}%`, // Thêm % hiển thị
+        frequencyDisplay: `${frequency}/${totalTransactions}` // Hiển thị dạng phân số
+      };
+    });
+    
     res.status(200).json({
-      frequentItemsets,
+      frequentItemsets: normalizedItemsets,
       message: result?.message || "Danh sách sản phẩm thường được mua cùng nhau",
-      success: true
+      success: true,
+      info: result?.info || {
+        minSupport,
+        limit, 
+        orderLimit,
+        totalTransactions: frequentItemsets[0]?.totalTransactions || 0
+      }
     });
   } catch (error) {
     console.error("Error getting frequently bought together products:", error);
     
     res.status(500).json({ 
       frequentItemsets: [],
-      message: "Không thể lấy dữ liệu sản phẩm thường được mua cùng nhau", 
+      message: "Không thể lấy dữ liệu sản phẩm thường được mua cùng nhau: " + error.message, 
       success: false,
       error: error.toString()
     });

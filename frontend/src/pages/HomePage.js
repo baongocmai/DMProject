@@ -194,14 +194,16 @@ const HomePage = () => {
                   {banner.buttonText} <FaArrowRight className="ms-2" />
                 </Button>
               ) : (
-                <Button 
-                  variant="light" 
-                  size="lg" 
-                  href={banner.link} 
-                  className="banner-button"
-                >
-                  {banner.buttonText} <FaArrowRight className="ms-2" />
-                </Button>
+                <Link to={banner.link}>
+  <Button 
+    variant="light" 
+    size="lg" 
+    className="banner-button"
+  >
+    {banner.buttonText} <FaArrowRight className="ms-2" />
+  </Button>
+</Link>
+
               )}
             </div>
           </Col>

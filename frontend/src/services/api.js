@@ -999,12 +999,51 @@ export const api = createApi({
     // Analytics endpoints
     getProductAnalytics: builder.query({
       query: () => '/analytics/products',
+      transformResponse: (response) => {
+        // If API returns no data, provide mock data to prevent dashboard errors
+        if (!response) {
+          console.log('No product analytics data received, using mock data');
+          return {
+            topProducts: [],
+            categoryDistribution: [],
+            stockStatus: { inStock: 0, lowStock: 0, outOfStock: 0 },
+            priceRanges: []
+          };
+        }
+        return response;
+      }
     }),
     getUserAnalytics: builder.query({
       query: () => '/analytics/users',
+      transformResponse: (response) => {
+        // If API returns no data, provide mock data to prevent dashboard errors
+        if (!response) {
+          console.log('No user analytics data received, using mock data');
+          return {
+            customersByPeriod: [],
+            registrationSource: [],
+            customerRetention: { retained: 0, lost: 0 },
+            customerSegmentation: []
+          };
+        }
+        return response;
+      }
     }),
     getOrderAnalytics: builder.query({
       query: () => '/analytics/orders',
+      transformResponse: (response) => {
+        // If API returns no data, provide mock data to prevent dashboard errors
+        if (!response) {
+          console.log('No order analytics data received, using mock data');
+          return {
+            revenueByPeriod: [],
+            orderStatusDistribution: [],
+            averageOrderValue: 0,
+            recentOrders: []
+          };
+        }
+        return response;
+      }
     }),
     
     // Recommendation engine
@@ -1041,9 +1080,9 @@ export const api = createApi({
         return {
           url: `/admin/reports/frequently-bought-together`,
           params: {
-            minSupport: params.minSupport || 0.0000001,
-            limit: params.limit || 100,
-            orderLimit: params.orderLimit || 10000000
+            minSupport: params.minSupport || 0.01,
+            limit: params.limit || 50,
+            orderLimit: params.orderLimit || 1000
           },
         };
       },
@@ -1051,22 +1090,66 @@ export const api = createApi({
       keepUnusedDataFor: 0, // Không cache, luôn lấy dữ liệu mới
       transformResponse: (response) => {
         if (response && response.frequentItemsets && response.frequentItemsets.length > 0) {
+          console.log('Số lượng itemsets nhận được:', response.frequentItemsets.length);
+          
+          // Lấy thông tin tổng số giao dịch
+          const totalTransactions = response.info?.totalTransactions || 
+                                  response.frequentItemsets[0]?.totalTransactions ||
+                                  0;
+                                  
+          console.log('Tổng số giao dịch:', totalTransactions);
+          
           // Chuẩn hóa dữ liệu
           const normalizedData = {
             ...response,
-            frequentItemsets: response.frequentItemsets.map(itemset => ({
-              ...itemset,
-              support: itemset.support > 1 ? itemset.support / 100 : itemset.support, // Chuẩn hóa giá trị support
-              frequency: itemset.frequency || itemset.count || 0, // Đảm bảo frequency tồn tại
-              products: Array.isArray(itemset.products) ? itemset.products : [] // Đảm bảo products là mảng
-            }))
+            frequentItemsets: response.frequentItemsets.map(itemset => {
+              // Đảm bảo frequency không vượt quá tổng số giao dịch
+              const frequency = Math.min(
+                itemset.frequency || itemset.count || 0, 
+                totalTransactions
+              );
+              
+              // Tính toán lại support chính xác
+              const support = totalTransactions > 0 ? 
+                frequency / totalTransactions : 
+                0;
+              
+              return {
+                ...itemset,
+                frequency,
+                support,
+                // Thêm trường hiển thị cho UI
+                supportPercent: `${(support * 100).toFixed(2)}%`,
+                frequencyDisplay: itemset.frequencyDisplay || `${frequency}/${totalTransactions}`
+              };
+            }).filter(itemset => 
+              // Lọc các kết quả không hợp lệ
+              itemset.products && 
+              Array.isArray(itemset.products) &&
+              itemset.products.length >= 2 && 
+              itemset.support > 0
+            )
           };
           
           return normalizedData;
         } else {
-          return { frequentItemsets: [] };
+          // Return empty data if API returns nothing
+          console.log('Không nhận được dữ liệu từ API');
+          return { 
+            frequentItemsets: [],
+            message: response?.message || "Không có dữ liệu",
+            success: false
+          };
         }
       },
+      // Add error handling
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+        } catch (err) {
+          console.error('Error in frequentlyBoughtTogether query:', err);
+        }
+      }
     }),
     
     // Coupon endpoints
@@ -1179,10 +1262,25 @@ export const api = createApi({
     }),
     
     deleteCombo: builder.mutation({
-      query: (id) => ({
-        url: `/combos/${id}`,
-        method: 'DELETE',
-      }),
+      query: (id) => {
+        console.log('Xóa combo với ID:', id);
+        if (!id) {
+          throw new Error('ID không hợp lệ');
+        }
+        return {
+          url: `/combos/${id}`,
+          method: 'DELETE',
+        };
+      },
+      // Xử lý lỗi nếu có
+      async onQueryStarted(id, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          console.log('Xóa combo thành công:', id);
+        } catch (error) {
+          console.error('Lỗi khi xóa combo:', error);
+        }
+      },
       invalidatesTags: ['Combo']
     }),
   }),
