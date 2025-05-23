@@ -866,6 +866,70 @@ const getRelatedProductRecommendations = async (productId, limit = 4) => {
   }
 };
 
+const getDynamicAprioriParameters = (transactions) => {
+  // Tính toán minSupport dựa trên số lượng giao dịch
+  let minSupport = 0.01; // Default 1%
+  if (transactions.length > 10000) {
+    minSupport = 0.005; // 0.5% cho dữ liệu lớn
+  } else if (transactions.length > 5000) {
+    minSupport = 0.008; // 0.8% cho dữ liệu trung bình
+  }
+
+  // Tính toán minConfidence dựa trên phân phối dữ liệu
+  let minConfidence = 0.3; // Default 30%
+  const uniqueProducts = new Set(transactions.flat()).size;
+  if (uniqueProducts > 1000) {
+    minConfidence = 0.25; // 25% cho nhiều sản phẩm
+  } else if (uniqueProducts > 500) {
+    minConfidence = 0.28; // 28% cho số lượng trung bình
+  }
+
+  return { minSupport, minConfidence };
+};
+
+const updateAprioriRecommendations = async () => {
+  try {
+    // Thử lấy dữ liệu từ MongoDB
+    const transactions = await getTransactions();
+    console.log(`Fetched ${transactions.length} transactions for Apriori update`);
+
+    // Tính toán tham số động
+    const { minSupport, minConfidence } = getDynamicAprioriParameters(transactions);
+    console.log(`Dynamic parameters - minSupport: ${minSupport}, minConfidence: ${minConfidence}`);
+
+    // Khởi tạo Apriori với tham số động
+    const apriori = new Apriori(minSupport, minConfidence);
+    
+    // Phân tích và tìm rules
+    const rules = await apriori.analyze(transactions);
+    console.log(`Generated ${rules.length} association rules`);
+
+    // Lưu kết quả vào cache
+    await cacheManager.set('apriori_rules', rules, 3600 * 72); // Cache trong 72 giờ
+    
+    // Lưu metrics
+    await saveAlgorithmMetrics('apriori', {
+      transactionCount: transactions.length,
+      minSupport,
+      minConfidence,
+      rulesGenerated: rules.length,
+      timestamp: new Date()
+    });
+
+    return rules;
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    // Fallback - Sử dụng cache nếu có
+    const cachedRules = await cacheManager.get('apriori_rules');
+    if (cachedRules) {
+      console.log('Using cached Apriori rules due to database connection issues');
+      return cachedRules;
+    }
+    // Hoặc trả về dữ liệu mặc định
+    return defaultRecommendations;
+  }
+};
+
 const updateFPGrowthRecommendations = async () => {
   try {
     // Lấy dữ liệu đơn hàng mới nhất
@@ -898,5 +962,7 @@ module.exports = {
   getHomepageRecommendations,
   getFrequentlyBoughtTogether,
   getRelatedProductRecommendations,
-  updateFPGrowthRecommendations
+  updateFPGrowthRecommendations,
+  updateAprioriRecommendations,
+  getDynamicAprioriParameters
 };

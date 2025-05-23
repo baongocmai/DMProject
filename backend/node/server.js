@@ -88,6 +88,17 @@ cron.schedule('0 0 */3 * *', async () => {
   }
 });
 
+// Thêm cron job để chạy Apriori mỗi 3 ngày
+cron.schedule('0 0 */3 * *', async () => {
+  console.log('Running Apriori algorithm update...');
+  try {
+    await recommendationService.updateAprioriRecommendations();
+    console.log('Apriori algorithm update completed successfully');
+  } catch (error) {
+    console.error('Error updating Apriori recommendations:', error);
+  }
+});
+
 // Xử lý lỗi 404
 app.use((req, res) => {
   res.status(404).json({ message: "Không tìm thấy đường dẫn" });
